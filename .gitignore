@@ -1,0 +1,9 @@
+node_modules/
+public/runtime/
+public/pdf-runtime/
+.wxt/
+.output/
+.cache/
+lab/local-speech/dist/
+lab/local-speech/results/
+

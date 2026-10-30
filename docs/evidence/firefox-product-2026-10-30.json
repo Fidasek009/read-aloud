@@ -1,0 +1,21 @@
+{
+	"recordedAt": "2026-10-30T01:13:43.922Z",
+	"browserVersion": "158.0.1",
+	"voice": "cs_CZ-jirka-medium",
+	"virtualAudio": true,
+	"passed": [
+		"explicit download",
+		"integrity",
+		"model storage",
+		"local speech",
+		"Czech word highlighting",
+		"pause",
+		"close",
+		"delete"
+	],
+	"limitations": [
+		"Scripted entry with localhost fixture permission; native activeTab/context menu not tested",
+		"Virtual audio sink; not a physical device performance or quality test",
+		"GPU and Windows not tested"
+	]
+}

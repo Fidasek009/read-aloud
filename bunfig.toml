@@ -1,0 +1,31 @@
+[install]
+globalStore = true
+linker = "isolated"
+minimumReleaseAge = 86400
+exact = true
+
+[run]
+bun = true
+shell = "bun"
+
+[test]
+pathIgnorePatterns = ["**/.output/**", "**/dist/**", "**/vendor/**", "**/results/**"]
+
+[fmt]
+printWidth = 120
+semi = false
+singleQuote = false
+trailingComma = "all"
+useTabs = true
+endOfLine = "lf"
+ignorePatterns = ["**/*.md", "**/.source/**", "**/generated/**", "lab/local-speech/vendor/**", "bun.lock"]
+
+[fmt.sortImports]
+groups = [
+	["type-builtin", "type-external", "type-internal"],
+	["builtin", "external", "internal"],
+	["type-parent", "type-sibling", "type-index"],
+	["parent", "sibling", "index"],
+	"style",
+	"unknown",
+]

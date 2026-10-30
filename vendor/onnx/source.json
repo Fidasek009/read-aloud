@@ -1,0 +1,6 @@
+{
+	"repository": "https://github.com/onnx/onnx",
+	"revision": "v1.19.1",
+	"path": "onnx/onnx.proto3",
+	"sha256": "c2a24681ba16a6af3eca7ac70c657fb1e3a9598506b6dc98501a77ba0e5ff2bc"
+}

@@ -1,0 +1,12 @@
+{
+	"extends": "./.wxt/tsconfig.json",
+	"compilerOptions": {
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true
+	},
+	"include": ["src/**/*.ts", "wxt.config.ts", ".wxt/wxt.d.ts"],
+	"exclude": ["node_modules", "lab", ".output", "src/speech/worker.ts"]
+}

@@ -1,0 +1,80 @@
+# Product brief
+
+Started and updated: **2026-10-29**. Product answers below are confirmed by the user; architecture remains under investigation.
+
+## Confirmed experience
+
+A brutally simple, premium Firefox and Chrome extension for Windows and Linux. It reads web articles, selected text, and the user's PDF benchmark, entirely inside the browser extension with no separate helper application. US English and Czech are mandatory; expose all additional languages that the vetted models/runtime support.
+
+The primary flow is **select text → right-click → read the selection nearly instantly**. Reading only that selection is the defined behavior; continuing into the rest of the article would be a different action. Article reading also belongs in the first release, with its exact invocation still to settle.
+
+The user considers Piper's medium-quality voices decent and values choosing a lower-quality model for better speed. They dislike missing highlighting, broken model deletion, and playback speed changes that raise voice pitch. A pitch-preserving speed slider is mandatory.
+
+In a subsequent answer, the user explicitly selected a playback bar, word-by-word highlighting, and automatic scrolling. **These are now first-release requirements**, superseding their earlier optional-highlighting preference. Follow Edge closely, with play/pause, previous/next sentence, speed, close/stop, and voice choice in the same surface. Sentence clicking is excluded from the first release.
+
+The latest clarification is authoritative: **continue on tab switch; stop on source-page navigation or source-tab closure**. This supersedes the user's earlier continue-everywhere answer. The visible surface is a small in-page playback bar. Playback must be independent of toolbar-popup lifetime, but stopped sessions must not be restarted by late inference results.
+
+## Model ownership and setup
+
+- No automatic model downloads. The user must consciously choose a model and start its download.
+- Download size itself does not constrain the design; explain the actual size before downloading.
+- Installed models must be removable through a reliable, simple action.
+- Users must be able to audition voices through on-demand prerecorded samples without downloading the whole model. Keep previews out of the extension package to minimize its size; never prefetch them.
+- Model selection and management are justified product UI. Avoid exposing engine names, execution providers, worker counts, and other implementation settings.
+- Reading is local/offline once its model and required assets are installed. A deliberate preview may need network access if its sample is not cached; this must never send the selected/page text to a server.
+
+## Supported machines and licensing
+
+- Windows and Linux; Firefox and Chrome are equally important.
+- Baseline: 4 CPU cores, 8 GB RAM.
+- Optional GPU: 4 GB VRAM. CPU-only operation must be usable.
+- Original application source: MIT, open source. Audit third-party executable code, model weights, datasets, and preview assets independently before distribution.
+- Separately licensed dependencies may be considered; explain their obligations before choosing them. Do not represent bundled GPL code or separately licensed model weights as MIT.
+- Public store distribution versus personal/unlisted distribution remains unanswered. No monetization or account system is requested.
+
+## Confirmed engineering direction
+
+- WXT following its official extension project structure, with explicit Manifest V3 builds for Firefox and Chrome.
+- Strict TypeScript for first-party application, worker, and tooling code.
+- Bun throughout: runtime, workspace package management, tests, native type checking/formatting, and standalone lab bundling. Run WXT under Bun; no project Node runtime requirement or npm toolchain.
+- Bun configuration follows the user's `~/projects/talqo/bunfig.toml` preferences: isolated/global-store installs, a one-day minimum release age, and tabs/double quotes/no semicolons with import sorting. Ignore patterns are adapted to this repository.
+
+## Mandatory first-release reading benchmarks
+
+- Easy: <https://filipkrasa.salonek.org/projects/md-dash/>
+- Medium: <https://artificialanalysis.ai/articles/artificial-analysis-intelligence-index-v5>
+- Hard: <https://is.muni.cz/th/wdhgd/bc.pdf>
+
+All three must work in the first release; the PDF is not deferred. Define extraction order, selected-text behavior, sentence navigation, word highlighting, and auto-scroll for each. Do not mark a benchmark passed merely because its URL fetches or some text is extracted.
+
+Initial inspection: both HTML benchmarks provide a `main` element in their server responses. The PDF URL returned an HTML JavaScript interstitial to the command-line fetch on 2026-10-29, not PDF bytes. Browser-context access and an integrated PDF text/rendering path must be investigated. These are observations, not passed reading tests.
+
+## Proposed minimal interface — not yet approved
+
+One selection context-menu action and one compact, Edge-like playback bar containing all confirmed controls. Keep voice choice in the bar. Provide explicit model downloads, preview, and delete through a small secondary view reachable from that choice, without turning playback into a model-management dashboard.
+
+Do not auto-install a default voice. If reading is invoked without a suitable installed model, show the shortest clear path to selecting/downloading one. Once ready, remember the user's chosen voice and speed locally. Compute backend selection is automatic.
+
+Word highlighting requires a proven timing and live-text mapping strategy. Auto-scroll should follow playback without fighting deliberate user scrolling. No sentence-click interaction.
+
+The user likes the idea of multiple workers. Treat this as architectural interest, not a requirement for a worker count or a setting: test one synthesis worker plus bounded read-ahead first, and measure any additional workers against CPU contention, model-memory duplication, and the 4-core/8-GB baseline.
+
+## Remaining questions
+
+1. PDF reading opens in a **new extension reader tab**, keeping the original PDF tab. Native PDF viewers cannot host our content UI. Article reading currently uses the browser action; the selection right-click flow remains mandatory.
+2. What extraction behavior is expected for captions, citations, headers/footers, bibliography, tables, and formulas in the thesis PDF? Correct reading order and no dropped prose remain fundamental.
+3. Latency is now confirmed: **medium models should start within 1 second warm and 2 seconds cold** on the target 4-core device. Faster is welcome. Measure first-audio readiness, not just model loading.
+4. What playback-speed range does the user actually need? Performance must be measured at those speeds.
+5. Manual voice/language choice is confirmed sufficient for day one; automatic detection is optional only if demonstrably straightforward. Mixed-language behavior remains a later refinement.
+6. Should model deletion stop an active reading session using that model? Proposed default: clearly explain and stop that session, then remove the model and its cached data.
+7. Public Chrome Web Store/Firefox AMO release, or personal/unlisted distribution initially? Should private browsing be supported initially?
+8. Is offline reading after deliberate provisioning sufficient, or must models also be provisionable without internet access?
+
+Previously asked questions on setup, reading scope, hardware, downloads, Piper's UX, languages, original-source licensing, playback controls, highlighting, auto-scroll, session continuity, and sentence clicking are answered and should not be repeated.
+
+## Immediate work
+
+1. Verify a browser-local US-English/Czech inference path and resolve dependency licensing before choosing an engine.
+2. Benchmark cold/warm CPU synthesis and investigate GPU inference in both browsers. The current development machine has no exposed GPU; real GPU/Windows validation will need other hardware.
+3. Prototype explicit model download/delete/preview behavior and pitch-preserving speed, together with the core selection-reading interaction.
+4. Use the user's answers to the remaining interaction questions to refine the smallest coherent playback UI.

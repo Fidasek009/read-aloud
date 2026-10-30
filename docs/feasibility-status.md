@@ -1,0 +1,34 @@
+# Implementation and acceptance status
+
+Updated: **2026-10-30**. A working development prototype now exists; the requested release is **not complete**.
+
+## Implemented
+
+- WXT Manifest V3 packages, strict TypeScript, and Bun-only installs, builds, native checks, formatting, and tests.
+- Explicit voice download, hash verification, cancellation, deletion, and on-demand remote prerecorded previews. No voice model is included in the package or downloaded on startup.
+- Selection/article capture with DOM offsets, an in-page playback bar, sentence controls, voice choice, model-duration speed control, acoustic word timing, highlighting, and scrolling.
+- Browser-local Piper inference with Spellophone/eSpeak NG phonemes, separate GPU/CPU workers, and CPU retry after an acceleration failure. The two prototype voices are US-English LJSpeech medium and Czech Jirka medium; this is not a fully cleared release catalog.
+- A new-tab PDF reader using bundled PDF.js, keeping the original tab. Visible page canvases are bounded; text layers are created as needed, including when playback highlights a distant page. Selection matching preserves source offsets and refuses ambiguous/missing matches instead of reading the whole PDF.
+
+## Direct evidence
+
+The independent Piper lab generated English/Czech speech in Chrome and Firefox with remote network access restricted. The event-based tokenizer reproduced the reference phonemes for its basic fixtures; predicted token frames covered the generated waveform. CPU synthesis sustained playback on this development VM. These observations do not prove the required target-device performance or audio quality.
+
+The Chrome product probe exercised explicit download, storage, local synthesis, source-word highlighting, pause, close, and deletion. Programmatic entry required a trusted Play gesture. The Firefox product probe passed the equivalent Czech flow with a private virtual audio sink and normal autoplay settings. This VM has no hardware audio output; without the sink Firefox's audio clock remained at zero. The sink is test infrastructure, not an end-user helper.
+
+Product probes use isolated profiles and a test-only localhost permission. They **do not prove native context-menu/action activation or activeTab behavior**. Reports are saved in `docs/evidence/`; no product reading text is logged.
+
+The supplied thesis was obtained by retaining its site session cookie: **60 pages**, SHA-256 `30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32`. The PDF browser probe checks rendered text, exact DOM highlighting, and movement to an offscreen page using those cached original bytes. This is a rendering/mapping check, not end-to-end PDF speech or native-viewer entry acceptance. It does not prove every paragraph's reading order, tables, hyphenation, citations, or accessibility.
+
+## Acceptance still open
+
+- **Latency:** medium models must start within **1 second warm / 2 seconds cold** on the specified 4-core machine. Current measured cold speech startup exceeds that budget. No passing latency claim is justified.
+- **Automatic native entry:** selection → right-click must start speech without a second Play action. Verify actual browser entry and resolve autoplay restrictions without weakening privacy or requiring a helper.
+- **All three benchmarks:** neither supplied HTML article nor the complete thesis has passed end-to-end extraction, listening, sentence navigation, word synchronization, and scrolling.
+- **Lifecycle:** verify tab switching, navigation/closure, cross-tab replacement, interrupted model loading, speed/voice changes, source mutations, and stale-work cancellation. Implemented handlers alone are insufficient evidence.
+- **GPU/CPU and platforms:** no physical GPU or Windows machine has been tested. Verify GPU correctness, device loss, CPU fallback, memory, and the 4-core/8-GB baseline.
+- **Speech and catalog:** listen to speed/quality variants, validate pitch, test normalized numbers/abbreviations and mixed scripts, and clear additional supported languages/voice variants. Only basic fixtures have timing evidence.
+- **UI/accessibility:** visual checks and some keyboard interaction exist; complete keyboard, focus, contrast, assistive-technology, responsive layout, and recovery checks remain.
+- **Licensing/distribution:** original source remains MIT. Spellophone/eSpeak NG impose GPL obligations on the combined distribution; complete corresponding-source packaging remains open. Jirka's Lessac training provenance requires clearance. See [licensing.md](licensing.md) and [NOTICE.md](../NOTICE.md).
+
+Keep these gates open until evidence covers the actual requirement. Do not equate a build, a scripted smoke test, or a rendered PDF with the finished product.

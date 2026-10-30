@@ -1,0 +1,26 @@
+{
+	"recordedAt": "2026-10-30T01:13:55.515Z",
+	"browser": {
+		"protocolVersion": "1.3",
+		"product": "Chrome/156.0.8078.4",
+		"revision": "@f842f52ef39fd97b449eb27cff414bf05a98ddce",
+		"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+		"jsVersion": "15.6.75"
+	},
+	"voice": "en_US-ljspeech-medium",
+	"passed": [
+		"explicit download",
+		"integrity",
+		"model storage",
+		"local speech",
+		"word highlighting",
+		"pause",
+		"close",
+		"delete"
+	],
+	"limitations": [
+		"Scripted entry with localhost fixture permission; native activeTab/context-menu activation not tested",
+		"Trusted Play gesture supplied if autoplay is blocked",
+		"GPU, Windows, target-device performance, and audio quality not tested"
+	]
+}

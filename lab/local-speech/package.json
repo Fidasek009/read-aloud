@@ -1,0 +1,28 @@
+{
+	"name": "read-aloud-local-inference-lab",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"packageManager": "bun@1.4.4",
+	"engines": {
+		"bun": ">=1.4.4"
+	},
+	"description": "Browser-local English/Czech speech feasibility experiment; not the product extension",
+	"scripts": {
+		"assets": "bun scripts/assets.ts",
+		"build": "bun scripts/build.ts",
+		"test": "bun test",
+		"probe:chromium": "bun scripts/probe.ts chromium",
+		"probe:firefox": "bun scripts/probe.ts firefox",
+		"typecheck": "bun check -p tsconfig.json && bun check -p tsconfig.worker.json"
+	},
+	"dependencies": {
+		"@spelling-creator/spellophone": "0.2.1",
+		"onnxruntime-web": "1.31.1",
+		"protobufjs": "7.6.6"
+	},
+	"devDependencies": {
+		"@types/bun": "1.4.4",
+		"@webgpu/types": "0.1.74"
+	}
+}

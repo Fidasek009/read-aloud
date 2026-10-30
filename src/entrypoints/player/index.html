@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Read Aloud</title>
+	</head>
+	<body>
+		<div id="bar" role="group" aria-label="Read Aloud playback">
+			<button id="previous" title="Previous sentence" aria-label="Previous sentence">↶</button>
+			<button id="play" title="Pause" aria-label="Pause" class="play">Ⅱ</button>
+			<button id="next" title="Next sentence" aria-label="Next sentence">↷</button>
+			<label class="speed"
+				><span id="rate">1×</span
+				><input id="speed" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed"
+			/></label>
+			<select id="voice" aria-label="Voice"></select>
+			<button id="close" title="Stop reading" aria-label="Stop reading">×</button>
+			<div id="message">
+				<span id="status" role="status" aria-live="polite">Getting ready…</span
+				><a id="manage" href="voices.html" target="_blank" rel="noopener">Choose voices</a>
+			</div>
+		</div>
+		<script type="module" src="./main.ts"></script>
+	</body>
+</html>

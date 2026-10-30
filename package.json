@@ -1,0 +1,41 @@
+{
+	"name": "read-aloud",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"license": "MIT",
+	"packageManager": "bun@1.4.4",
+	"engines": {
+		"bun": ">=1.4.4"
+	},
+	"workspaces": [
+		"lab/local-speech"
+	],
+	"scripts": {
+		"dev": "bun --bun run wxt --mv3",
+		"dev:firefox": "bun --bun run wxt --browser firefox --mv3",
+		"prepare": "bun --bun run wxt prepare",
+		"typecheck": "bun run prepare && bun check && bun check -p tsconfig.speech.json && bun check -p tsconfig.tools.json && bun run --filter read-aloud-local-inference-lab typecheck",
+		"test": "bun test lab/local-speech/test",
+		"format": "bun fmt",
+		"format:check": "bun fmt --check",
+		"build": "bun --bun run wxt build --mv3",
+		"build:firefox": "bun --bun run wxt build --browser firefox --mv3",
+		"zip": "bun --bun run wxt zip --mv3",
+		"zip:firefox": "bun --bun run wxt zip --browser firefox --mv3",
+		"probe:chrome": "bun scripts/probe-product.ts",
+		"probe:firefox": "bun scripts/probe-product-firefox.ts",
+		"probe:pdf": "bun scripts/probe-pdf.ts"
+	},
+	"devDependencies": {
+		"@types/bun": "1.4.4",
+		"@webgpu/types": "0.1.74",
+		"typescript": "7.0.2",
+		"wxt": "0.21.5"
+	},
+	"dependencies": {
+		"@spelling-creator/spellophone": "0.2.1",
+		"onnxruntime-web": "1.31.1",
+		"pdfjs-dist": "6.4.299"
+	}
+}

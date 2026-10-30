@@ -1,0 +1,52 @@
+# Product principles
+
+Build a Firefox and Chrome extension that makes listening to a web page feel effortless. Microsoft Edge's Read Aloud is the experience benchmark; Piper Read Aloud demonstrates the user's acceptable voice quality, but its UI/UX is a problem to solve.
+
+## Non-negotiable values
+
+1. **Brutal simplicity.** Every feature, control, setting, permission, and onboarding step must earn its place. Prefer a good default over another choice. Do not add functionality just because the engine supports it.
+2. **Premium means effortless.** Prioritize predictable behavior, clear state, responsive controls, polished details, and seamless browser integration. Visual decoration and more settings do not constitute quality.
+3. **Natural speech is a core requirement.** US English and Czech are mandatory. Make all additional languages supported by the vetted model/runtime combination available without unnecessary UI. Piper medium-quality speech is an acceptable baseline; let users trade quality for speed through their model choice. Do not treat robotic speech as an acceptable way to claim the requirement is finished.
+4. **Speech runs in the extension on the user's machine.** No separately installed helper app, cloud synthesis, or sending page text/audio to remote inference services. Use GPU acceleration when available and working, with a usable local CPU fallback. Validate both paths; an API being present is not proof a model works well on that device.
+5. **The reading experience comes first.** Optimize the path from wanting to listen to hearing the right text. Reading order, excluding unrelated page content, stopping promptly, and recovering gracefully matter as much as synthesis quality.
+6. **Firefox and Chrome are first-class.** Share implementation where sensible, but verify behavior and lifecycle on both browsers. Do not assume Chromium-only APIs or WebGPU support work in Firefox.
+7. **Accessibility is part of polish.** All controls must work with keyboard and assistive technology, have meaningful accessible names, visible focus, and appropriate contrast. Respect reduced motion and avoid unnecessary animation.
+8. **Privacy and trust by design.** Request the minimum permissions needed for agreed behavior. Keep reading content out of logs and analytics. Clearly explain necessary model downloads and local storage. Never disguise a network dependency as offline capability.
+9. **Performance is user experience.** Treat startup time, time to first audio, continuity, cancellation, battery use, memory, model size, and download friction as product concerns. Measure on representative hardware, including CPU-only devices.
+10. **Current, verified engineering.** Use maintained dependencies and current official browser, extension-store, security, and accessibility guidance. Date architecture research and cite primary sources. Verify claims against information available in 2026; do not invent a universal "2026 standard" or equate newest with best.
+
+## Confirmed product requirements
+
+- Target Firefox and Chrome on **Windows and Linux**. Design for **4 CPU cores and 8 GB RAM**; a GPU with **4 GB VRAM is optional**, not required.
+- Initial reading surfaces: **web articles, explicitly selected text, and PDFs including the supplied thesis**. The essential interaction is **select text → right-click → read that selection nearly instantly** once provisioned. Do not silently continue beyond the selection. All three user benchmark URLs in `docs/product-brief.md` must work in the first release.
+- **Medium-model latency baseline:** no more than **1 second warm** and **2 seconds cold** on the target 4-core machine. Treat these as acceptance targets, measure them separately, and improve further when possible.
+- **Open PDF reading in a new extension reader tab**, preserving the original PDF tab. Keep the same playback bar and highlighting.
+- Provide a **speed slider that preserves vocal pitch**. Pitching voices upward to make playback faster is unacceptable. Prefer the model's duration/rate control where it works; validate audio quality and pitch at changed speeds.
+- Provide an **Edge-like playback bar**, **word-by-word highlighting**, and **automatic scrolling**. The user's latest answer makes these first-release requirements, superseding the earlier optional-highlighting preference. Use accurate playback synchronization; do not claim exact alignment from arbitrary timers.
+- Keep **play/pause, previous/next sentence, speed, close/stop, and voice choice together** in that playback surface. Match Edge's interaction as closely as public extension APIs permit. **Do not add sentence clicking** to the first release.
+- **Continue reading across tab switches; stop on source-page navigation or source-tab closure.** This latest explicit clarification supersedes the user's earlier continue-everywhere answer. Closing the playback controls also intentionally stops. Keep playback independent of popup lifetime, and prevent stale jobs from restarting stopped sessions.
+- **Never download a model automatically.** Users explicitly choose and download models; download size itself is not a limiting requirement. Let them **delete downloaded models reliably** and choose between quality/performance variants.
+- **Minimize extension size. Do not bundle voice previews.** Stream prerecorded samples only after an explicit Listen action; do not prefetch them or download a model for auditioning.
+- Offer voice auditioning, preferably with **prerecorded samples**, without requiring a full model download. Fetch a preview only in response to the user's action, and make network/storage behavior clear.
+- License this project's original source code under **MIT**. Audit runtime, phonemizer, model, data, and preview licenses separately. A permissive wrapper or model label does not establish the license of bundled third-party binaries. Do not silently impose an incompatible distribution license.
+- The user accepts considering separately licensed dependencies, provided their obligations are explained **before choosing** them. Do not mislabel third-party code or models as MIT or imply that notices alone satisfy all licenses.
+- Manual voice/language choice is sufficient for the first release. Do not add automatic detection unless it is demonstrably simple and reliable.
+- **Use WXT with strict TypeScript**, following WXT's official project structure and TypeScript guidance, plus Mozilla's extension UX/security/publishing guidance and Chrome's extension requirements. Build Manifest V3 explicitly for both browsers. Keep page and worker environment types explicit; type-check message contracts and state transitions. Third-party reference code may retain its upstream language and license.
+- **Bun is the sole project runtime and toolchain.** Use Bun for installs, scripts, tests, native type checking (`bun check`), formatting (`bun fmt`), and standalone lab bundling (`Bun.build`). Run WXT and its build tooling under Bun. Keep one `bun.lock`; do not introduce Node runtime requirements, package-lock files, or npm/npx commands. Prefer Bun-native APIs in first-party tooling. Check current Bun release notes and official docs before adding replacement packages for capabilities Bun already provides.
+
+## Working rules
+
+- Keep the initial product scope small. Before adding a feature or UI component, identify the essential user problem it solves and why a simpler existing interaction is insufficient.
+- Distinguish user-confirmed requirements from proposals and unanswered questions. Do not silently turn an implementation preference into a product requirement.
+- Research and prototype the hard constraints before committing to an engine or framework: local voice quality, browser-compatible inference, CPU performance, GPU compatibility, model licensing, and extension lifecycle.
+- Follow each browser's current extension manifest, content security policy, packaging, and store-review requirements. Bundle executable code; verify any model or runtime loading strategy against the actual policies.
+- Handle web page content as untrusted input. Keep page extraction, extension control, inference, and playback boundaries explicit; validate messages crossing them.
+- Prefer a small, understandable architecture and platform capabilities over unnecessary dependencies. Do not introduce accounts, cloud services, telemetry, monetization, extra reading surfaces, or extensive preferences without an agreed need.
+- Test meaningful user behavior on both target browsers. Include CPU fallback, interrupted playback, model-download failure, and long-page reading when those paths exist.
+- For UI work, verify keyboard access, accessible state changes, focus behavior, and real-browser layout as well as functionality, using the tools permitted in the current task.
+- Record unresolved product decisions and research evidence in project documentation rather than bloating the interface or this file.
+- Never claim voice quality, latency, compatibility, offline operation, or policy compliance based only on a library's marketing. Identify what has been measured and what remains unverified.
+
+## Decisions still to establish
+
+WXT and strict TypeScript are selected for the extension. No production speech engine or UI component framework is selected yet. Remaining decisions include the precise article/PDF entry points and extraction expectations, store distribution, and private-browsing behavior. Use the latest confirmed answers in `docs/product-brief.md`; do not re-ask questions already answered.

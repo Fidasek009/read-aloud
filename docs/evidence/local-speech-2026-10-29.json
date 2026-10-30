@@ -1,0 +1,269 @@
+{
+	"scope": "Single-thread local synthesis in temporary extension tabs, not product acceptance",
+	"reports": {
+		"chromium": {
+			"recordedAt": "2026-10-29T20:36:51.917Z",
+			"browser": "chromium",
+			"browserVersion": "Chrome/156.0.8078.4",
+			"offlineMethod": "Bun.WebView CDP offline mode, closed HTTP/HTTPS proxy, extension CSP, and local-only worker fetch guard",
+			"toolchain": "Bun 1.4.4",
+			"machine": {
+				"browserReportedCores": 8,
+				"note": "Development VM, not proof of 4-core/8-GB target or Windows/GPU performance"
+			},
+			"build": {
+				"toolchain": "Bun 1.4.4",
+				"versions": {
+					"onnxruntime-web": "1.31.1"
+				},
+				"model": "supertone-oss-archive/supertonic-3",
+				"revision": "aafc6e32416a594460b32413efc49d7fe4ce6d46",
+				"voice": "F1",
+				"assets": [
+					{
+						"path": "onnx/duration_predictor.onnx",
+						"bytes": 3700147,
+						"sha256": "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db"
+					},
+					{
+						"path": "onnx/text_encoder.onnx",
+						"bytes": 36416150,
+						"sha256": "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff"
+					},
+					{
+						"path": "onnx/vector_estimator.onnx",
+						"bytes": 256534781,
+						"sha256": "883ac868ea0275ef0e991524dc64f16b3c0376efd7c320af6b53f5b780d7c61c"
+					},
+					{
+						"path": "onnx/vocoder.onnx",
+						"bytes": 101424195,
+						"sha256": "085de76dd8e8d5836d6ca66826601f615939218f90e519f70ee8a36ed2a4c4ba"
+					},
+					{
+						"path": "onnx/tts.json",
+						"bytes": 8253,
+						"sha256": "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09"
+					},
+					{
+						"path": "onnx/unicode_indexer.json",
+						"bytes": 277676,
+						"sha256": "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f"
+					},
+					{
+						"path": "voice_styles/F1.json",
+						"bytes": 292046,
+						"sha256": "bbdec6ee00231c2c742ad05483df5334cab3b52fda3ba38e6a07059c4563dbc2"
+					},
+					{
+						"path": "LICENSE",
+						"bytes": 15007,
+						"sha256": "0d944a9110fed9a9602d60e0423a272903e7bd21ab060490774efc77c2275e9f"
+					}
+				]
+			},
+			"ok": true,
+			"report": {
+				"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+				"crossOriginIsolated": true,
+				"hardwareConcurrency": 8,
+				"requested": "cpu",
+				"selected": "wasm",
+				"gpu": {
+					"api": true,
+					"adapter": false
+				},
+				"threads": 1,
+				"steps": 5,
+				"requests": [
+					"/models/onnx/tts.json",
+					"/runtime/ort-wasm-simd-threaded.asyncify.wasm",
+					"/models/onnx/duration_predictor.onnx",
+					"/models/onnx/text_encoder.onnx",
+					"/models/onnx/vector_estimator.onnx",
+					"/models/onnx/vocoder.onnx",
+					"/models/onnx/unicode_indexer.json",
+					"/models/voice_styles/F1.json",
+					"/models/voice_styles/F1.json"
+				],
+				"denied": [],
+				"samples": [
+					{
+						"lang": "en",
+						"speed": 1,
+						"text": "A good reading experience should feel effortless. Your words stay on your device.",
+						"synthesisMs": 9505.72000002861,
+						"durationSeconds": 6.130068027210885,
+						"predictedDurationSeconds": 6.112208843231201,
+						"realTimeFactor": 1.5506712091665988,
+						"peak": 0.3318292498588562,
+						"rms": 0.04929168674324135
+					},
+					{
+						"lang": "cs",
+						"speed": 1,
+						"text": "Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.",
+						"synthesisMs": 11255.02999997139,
+						"durationSeconds": 7.801904761904762,
+						"predictedDurationSeconds": 7.783066749572754,
+						"realTimeFactor": 1.4426002807580516,
+						"peak": 0.4113685190677643,
+						"rms": 0.05641232076049962
+					},
+					{
+						"lang": "cs",
+						"speed": 1.5,
+						"text": "Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.",
+						"synthesisMs": 8196.705000042915,
+						"durationSeconds": 5.224489795918367,
+						"predictedDurationSeconds": 5.188711166381836,
+						"realTimeFactor": 1.5689005664144642,
+						"peak": 0.4429243803024292,
+						"rms": 0.05831206136184583
+					}
+				],
+				"fallback": null,
+				"limitation": "Synthesis in an extension tab only; background audio lifecycle and word timing are not implemented.",
+				"initializationMs": 9756.685000061989,
+				"firstClipReadyMs": 19262.4050000906,
+				"speedDurationRatio": 1.4933333333333334
+			},
+			"remoteRequests": []
+		},
+		"firefox": {
+			"recordedAt": "2026-10-29T20:50:27.854Z",
+			"browser": "firefox",
+			"browserVersion": "158.0.1",
+			"offlineMethod": "Fresh profile with HTTP/HTTPS forced through a closed local proxy, extension CSP, and local-only worker fetch guard",
+			"toolchain": "Bun 1.4.4",
+			"machine": {
+				"browserReportedCores": 8,
+				"note": "Development VM, not proof of 4-core/8-GB target or Windows/GPU performance"
+			},
+			"build": {
+				"toolchain": "Bun 1.4.4",
+				"versions": {
+					"onnxruntime-web": "1.31.1"
+				},
+				"model": "supertone-oss-archive/supertonic-3",
+				"revision": "aafc6e32416a594460b32413efc49d7fe4ce6d46",
+				"voice": "F1",
+				"assets": [
+					{
+						"path": "onnx/duration_predictor.onnx",
+						"bytes": 3700147,
+						"sha256": "c3eb91414d5ff8a7a239b7fe9e34e7e2bf8a8140d8375ffb14718b1c639325db"
+					},
+					{
+						"path": "onnx/text_encoder.onnx",
+						"bytes": 36416150,
+						"sha256": "c7befd5ea8c3119769e8a6c1486c4edc6a3bc8365c67621c881bbb774b9902ff"
+					},
+					{
+						"path": "onnx/vector_estimator.onnx",
+						"bytes": 256534781,
+						"sha256": "883ac868ea0275ef0e991524dc64f16b3c0376efd7c320af6b53f5b780d7c61c"
+					},
+					{
+						"path": "onnx/vocoder.onnx",
+						"bytes": 101424195,
+						"sha256": "085de76dd8e8d5836d6ca66826601f615939218f90e519f70ee8a36ed2a4c4ba"
+					},
+					{
+						"path": "onnx/tts.json",
+						"bytes": 8253,
+						"sha256": "42078d3aef1cd43ab43021f3c54f47d2d75ceb4e75f627f118890128b06a0d09"
+					},
+					{
+						"path": "onnx/unicode_indexer.json",
+						"bytes": 277676,
+						"sha256": "9bf7346e43883a81f8645c81224f786d43c5b57f3641f6e7671a7d6c493cb24f"
+					},
+					{
+						"path": "voice_styles/F1.json",
+						"bytes": 292046,
+						"sha256": "bbdec6ee00231c2c742ad05483df5334cab3b52fda3ba38e6a07059c4563dbc2"
+					},
+					{
+						"path": "LICENSE",
+						"bytes": 15007,
+						"sha256": "0d944a9110fed9a9602d60e0423a272903e7bd21ab060490774efc77c2275e9f"
+					}
+				]
+			},
+			"ok": true,
+			"error": null,
+			"report": {
+				"userAgent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0",
+				"crossOriginIsolated": false,
+				"hardwareConcurrency": 8,
+				"requested": "cpu",
+				"selected": "wasm",
+				"gpu": {
+					"api": false,
+					"adapter": false
+				},
+				"threads": 1,
+				"steps": 5,
+				"requests": [
+					"/models/onnx/tts.json",
+					"/runtime/ort-wasm-simd-threaded.asyncify.wasm",
+					"/models/onnx/duration_predictor.onnx",
+					"/models/onnx/text_encoder.onnx",
+					"/models/onnx/vector_estimator.onnx",
+					"/models/onnx/vocoder.onnx",
+					"/models/onnx/unicode_indexer.json",
+					"/models/voice_styles/F1.json",
+					"/models/voice_styles/F1.json"
+				],
+				"denied": [],
+				"samples": [
+					{
+						"lang": "en",
+						"speed": 1,
+						"text": "A good reading experience should feel effortless. Your words stay on your device.",
+						"synthesisMs": 10643,
+						"durationSeconds": 6.130068027210885,
+						"predictedDurationSeconds": 6.112208843231201,
+						"realTimeFactor": 1.7361960671164773,
+						"peak": 0.3791433870792389,
+						"rms": 0.049738895233002206
+					},
+					{
+						"lang": "cs",
+						"speed": 1,
+						"text": "Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.",
+						"synthesisMs": 12332,
+						"durationSeconds": 7.801904761904762,
+						"predictedDurationSeconds": 7.783066749572754,
+						"realTimeFactor": 1.5806396484375,
+						"peak": 0.3643239140510559,
+						"rms": 0.05211483199509969
+					},
+					{
+						"lang": "cs",
+						"speed": 1.5,
+						"text": "Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.",
+						"synthesisMs": 9071,
+						"durationSeconds": 5.224489795918367,
+						"predictedDurationSeconds": 5.188711166381836,
+						"realTimeFactor": 1.7362460937500002,
+						"peak": 0.46048635244369507,
+						"rms": 0.05591591570773096
+					}
+				],
+				"fallback": null,
+				"limitation": "Synthesis in an extension tab only; background audio lifecycle and word timing are not implemented.",
+				"initializationMs": 10370,
+				"firstClipReadyMs": 21013,
+				"speedDurationRatio": 1.4933333333333334
+			}
+		}
+	},
+	"limitations": [
+		"Development Linux VM; Windows and physical GPU not tested",
+		"No product playback UI, article/PDF extraction, word alignment, auto-scroll, or model management",
+		"Cold first-clip readiness and single-thread throughput do not meet the requested premium experience",
+		"Duration control verified; human voice and pitch-quality evaluation pending"
+	]
+}

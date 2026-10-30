@@ -1,0 +1,31 @@
+{
+  "repository": "https://github.com/supertone-oss-archive/supertonic",
+  "revision": "1e9799e964ea4c0dad7cde993b65c3c813a7b373",
+  "maintenance": "Upstream archived; experiment only. Not selected for the product.",
+  "files": [
+    {
+      "path": "web/helper.js",
+      "local": "helper.mjs",
+      "sha256": "a8200d50e2eabeb18c777b218ecb5214fd33fb623477e8b8378b4696179d125a"
+    },
+    {
+      "path": "LICENSE",
+      "local": "LICENSE",
+      "sha256": "0dfe0d0ba84416fe3879d9a34f4909d8d0137c78d1e95834177b0414ac096fa2"
+    }
+  ],
+  "runtimeNotices": [
+    {
+      "repository": "https://github.com/microsoft/onnxruntime",
+      "revision": "v1.31.1",
+      "local": "onnxruntime-LICENSE",
+      "sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+    },
+    {
+      "repository": "https://github.com/microsoft/onnxruntime",
+      "revision": "v1.31.1",
+      "local": "onnxruntime-ThirdPartyNotices.txt",
+      "sha256": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3"
+    }
+  ]
+}
