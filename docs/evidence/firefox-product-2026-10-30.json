@@ -1,8 +1,31 @@
 {
-	"recordedAt": "2026-10-30T01:13:43.922Z",
+	"recordedAt": "2026-10-30T09:14:01.648Z",
 	"browserVersion": "158.0.1",
 	"voice": "cs_CZ-jirka-medium",
+	"performance": {
+		"cold": {
+			"backend": "cpu",
+			"voice": "cs_CZ-jirka-medium",
+			"modelReadMs": 418,
+			"loadMs": 6682,
+			"threads": 1,
+			"crossOriginIsolated": false,
+			"phonemizerMs": 158,
+			"sessionMs": 6213,
+			"workerLoadMs": 6216,
+			"synthesisMs": 476,
+			"timeToFirstBufferMs": 7183,
+			"audioContextState": "running",
+			"recordedAt": "2026-10-30T09:13:51.228Z"
+		},
+		"caveat": "Development VM with virtual audio, not target-hardware latency acceptance."
+	},
 	"virtualAudio": true,
+	"pdf": {
+		"pages": 60,
+		"characters": 85678,
+		"highlighted": "Virtual Research Environment"
+	},
 	"passed": [
 		"explicit download",
 		"integrity",
@@ -11,10 +34,11 @@
 		"Czech word highlighting",
 		"pause",
 		"close",
-		"delete"
+		"delete",
+		"live MUNI PDF fetch/render/highlight with explicit test-origin grant"
 	],
 	"limitations": [
-		"Scripted entry with localhost fixture permission; native activeTab/context menu not tested",
+		"Scripted entry with localhost and MUNI test-origin grants; native activeTab/context menu and permission dialog not tested",
 		"Virtual audio sink; not a physical device performance or quality test",
 		"GPU and Windows not tested"
 	]

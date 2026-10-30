@@ -34,3 +34,11 @@ Original project code is [MIT](LICENSE). Third-party reference code, runtime fil
 After building, use `bun run probe:chrome` and `bun run probe:firefox` for isolated product probes. They deliberately download a voice and delete it again. A working audio output is required; the Linux VM uses a private test sink via `bun scripts/with-test-audio.ts scripts/probe-product-firefox.ts`. The helper expects extracted Ubuntu PulseAudio test binaries under `.cache/test-audio/pulse/`; it installs no system service and is never part of the extension.
 
 `bun run probe:pdf` requires the deliberately fetched thesis bytes in `.cache/benchmarks/muni-thesis.pdf`. Its evidence covers PDF rendering/text mapping, not full speech acceptance. See [current status](docs/feasibility-status.md) for exact limits.
+
+The voice page contains the pinned 178-model catalog with search, source terms, variants, and explicit downloads; seven models need pronunciation engines that are not yet implemented. These are labeled unavailable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
+
+For a live PDF fetch check, use `PDF_SOURCE_URL=https://is.muni.cz/th/wdhgd/bc.pdf bun run probe:pdf`. The test checks access recovery in a fresh ungranted profile, then uses a narrow grant in a separate test copy; it does not click the browser's native permission dialog. In your normal browser, the new PDF tab may ask for access to the PDF's site. This is optional site access, not an install-time all-sites grant.
+
+After updating a development package, reload the extension **and existing source tabs** once to remove listeners left by older builds. On Chrome, the new inference host adds the internal offscreen permission; accept that updated extension permission if the browser asks. No helper app is involved.
+
+Local timing/backend diagnostics are available from the extension page's developer console with `await browser.storage.local.get("lastSpeechPerformance")` (use `chrome` in Chrome). They contain no reading text. Cold initialization is still over the acceptance budget; see the evidence/status documents before interpreting one VM run as a benchmark.

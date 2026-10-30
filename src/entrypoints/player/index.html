@@ -7,19 +7,41 @@
 	</head>
 	<body>
 		<div id="bar" role="group" aria-label="Read Aloud playback">
-			<button id="previous" title="Previous sentence" aria-label="Previous sentence">↶</button>
-			<button id="play" title="Pause" aria-label="Pause" class="play">Ⅱ</button>
-			<button id="next" title="Next sentence" aria-label="Next sentence">↷</button>
+			<button id="previous" title="Previous sentence" aria-label="Previous sentence">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M19 5l-10 7 10 7z" /></svg>
+			</button>
+			<button id="play" title="Pause" aria-label="Pause" class="play">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-icon" d="M8 5v14M16 5v14" /></svg>
+			</button>
+			<button id="next" title="Next sentence" aria-label="Next sentence">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M5 5l10 7-10 7z" /></svg>
+			</button>
 			<label class="speed"
-				><span id="rate">1×</span
-				><input id="speed" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed"
-			/></label>
+				><span>Speed</span
+				><input id="speed" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed" /><span
+					id="rate"
+					>1×</span
+				></label
+			>
 			<select id="voice" aria-label="Voice"></select>
-			<button id="close" title="Stop reading" aria-label="Stop reading">×</button>
-			<div id="message">
-				<span id="status" role="status" aria-live="polite">Getting ready…</span
-				><a id="manage" href="voices.html" target="_blank" rel="noopener">Choose voices</a>
-			</div>
+			<a
+				id="manage"
+				class="icon"
+				href="voices.html"
+				target="_blank"
+				rel="noopener"
+				title="Voices and settings"
+				aria-label="Voices and settings"
+				><svg viewBox="0 0 24 24" aria-hidden="true">
+					<path
+						d="m9 3-.7 3a7 7 0 0 0-1.5.9L4 6l-2 3.5 2.2 2v1L2 14.5 4 18l2.8-.9a7 7 0 0 0 1.5.9l.7 3h4l.7-3a7 7 0 0 0 1.5-.9L18 18l2-3.5-2.2-2v-1L20 9.5 18 6l-2.8.9a7 7 0 0 0-1.5-.9L13 3z"
+					/>
+					<circle cx="11" cy="12" r="3" /></svg
+			></a>
+			<button id="close" title="Stop reading" aria-label="Stop reading">
+				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+			</button>
+			<div id="message"><span id="status" role="status" aria-live="polite">Getting ready…</span></div>
 		</div>
 		<script type="module" src="./main.ts"></script>
 	</body>

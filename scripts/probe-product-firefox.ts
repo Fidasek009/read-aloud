@@ -7,7 +7,7 @@ await $`mkdir -p ${out} ${root + "/.cache/product-probe/profiles"}`.quiet()
 await $`cp -R ${root + "/.output/firefox-mv3/."} ${out}`.quiet()
 const manifest = await Bun.file(`${out}/manifest.json`).json()
 // Test-only grant for scripted entry; native Firefox action activation is a separate gate.
-manifest.host_permissions = ["http://127.0.0.1/*"]
+manifest.host_permissions = ["http://127.0.0.1/*", "https://is.muni.cz/*"]
 await Bun.write(`${out}/manifest.json`, JSON.stringify(manifest))
 const server = Bun.serve({
 	hostname: "127.0.0.1",
@@ -114,9 +114,9 @@ try {
 	)
 	await waitFor(
 		() => script<number>("document.querySelectorAll('section').length"),
-		(value) => value === 2,
+		(value) => value === 178,
 	)
-	await script("document.querySelectorAll('section .primary')[1].click()")
+	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .primary').click()`)
 	const download = await waitFor(
 		() => script<string>("document.querySelector('#status').textContent"),
 		(value) => /ready|failed|unexpected|interrupted/i.test(value),
@@ -217,6 +217,8 @@ try {
 	})
 	console.log("Firefox highlighted Czech source word:", highlight)
 	await run("/frame", { id: frame })
+	const cold = (await script<any>("browser.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
+	console.log("Firefox cold first-buffer timings:", JSON.stringify(cold))
 	await script("document.querySelector('#play').click()")
 	await waitFor(
 		() => script<string>("document.querySelector('#status').textContent"),
@@ -226,12 +228,57 @@ try {
 	await run("/frame", { id: null })
 	await waitFor(() => script("!document.querySelector('[data-read-aloud]')"), Boolean)
 	await run("/window", { handle: voicesHandle })
-	await script("document.querySelectorAll('section .primary')[1].click()")
+	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .danger').click()`)
 	await waitFor(
 		() => script<string>("document.querySelector('#status').textContent"),
 		(value) => value.includes("deleted"),
 	)
 	console.log("Firefox pause, close, and deletion passed.")
+	const originalPdf = await script<{ id: number }>(
+		`browser.tabs.create({url:'https://is.muni.cz/th/wdhgd/bc.pdf',active:false})`,
+	)
+	await script(
+		`browser.tabs.create({url:browser.runtime.getURL('/pdf.html')+'?src='+encodeURIComponent('https://is.muni.cz/th/wdhgd/bc.pdf'),active:true})`,
+	)
+	await waitFor(
+		async () => {
+			for (const handle of await command<string[]>(`/session/${session}/window/handles`, undefined, "GET")) {
+				await run("/window", { handle })
+				if (
+					(await command<string>(`/session/${session}/url`, undefined, "GET")).startsWith(
+						`moz-extension://${uuid}/pdf.html`,
+					)
+				)
+					return true
+			}
+			return false
+		},
+		Boolean,
+		20,
+	)
+	const pdfStatus = await waitFor(
+		() => script<string>("document.querySelector('#status').textContent"),
+		(value) => value === "" || !value.startsWith("Opening PDF"),
+		90,
+	)
+	assert(!pdfStatus, `Firefox live PDF fetch failed: ${pdfStatus}`)
+	const pdf = await script<any>(`(async()=>{
+		const session=new URL(document.querySelector('iframe').src).hash.slice(1)
+		const {text}=await window.readAloudHost({session,command:'document'})
+		const target='Virtual Research Environment',start=text.indexOf(target)
+		await window.readAloudHost({session,command:'highlight',start,end:start+target.length})
+		return {pages:document.querySelectorAll('.pdf-page').length,characters:text.length,highlighted:Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')}
+	})()`)
+	assert(
+		pdf.pages === 60 && pdf.characters > 50000 && pdf.highlighted === "Virtual Research Environment",
+		`Firefox PDF mapping failed: ${JSON.stringify(pdf)}`,
+	)
+	await run("/window", { handle: voicesHandle })
+	assert(
+		await script(`browser.tabs.get(${originalPdf.id}).then(()=>true,()=>false)`),
+		"The original PDF tab was closed",
+	)
+	console.log("Firefox live MUNI PDF fetch, text mapping, highlighting, and original-tab preservation passed.")
 	await Bun.write(
 		`${root}/docs/evidence/firefox-product-2026-10-30.json`,
 		JSON.stringify(
@@ -239,7 +286,9 @@ try {
 				recordedAt: new Date().toISOString(),
 				browserVersion: created.capabilities.browserVersion,
 				voice: "cs_CZ-jirka-medium",
+				performance: { cold, caveat: "Development VM with virtual audio, not target-hardware latency acceptance." },
 				virtualAudio: Boolean(Bun.env.PULSE_SERVER),
+				pdf,
 				passed: [
 					"explicit download",
 					"integrity",
@@ -249,9 +298,10 @@ try {
 					"pause",
 					"close",
 					"delete",
+					"live MUNI PDF fetch/render/highlight with explicit test-origin grant",
 				],
 				limitations: [
-					"Scripted entry with localhost fixture permission; native activeTab/context menu not tested",
+					"Scripted entry with localhost and MUNI test-origin grants; native activeTab/context menu and permission dialog not tested",
 					"Virtual audio sink; not a physical device performance or quality test",
 					"GPU and Windows not tested",
 				],

@@ -130,6 +130,10 @@ browser.runtime.onMessage.addListener((message: unknown, sender) => {
 		"mode" in message &&
 		(message.mode === "selection" || message.mode === "article")
 	) {
+		if ("reveal" in message && message.reveal === true && frame?.isConnected) {
+			frame.focus()
+			return Promise.resolve({ ok: true })
+		}
 		const mode = message.mode
 		return (async () => {
 			allowStart = true
@@ -192,11 +196,7 @@ async function load() {
 	GlobalWorkerOptions.workerSrc = browser.runtime.getURL("/pdf-runtime/pdf.worker.mjs")
 	let bytes: Uint8Array<ArrayBuffer> | undefined
 	for (let attempt = 0; attempt < 2; attempt++) {
-		const response = await fetch(url, {
-			credentials: "include",
-			referrerPolicy: "no-referrer",
-			signal: AbortSignal.timeout(60_000),
-		})
+		const response = await fetchPdf(url)
 		if (!response.ok) throw new Error("The PDF could not be downloaded. Open it on its original site and try again.")
 		const candidate = new Uint8Array(await response.arrayBuffer())
 		if (new TextDecoder().decode(candidate.subarray(0, 5)) === "%PDF-") {
@@ -304,6 +304,50 @@ async function load() {
 		}
 	}
 	if (allowStart && alive) await start("article", requested)
+}
+
+async function fetchPdf(url: URL): Promise<Response> {
+	const request = () =>
+		fetch(url, {
+			credentials: "include",
+			referrerPolicy: "no-referrer",
+			signal: AbortSignal.timeout(60_000),
+		})
+	try {
+		return await request()
+	} catch (error) {
+		const origins = [`${url.protocol}//${url.hostname}/*`]
+		if (await browser.permissions.contains({ origins }))
+			throw new Error("The PDF could not be reached. Check your connection and the original PDF tab, then try again.", {
+				cause: error,
+			})
+		// The activeTab grant belongs to the original PDF tab. Firefox does not
+		// transfer it to this new extension tab, and most PDF servers do not allow CORS.
+		status.textContent = `Allow access to ${url.hostname} to open this PDF.`
+		const open = document.createElement("button")
+		open.textContent = "Allow access and open PDF"
+		status.append(" ", open)
+		await new Promise<void>((resolve) => {
+			open.onclick = () => {
+				// Keep the permission request inside the trusted click handler.
+				void browser.permissions
+					.request({ origins })
+					.then((granted) => {
+						if (granted) resolve()
+						else status.firstChild!.textContent = `Access to ${url.hostname} is needed to open this PDF. `
+					})
+					.catch(() => {
+						status.firstChild!.textContent = "Access could not be requested. Reload this reader and try again. "
+					})
+			}
+		})
+		status.textContent = "Opening PDF…"
+		try {
+			return await request()
+		} catch (cause) {
+			throw new Error("The PDF could not be reached. Open it on its original site, then try again.", { cause })
+		}
+	}
 }
 void load().catch((error) => {
 	status.textContent = error instanceof Error ? error.message : "This PDF could not be opened."

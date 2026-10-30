@@ -1,5 +1,5 @@
 {
-	"recordedAt": "2026-10-30T01:13:48.189Z",
+	"recordedAt": "2026-10-30T09:00:37.627Z",
 	"browser": {
 		"protocolVersion": "1.3",
 		"product": "Chrome/156.0.8078.4",
@@ -12,13 +12,15 @@
 	"characters": 85678,
 	"highlighted": "Virtual Research Environment",
 	"content": true,
+	"permissionRecovery": "Verified separately without a host grant",
+	"source": "remote MUNI source",
 	"distant": {
 		"highlighted": "Bibliography",
-		"scroll": 58103,
+		"scroll": 58093,
 		"textPages": 3
 	},
-	"navigationMs": 636.7284550000002,
-	"textReadyMs": 26292.893239999998,
-	"readyMs": 26641.824299,
-	"limits": "Cached original benchmark bytes served locally with CORS. Proves rendering/text mapping, not native PDF action, speech, GPU, or latency acceptance."
+	"navigationMs": 582.4905230000004,
+	"textReadyMs": 28181.660184000004,
+	"readyMs": 28513.305281000004,
+	"limits": "First checks missing-permission recovery, then uses a test-only origin grant to verify actual privileged fetch without CORS, rendering, and text mapping. Native permission dialog, PDF action, and speech are not covered."
 }

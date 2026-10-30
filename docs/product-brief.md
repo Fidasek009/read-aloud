@@ -78,3 +78,12 @@ Previously asked questions on setup, reading scope, hardware, downloads, Piper's
 2. Benchmark cold/warm CPU synthesis and investigate GPU inference in both browsers. The current development machine has no exposed GPU; real GPU/Windows validation will need other hardware.
 3. Prototype explicit model download/delete/preview behavior and pitch-preserving speed, together with the core selection-reading interaction.
 4. Use the user's answers to the remaining interaction questions to refine the smallest coherent playback UI.
+
+## Product-owner feedback — 2026-10-30
+
+- Keep the speed control visibly distinct from a playback timeline. Compact, familiar playback icons with accessible names are appropriate; retain explicit text for Download/Delete. Delete is red.
+- Expose the entire available model catalog and its quality variants at launch, not just US-English/Czech samples. Do not equate catalog inclusion with working phonemizer support or license clearance.
+- The in-page bar must not add overscroll space. Repeated toolbar activation should reveal existing controls without creating another overlay or changing the reading position. Voices/settings are accessible from the bar; the browser's Options entry remains acceptable.
+- Fix Previous on the actual MD Dash article, not just prose fixtures.
+- The reported PDF failure is the MUNI thesis in latest-stable Zen. The user's test machine has a 20-core CPU and an 8-GB-VRAM GPU, using the US medium voice. Those are diagnostic details, not replacements for the 4-core/8-GB baseline. The precise Zen version and GPU model are unknown.
+- The agent owns implementation decisions and may refactor first-party code autonomously. The user is the product owner; keep the agreed requirements intact and report evidence honestly.

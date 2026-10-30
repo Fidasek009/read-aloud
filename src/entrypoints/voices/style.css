@@ -72,6 +72,48 @@ button.primary {
 	border-color: #295dc6;
 	color: white;
 }
+button.danger {
+	color: #b42318;
+	border-color: #d92d20;
+}
+button.danger:hover {
+	background: #fff0ee;
+}
+.search {
+	display: block;
+	margin: 28px 0 8px;
+	font-size: 14px;
+	font-weight: 600;
+}
+input[type="search"] {
+	width: 100%;
+	min-height: 44px;
+	padding: 10px 14px;
+	font: inherit;
+	border: 1px solid #aeb8c8;
+	border-radius: 8px;
+	color: inherit;
+	background: transparent;
+}
+input:focus-visible {
+	outline: 3px solid #568bea;
+	outline-offset: 3px;
+}
+.terms {
+	display: block;
+	margin-top: 6px;
+	font-size: 12px;
+	line-height: 1.5;
+}
+.compatibility {
+	margin-top: 6px;
+}
+#count {
+	font-size: 13px;
+}
+#voices {
+	margin-top: 12px;
+}
 button:focus-visible,
 a:focus-visible {
 	outline: 3px solid #568bea;
@@ -116,5 +158,12 @@ a {
 	}
 	a {
 		color: #9ebeff;
+	}
+	button.danger {
+		color: #ffb4aa;
+		border-color: #ed7769;
+	}
+	button.danger:hover {
+		background: #462723;
 	}
 }

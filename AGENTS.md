@@ -36,6 +36,7 @@ Build a Firefox and Chrome extension that makes listening to a web page feel eff
 
 ## Working rules
 
+- The user is the product owner; the agent owns implementation and engineering decisions. Refactor or replace first-party code autonomously when it improves the agreed product. Keep product requirements, privacy, license obligations, and measured acceptance targets intact; do not seek approval for routine engineering choices.
 - Keep the initial product scope small. Before adding a feature or UI component, identify the essential user problem it solves and why a simpler existing interaction is insufficient.
 - Distinguish user-confirmed requirements from proposals and unanswered questions. Do not silently turn an implementation preference into a product requirement.
 - Research and prototype the hard constraints before committing to an engine or framework: local voice quality, browser-compatible inference, CPU performance, GPU compatibility, model licensing, and extension lifecycle.

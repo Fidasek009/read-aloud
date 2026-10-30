@@ -22,6 +22,7 @@ export function tokenizeEvents(
 	text: string,
 	events: readonly PhonemeEvent[],
 	idMap: Readonly<Record<string, readonly number[]>>,
+	replacements: Readonly<Record<string, readonly string[]>> = {},
 ): SpeechTokens {
 	const offsets = [0]
 	for (const character of text) offsets.push(offsets.at(-1)! + character.length)
@@ -56,7 +57,9 @@ export function tokenizeEvents(
 			clauseEnded = false
 		} else if (event.type === "phoneme" && event.phoneme) {
 			if (!current) throw new Error("Phoneme has no source word")
-			for (const symbol of event.phoneme) padded(symbol, current)
+			for (const symbol of event.phoneme) {
+				for (const replacement of replacements[symbol] ?? [symbol]) padded(replacement, current)
+			}
 			spoken = true
 		} else if (event.type === "end" && spoken && current && !clauseEnded) {
 			const end = offsets[Math.min(event.textPosition, offsets.length - 1)] ?? text.length
@@ -95,4 +98,39 @@ export function alignWords(tokens: SpeechTokens, durations: readonly number[], s
 		else timings.push({ ...word, from, to })
 	}
 	return { timings, samples: frames * hopLength }
+}
+
+/** Grapheme models use original character spans, with acoustic durations as usual. */
+export function tokenizeText(
+	text: string,
+	idMap: Readonly<Record<string, readonly number[]>>,
+	locale: string,
+): SpeechTokens {
+	const tokens: SpeechTokens = { ids: [], words: [], symbols: [] }
+	const spans = [...new Intl.Segmenter(locale, { granularity: "word" }).segment(text)]
+		.filter((part) => part.isWordLike)
+		.map((part) => ({ start: part.index, end: part.index + part.segment.length }))
+	const append = (symbol: string, word: SourceWord | null) => {
+		const ids = idMap[symbol]
+		if (!ids?.length) throw new Error(`This model cannot read character ${JSON.stringify(symbol)}`)
+		tokens.symbols.push(symbol)
+		for (const id of ids) {
+			tokens.ids.push(id)
+			tokens.words.push(word)
+		}
+	}
+	append("^", null)
+	append("_", null)
+	let offset = 0
+	for (const character of text) {
+		const word = spans.find((word) => offset >= word.start && offset < word.end) ?? null
+		for (let symbol of character.toLocaleLowerCase(locale).normalize("NFC")) {
+			if (/\s/u.test(symbol)) symbol = " "
+			append(symbol, word)
+			append("_", word)
+		}
+		offset += character.length
+	}
+	append("$", null)
+	return tokens
 }

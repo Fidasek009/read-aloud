@@ -76,22 +76,36 @@ export interface ReadingChunk {
 export function readingChunks(text: string, language = "en"): ReadingChunk[] {
 	const chunks: ReadingChunk[] = []
 	let sentence = 0
-	for (const part of new Intl.Segmenter(language, { granularity: "sentence" }).segment(text)) {
-		let start = part.index
-		const limit = part.index + part.segment.length
-		while (start < limit) {
-			while (start < limit && /\s/u.test(text[start]!)) start++
-			if (start === limit) break
-			let end = Math.min(start + 240, limit)
-			if (end < limit) {
-				const boundary = text.lastIndexOf(" ", end)
-				if (boundary > start) end = boundary
+	const segmenter = new Intl.Segmenter(language, { granularity: "sentence" })
+	// Headings, list items, and Markdown paragraphs often have no final punctuation.
+	// DOM block breaks are navigation boundaries even when ICU joins those lines.
+	for (const block of text.matchAll(/[^\n]+/gu)) {
+		for (const part of segmenter.segment(block[0])) {
+			let start = block.index + part.index
+			const limit = start + part.segment.length
+			while (start < limit) {
+				while (start < limit && /\s/u.test(text[start]!)) start++
+				if (start === limit) break
+				// A shorter first utterance produces audio sooner; read-ahead uses larger chunks.
+				let end = Math.min(start + (chunks.length === 0 ? 100 : 240), limit)
+				if (end < limit) {
+					const boundary = text.lastIndexOf(" ", end)
+					if (boundary > start) end = boundary
+				}
+				if (end < limit && /[\uDC00-\uDFFF]/u.test(text[end]!)) end--
+				chunks.push({ start, end, sentence })
+				start = end
 			}
-			if (end < limit && /[\uDC00-\uDFFF]/u.test(text[end]!)) end--
-			chunks.push({ start, end, sentence })
-			start = end
+			sentence++
 		}
-		sentence++
 	}
 	return chunks
+}
+
+export function sentenceTarget(chunks: readonly ReadingChunk[], cursor: number, direction: -1 | 1): number {
+	const current = Math.min(Math.max(0, cursor), chunks.length - 1)
+	const sentence = chunks[current]?.sentence ?? 0
+	if (direction === 1) return chunks.findIndex((chunk) => chunk.sentence > sentence)
+	if (sentence === 0) return 0
+	return chunks.findIndex((chunk) => chunk.sentence === sentence - 1)
 }

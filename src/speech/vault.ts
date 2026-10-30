@@ -1,4 +1,6 @@
-import { getVoice } from "./catalog.ts"
+import { getVoice, validateConfig, type VoiceConfig } from "./catalog.ts"
+import legacyCzech from "./configs/cs_CZ-jirka-medium.json"
+import legacyEnglish from "./configs/en_US-ljspeech-medium.json"
 import { instrumentModel } from "./instrument.ts"
 
 interface StoredVoice {
@@ -6,6 +8,7 @@ interface StoredVoice {
 	sourceHash: string
 	model: ArrayBuffer
 	installedAt: number
+	config?: VoiceConfig
 }
 
 const channel = new BroadcastChannel("read-aloud-voices")
@@ -32,10 +35,13 @@ export async function installedVoices(): Promise<string[]> {
 	return (await operation("readonly", (store) => store.getAllKeys())).map(String)
 }
 
-export async function readModel(id: string): Promise<ArrayBuffer> {
+export async function readVoice(id: string): Promise<{ model: ArrayBuffer; config: VoiceConfig }> {
 	const stored = await operation<StoredVoice | undefined>("readonly", (store) => store.get(id))
 	if (!stored || stored.sourceHash !== getVoice(id).sha256) throw new Error("Download this voice before reading")
-	return stored.model
+	const config =
+		stored.config ??
+		(id === "en_US-ljspeech-medium" ? legacyEnglish : id === "cs_CZ-jirka-medium" ? legacyCzech : undefined)
+	return { model: stored.model, config: validateConfig(config) }
 }
 
 export function onVoicesChanged(callback: (id: string, deleted: boolean) => void): () => void {
@@ -71,6 +77,7 @@ export async function downloadVoice(
 	progress: (fraction: number) => void,
 ): Promise<void> {
 	const voice = getVoice(id)
+	if (voice.unsupported) throw new Error(voice.unsupported)
 	const controller = new AbortController()
 	const stop = onVoicesChanged((changed, deleted) => {
 		if (changed === id && deleted) controller.abort()
@@ -78,6 +85,19 @@ export async function downloadVoice(
 	const abort = AbortSignal.any([signal, controller.signal, AbortSignal.timeout(300_000)])
 	try {
 		await navigator.locks.request(`voice:${id}`, { signal: abort }, async () => {
+			const configResponse = await fetch(voice.configUrl, {
+				signal: abort,
+				credentials: "omit",
+				referrerPolicy: "no-referrer",
+			})
+			if (!configResponse.ok) throw new Error("Voice configuration could not be downloaded")
+			const configBytes = await configResponse.arrayBuffer()
+			if (
+				configBytes.byteLength > 1_000_000 ||
+				new Uint8Array(await crypto.subtle.digest("SHA-256", configBytes)).toHex() !== voice.configHash
+			)
+				throw new Error("Voice configuration integrity check failed")
+			const config = validateConfig(JSON.parse(new TextDecoder().decode(configBytes)))
 			const response = await fetch(voice.url, { signal: abort, credentials: "omit", referrerPolicy: "no-referrer" })
 			if (!response.ok || !response.body) throw new Error("Voice download failed. Please try again.")
 			const reader = response.body.getReader()
@@ -102,7 +122,13 @@ export async function downloadVoice(
 			const model = instrumentModel(bytes.buffer)
 			abort.throwIfAborted()
 			await operation("readwrite", (store) =>
-				store.put({ id, sourceHash: digest, model: model.buffer, installedAt: Date.now() } satisfies StoredVoice),
+				store.put({
+					id,
+					sourceHash: digest,
+					model: model.buffer,
+					config,
+					installedAt: Date.now(),
+				} satisfies StoredVoice),
 			)
 			channel.postMessage({ id, deleted: false })
 		})

@@ -13,7 +13,20 @@ export default defineConfig({
 		name: "Read Aloud",
 		description: "Natural speech on your device. Firefox and Chrome.",
 		version: "0.0.0",
-		permissions: ["activeTab", "scripting", "contextMenus", "storage"],
+		permissions: [
+			"activeTab",
+			"scripting",
+			"contextMenus",
+			"storage",
+			...(browser === "chrome" ? ["offscreen" as const] : []),
+		],
+		...(browser === "chrome"
+			? {
+					cross_origin_embedder_policy: { value: "require-corp" as const },
+					cross_origin_opener_policy: { value: "same-origin" as const },
+				}
+			: {}),
+		optional_host_permissions: ["https://*/*", "http://*/*"],
 		action: { default_title: "Read this page" },
 		options_ui: { page: "voices.html", open_in_tab: true },
 		web_accessible_resources: [{ resources: ["player.html"], matches: ["<all_urls>"] }],

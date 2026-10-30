@@ -1,28 +1,48 @@
 import { defineBackground } from "#imports"
 import { browser } from "wxt/browser"
 
+import { installSpeechBroker } from "../speech/broker.ts"
+
 export default defineBackground(() => {
+	installSpeechBroker()
 	browser.runtime.onInstalled.addListener(async (details) => {
 		await browser.contextMenus.removeAll()
 		browser.contextMenus.create({ id: "read-selection", title: "Read selection", contexts: ["selection"] })
 		browser.contextMenus.create({ id: "read-page", title: "Read this page", contexts: ["page"] })
 		if (details.reason === "install") await browser.tabs.create({ url: browser.runtime.getURL("/voices.html") })
 	})
-	const start = async (tabId: number, mode: "selection" | "article", selection?: string) => {
+	const start = async (tabId: number, mode: "selection" | "article", selection?: string, reveal = false) => {
 		try {
 			const tab = await browser.tabs.get(tabId)
 			const previous = await browser.storage.session.get("readingTab")
-			if (typeof previous.readingTab === "number" && previous.readingTab !== tabId) {
+			const existingPdf = reveal ? await browser.storage.session.get("pdfReaders") : {}
+			const revealsPreviousPdf =
+				reveal &&
+				existingPdf.pdfReaders &&
+				typeof existingPdf.pdfReaders === "object" &&
+				(existingPdf.pdfReaders as Record<string, unknown>)[String(previous.readingTab)] === tabId
+			if (typeof previous.readingTab === "number" && previous.readingTab !== tabId && !revealsPreviousPdf) {
 				await browser.tabs.sendMessage(previous.readingTab, { type: "stop-reading" }, { frameId: 0 }).catch(() => {})
 				await browser.runtime.sendMessage({ type: "pdf-stop", tabId: previous.readingTab }).catch(() => {})
 			}
 			if (tab.url?.startsWith(browser.runtime.getURL("/pdf.html"))) {
-				const result = await browser.runtime.sendMessage({ type: "pdf-read", tabId, mode })
+				const result = await browser.runtime.sendMessage({ type: "pdf-read", tabId, mode, reveal })
 				if (result?.error) throw new Error(String(result.error))
 				await browser.storage.session.set({ readingTab: tabId })
 				return
 			}
 			if (tab.url && /^https?:/u.test(tab.url) && /\.pdf(?:$|[?#])/iu.test(tab.url)) {
+				if (reveal) {
+					const { pdfReaders } = await browser.storage.session.get("pdfReaders")
+					if (pdfReaders && typeof pdfReaders === "object") {
+						for (const [reader, source] of Object.entries(pdfReaders)) {
+							if (source === tabId && (await browser.tabs.get(Number(reader)).catch(() => undefined))) {
+								await browser.tabs.update(Number(reader), { active: true })
+								return
+							}
+						}
+					}
+				}
 				if (mode === "selection" && !selection?.trim()) throw new Error("Select some PDF text first.")
 				if (selection && selection.length > 500_000) throw new Error("Select a smaller part of the PDF to read.")
 				const url = new URL(browser.runtime.getURL("/pdf.html"))
@@ -41,8 +61,14 @@ export default defineBackground(() => {
 				return
 			}
 			await browser.action.setBadgeText({ tabId, text: "" })
-			await browser.scripting.executeScript({ target: { tabId }, files: ["/content-scripts/reader.js"] })
-			const result = await browser.tabs.sendMessage(tabId, { type: "start-reading", mode }, { frameId: 0 })
+			const message = { type: "start-reading", mode, reveal }
+			let result
+			try {
+				result = await browser.tabs.sendMessage(tabId, message, { frameId: 0 })
+			} catch {
+				await browser.scripting.executeScript({ target: { tabId }, files: ["/content-scripts/reader.js"] })
+				result = await browser.tabs.sendMessage(tabId, message, { frameId: 0 })
+			}
 			if (result?.error) throw new Error(String(result.error))
 			await browser.storage.session.set({ readingTab: tabId })
 			if (result?.reuse) await browser.runtime.sendMessage({ type: "reset-reader", session: result.session })
@@ -59,7 +85,7 @@ export default defineBackground(() => {
 			void start(tab.id, info.menuItemId === "read-selection" ? "selection" : "article", info.selectionText)
 	})
 	browser.action.onClicked.addListener((tab) => {
-		if (tab.id !== undefined) void start(tab.id, "article")
+		if (tab.id !== undefined) void start(tab.id, "article", undefined, true)
 	})
 	const stopPdfReaders = async (sourceTab: number, removed = false) => {
 		const stored = await browser.storage.session.get("pdfReaders")

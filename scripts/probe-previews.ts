@@ -1,4 +1,6 @@
-import { voices } from "../src/speech/catalog.ts"
+import { getVoice, voices as catalog } from "../src/speech/catalog.ts"
+
+const voices = [getVoice("en_US-ljspeech-medium"), getVoice("cs_CZ-jirka-medium")]
 
 const root = import.meta.dir.replace(/\/scripts$/, "")
 const extension = `${root}/.output/chrome-mv3`
@@ -42,7 +44,7 @@ try {
 		.join("")
 	await view.navigate(`chrome-extension://${id}/voices.html`)
 	await view.cdp("Page.bringToFront")
-	await waitFor("String(document.querySelectorAll('section').length)", (value) => value === String(voices.length))
+	await waitFor("String(document.querySelectorAll('section').length)", (value) => value === String(catalog.length))
 	await Bun.sleep(300)
 	if (requests.length) throw new Error(`Unexpected request before Listen: ${requests.join(", ")}`)
 	for (let index = 0; index < voices.length; index++) {
@@ -54,7 +56,7 @@ try {
 			`document.querySelectorAll('section')[${index}].querySelector('button').textContent`,
 			(value) => value === "Pause sample",
 		)
-		if (!requests.includes(voices[index]!.previewUrl)) throw new Error("Expected pinned preview URL was not requested")
+		if (!requests.includes(voices[index]!.previewUrl!)) throw new Error("Expected pinned preview URL was not requested")
 	}
 	await view.evaluate("document.querySelectorAll('section')[1].querySelector('button').click()")
 	await waitFor(

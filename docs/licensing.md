@@ -33,3 +33,11 @@ The prototype English LJSpeech medium card specifies public-domain recordings an
 PDF.js 6.4.299 is Apache-2.0. Preserve its license/notices and identify modifications when distributed; the current package copies the unmodified worker and supporting assets. It adds no GPL obligation to our original source. Source: [PDF.js license](https://github.com/mozilla/pdf.js/blob/v6.4.299/LICENSE).
 
 Preview source: [Piper Samples](https://github.com/rhasspy/piper-samples/tree/da672d1157136d07365790f51da3357a17cf9650). Only an explicit Listen action loads an audio URL; no page or selection text is sent. The browser may use its ordinary HTTP cache.
+
+## Expanded development catalog (2026-10-30)
+
+The catalog now pins **all 178 entries** in the current upstream `voices.json` at revision `5041a7a49ae5b3a0f30e6837769eb03fdbb231bd`, across 58 locale codes. This is discovery metadata, not a clearance statement. Dataset grants vary (public domain/CC0, attribution, share-alike, noncommercial, research restrictions, or separate terms), and fine-tuning can leave inherited provenance questions. Every entry links its pinned model card and shows the source's reported dataset terms before Download. No model weights or preview audio are redistributed in the extension.
+
+Seven entries require Hebrew, Japanese, Lithuanian, Thai, or Pinyin pronunciation engines absent from the current browser runtime; their Download controls are disabled and the reason is visible. The remaining entries have supported pronunciation formats; broad per-model inference/quality/license acceptance is still open. A supported format does not prove an individual model passes every graph/timing/quality requirement. Multispeaker choices share one downloaded model; they do not silently download another model.
+
+`bun scripts/update-voices.ts` refreshes pinned discovery/config metadata and sample existence, never weights or samples. Download validates both the configuration SHA-256 and model SHA-256 from that pinned snapshot. Original catalog labels are evidence supplied by upstream, not legal advice or an override of source agreements.

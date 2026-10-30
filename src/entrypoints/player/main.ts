@@ -1,9 +1,10 @@
 import { browser } from "wxt/browser"
 
-import { readingChunks } from "../../reading/document.ts"
+import { readingChunks, sentenceTarget } from "../../reading/document.ts"
 import { parentReaderHost } from "../../reading/host.ts"
-import { getVoice, voices } from "../../speech/catalog.ts"
-import { type SpeechClip, SpeechEngine } from "../../speech/engine.ts"
+import { voiceChoice, voices } from "../../speech/catalog.ts"
+import { SpeechClient } from "../../speech/client.ts"
+import { type SpeechClip } from "../../speech/protocol.ts"
 import { installedVoices, onVoicesChanged } from "../../speech/vault.ts"
 import "./style.css"
 
@@ -21,7 +22,7 @@ const speed = document.querySelector<HTMLInputElement>("#speed")!
 const rate = document.querySelector<HTMLSpanElement>("#rate")!
 const voiceSelect = document.querySelector<HTMLSelectElement>("#voice")!
 const status = document.querySelector<HTMLSpanElement>("#status")!
-const engine = new SpeechEngine()
+const engine = new SpeechClient()
 const context = new AudioContext()
 let text = "",
 	chunks = readingChunks(""),
@@ -34,18 +35,21 @@ let queue: { clip: SpeechClip; offset: number; index: number }[] = []
 let generating = false,
 	ended = false,
 	lastWord = -1
+let began = performance.now(),
+	firstBuffer = true
 
 function updateControls() {
-	play.textContent = paused || ended ? "▶" : "Ⅱ"
+	document.querySelector("#play-icon")!.setAttribute("d", paused || ended ? "m8 5 11 7-11 7z" : "M8 5v14M16 5v14")
 	play.setAttribute("aria-label", paused || ended ? "Play" : "Pause")
 	play.title = paused || ended ? "Play" : "Pause"
 	play.setAttribute("aria-pressed", String(!paused && !ended))
 	previous.disabled = cursor <= 0
-	next.disabled = cursor >= chunks.length - 1
+	next.disabled = sentenceTarget(chunks, cursor, 1) < 0
 }
 
 function halt() {
 	epoch++
+	engine.cancelQueued()
 	if (active) {
 		active.source.onended = null
 		active.source.stop()
@@ -58,8 +62,15 @@ function halt() {
 
 async function begin(index: number, offset?: number) {
 	halt()
+	began = performance.now()
+	firstBuffer = true
 	const current = epoch
 	cursor = Math.min(Math.max(0, index), chunks.length - 1)
+	const selectedChunk = chunks[cursor]
+	const resumeOffset =
+		selectedChunk && offset !== undefined && offset >= selectedChunk.start && offset < selectedChunk.end
+			? offset
+			: undefined
 	ended = false
 	status.textContent = "Preparing voice on your device…"
 	updateControls()
@@ -67,7 +78,7 @@ async function begin(index: number, offset?: number) {
 		await engine.load(voiceSelect.value)
 		if (current !== epoch) return
 		generating = false
-		void fill(current, offset)
+		void fill(current, resumeOffset)
 	} catch (error) {
 		if (current === epoch) fail(error)
 	}
@@ -113,6 +124,17 @@ function startNext(current: number) {
 	source.buffer = buffer
 	source.connect(context.destination)
 	active = { source, started: context.currentTime, clip: item.clip, offset: item.offset }
+	if (firstBuffer) {
+		firstBuffer = false
+		void browser.storage.local.set({
+			lastSpeechPerformance: {
+				...engine.diagnostics,
+				timeToFirstBufferMs: performance.now() - began,
+				audioContextState: context.state,
+				recordedAt: new Date().toISOString(),
+			},
+		})
+	}
 	source.onended = () => {
 		if (current !== epoch) return
 		active = undefined
@@ -170,14 +192,9 @@ play.onclick = async () => {
 		fail(error)
 	}
 }
-previous.onclick = () => {
-	const sentence = chunks[cursor]?.sentence ?? 0
-	const index = chunks.findIndex((chunk) => chunk.sentence === Math.max(0, sentence - 1))
-	void begin(Math.max(0, index))
-}
+previous.onclick = () => void begin(Math.max(0, sentenceTarget(chunks, cursor, -1)))
 next.onclick = () => {
-	const sentence = chunks[cursor]?.sentence ?? 0
-	const index = chunks.findIndex((chunk) => chunk.sentence > sentence)
+	const index = sentenceTarget(chunks, cursor, 1)
 	if (index >= 0) void begin(index)
 }
 button("close").onclick = () => {
@@ -204,17 +221,25 @@ async function refreshVoices() {
 	const preferences = await browser.storage.local.get(["voice", "speed"])
 	voiceSelect.replaceChildren()
 	for (const voice of voices.filter((voice) => installed.has(voice.id))) {
-		const option = document.createElement("option")
-		option.value = voice.id
-		option.textContent = `${voice.name} · ${voice.language}`
-		voiceSelect.append(option)
+		const group = document.createElement("optgroup")
+		group.label = `${voice.name} · ${voice.quality.replace("x_low", "extra low")} · ${voice.language}`
+		const names = new Map(Object.entries(voice.speakerNames ?? {}).map(([name, id]) => [id, name]))
+		for (let speaker = 0; speaker < voice.speakers; speaker++) {
+			const option = document.createElement("option")
+			option.value = speaker ? `${voice.id}#${speaker}` : voice.id
+			option.textContent =
+				voice.speakers > 1 ? `${voice.name} · ${names.get(speaker) ?? `Speaker ${speaker + 1}`}` : group.label
+			group.append(option)
+		}
+		voiceSelect.append(group)
 	}
-	if (typeof preferences.voice === "string" && installed.has(preferences.voice)) voiceSelect.value = preferences.voice
+	if (typeof preferences.voice === "string" && installed.has(preferences.voice.split("#")[0]!))
+		voiceSelect.value = preferences.voice
 	return installed.size > 0
 }
 
 onVoicesChanged(async (id, deleted) => {
-	if (deleted && id === voiceSelect.value) {
+	if (deleted && id === voiceSelect.value.split("#")[0]) {
 		halt()
 		engine.dispose()
 		paused = true
@@ -248,8 +273,13 @@ window.addEventListener("pagehide", () => {
 	void context.close()
 })
 new ResizeObserver(() => {
-	void send("resize", { height: document.body.scrollHeight }).catch(() => {})
-}).observe(document.body)
+	void send("resize", { height: Math.ceil(document.querySelector("#bar")!.getBoundingClientRect().height) }).catch(
+		() => {},
+	)
+}).observe(document.querySelector("#bar")!)
+window.addEventListener("keydown", (event) => {
+	if (event.key === "Escape") button("close").click()
+})
 
 async function initialize() {
 	const source: unknown = await send("document")
@@ -267,7 +297,7 @@ async function initialize() {
 	if (typeof preferences.speed === "number" && preferences.speed >= 0.5 && preferences.speed <= 2)
 		speed.value = String(preferences.speed)
 	rate.textContent = `${Number(speed.value)}×`
-	chunks = readingChunks(text, available ? getVoice(voiceSelect.value).config.espeak.voice : "en")
+	chunks = readingChunks(text, available ? voiceChoice(voiceSelect.value).voice.locale : "en")
 	if (!available) {
 		paused = true
 		play.disabled = true
