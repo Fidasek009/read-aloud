@@ -9,6 +9,15 @@ function connect() {
 	if (!alive) return
 	const port = browser.runtime.connect({ name: "speech-server" })
 	port.onMessage.addListener((message: unknown) => {
+		if (
+			message &&
+			typeof message === "object" &&
+			"deletedVoice" in message &&
+			typeof message.deletedVoice === "string"
+		) {
+			service.voiceDeleted(message.deletedVoice)
+			return
+		}
 		if (!message || typeof message !== "object" || !("client" in message) || typeof message.client !== "string") return
 		if ("release" in message && message.release === true) {
 			service.release(message.client)

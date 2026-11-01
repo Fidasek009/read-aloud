@@ -47,3 +47,63 @@ test("replaced or closed readers cannot receive late speech from the shared mode
 		service.dispose()
 	}
 })
+
+test("deleting a voice cancels its pending load but leaves unrelated voice preparation alone", async () => {
+	let rejectLoad: ((error: Error) => void) | undefined
+	let disposed = 0
+	const service = new SpeechService({
+		diagnostics: { voice: "en_US-ljspeech-medium" },
+		load: () =>
+			new Promise<void>((_resolve, reject) => {
+				rejectLoad = reject
+			}),
+		synthesize: async () => {
+			throw new Error("Unexpected synthesis")
+		},
+		cancelQueued: () => {},
+		clearClips: () => {},
+		dispose: () => {
+			disposed++
+			rejectLoad?.(new DOMException("Reading stopped", "AbortError"))
+		},
+	})
+	try {
+		const pending = service.request("reader", { id: 1, type: "load", voice: "cs_CZ-jirka-medium" })
+		service.voiceDeleted("en_US-ljspeech-medium")
+		expect(disposed).toBe(0)
+		service.voiceDeleted("cs_CZ-jirka-medium")
+		expect(disposed).toBe(1)
+		expect(await pending).toMatchObject({ ok: false, error: "Reading stopped" })
+	} finally {
+		service.dispose()
+	}
+})
+
+test("cancelling the same reader prevents an in-flight content recovery from spawning new synthesis", async () => {
+	const { SpeechTextError } = await import("../../../src/speech/errors.ts")
+	let reject: (error: Error) => void = () => {}
+	let calls = 0
+	const service = new SpeechService({
+		diagnostics: {},
+		load: async () => {},
+		synthesize: () => {
+			calls++
+			return new Promise((_resolve, fail) => {
+				reject = fail
+			})
+		},
+		cancelQueued: () => {},
+		clearClips: () => {},
+		dispose: () => {},
+	})
+	try {
+		await service.request("reader", { id: 1, type: "load", voice: "en_US-ljspeech-medium" })
+		const pending = service.request("reader", { id: 2, type: "synthesize", text: "first broken last", speed: 1 })
+		await service.request("reader", { id: 3, type: "cancel" })
+		reject(new SpeechTextError("Cannot pronounce"))
+		expect(await pending).toMatchObject({ ok: false, error: "Reading stopped" })
+		expect(calls).toBe(1)
+	} finally {
+		service.dispose()
+	}
+})

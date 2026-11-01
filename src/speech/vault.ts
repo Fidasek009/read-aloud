@@ -1,6 +1,7 @@
 import { getVoice, validateConfig, type VoiceConfig } from "./catalog.ts"
 import legacyCzech from "./configs/cs_CZ-jirka-medium.json"
 import legacyEnglish from "./configs/en_US-ljspeech-medium.json"
+import { downloadBytes } from "./download.ts"
 import { instrumentModel } from "./instrument.ts"
 
 interface StoredVoice {
@@ -80,42 +81,25 @@ export async function downloadVoice(
 	if (voice.unsupported) throw new Error(voice.unsupported)
 	const controller = new AbortController()
 	const stop = onVoicesChanged((changed, deleted) => {
-		if (changed === id && deleted) controller.abort()
+		if (changed === id && deleted)
+			controller.abort(new DOMException("Download cancelled because this voice was deleted.", "AbortError"))
 	})
-	const abort = AbortSignal.any([signal, controller.signal, AbortSignal.timeout(300_000)])
+	const abort = AbortSignal.any([signal, controller.signal])
 	try {
 		await navigator.locks.request(`voice:${id}`, { signal: abort }, async () => {
-			const configResponse = await fetch(voice.configUrl, {
+			const configBytes = await downloadBytes(voice.configUrl, {
 				signal: abort,
-				credentials: "omit",
-				referrerPolicy: "no-referrer",
+				maxBytes: 1_000_000,
 			})
-			if (!configResponse.ok) throw new Error("Voice configuration could not be downloaded")
-			const configBytes = await configResponse.arrayBuffer()
-			if (
-				configBytes.byteLength > 1_000_000 ||
-				new Uint8Array(await crypto.subtle.digest("SHA-256", configBytes)).toHex() !== voice.configHash
-			)
+			if (new Uint8Array(await crypto.subtle.digest("SHA-256", configBytes)).toHex() !== voice.configHash)
 				throw new Error("Voice configuration integrity check failed")
 			const config = validateConfig(JSON.parse(new TextDecoder().decode(configBytes)))
-			const response = await fetch(voice.url, { signal: abort, credentials: "omit", referrerPolicy: "no-referrer" })
-			if (!response.ok || !response.body) throw new Error("Voice download failed. Please try again.")
-			const reader = response.body.getReader()
-			const bytes = new Uint8Array(voice.bytes)
-			let offset = 0
-			try {
-				for (;;) {
-					const { done, value } = await reader.read()
-					if (done) break
-					if (offset + value.length > bytes.length) throw new Error("Voice download has an unexpected size")
-					bytes.set(value, offset)
-					offset += value.length
-					progress(offset / bytes.length)
-				}
-			} finally {
-				await reader.cancel().catch(() => {})
-			}
-			if (offset !== voice.bytes) throw new Error("Voice download was interrupted")
+			const bytes = await downloadBytes(voice.url, {
+				signal: abort,
+				bytes: voice.bytes,
+				maxBytes: voice.bytes,
+				onProgress: (received) => progress(received / voice.bytes),
+			})
 			const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)).toHex()
 			if (digest !== voice.sha256) throw new Error("Voice integrity check failed. Please try again.")
 			abort.throwIfAborted()

@@ -4,6 +4,11 @@ import { $ } from "bun"
 // end-user helper: a private null sink is destroyed when the probe finishes.
 const root = import.meta.dir.replace(/\/scripts$/, "")
 const distribution = `${root}/.cache/test-audio/pulse`
+const moduleDirectories = await Array.fromAsync(
+	new Bun.Glob("usr/lib/pulse-*/modules").scan({ cwd: distribution, onlyFiles: false }),
+)
+const modules = moduleDirectories.sort().at(-1)
+if (!modules) throw new Error("Provision a matching PulseAudio test fixture first")
 const runtime = `${root}/.cache/test-audio/runtime-${crypto.randomUUID()}`
 await $`mkdir -p ${runtime}`.quiet()
 await $`chmod 700 ${runtime}`.quiet()
@@ -18,14 +23,14 @@ const server = Bun.spawn(
 		"--log-level=warning",
 		"--disable-shm",
 		"-n",
-		`--dl-search-path=${distribution}/usr/lib/pulse-15.99.1+dfsg1/modules`,
+		`--dl-search-path=${distribution}/${modules}`,
 		`--load=module-native-protocol-unix socket=${socket} auth-anonymous=1 auth-cookie=${runtime}/cookie`,
 		"--load=module-null-sink sink_name=read_aloud_test rate=48000 channels=2",
 	],
 	{
 		env: {
 			...Bun.env,
-			LD_LIBRARY_PATH: `${distribution}/usr/lib/pulse-15.99.1+dfsg1/modules:${distribution}/usr/lib/x86_64-linux-gnu:${distribution}/usr/lib/x86_64-linux-gnu/pulseaudio:${Bun.env.LD_LIBRARY_PATH ?? ""}`,
+			LD_LIBRARY_PATH: `${distribution}/${modules}:${distribution}/usr/lib/x86_64-linux-gnu:${distribution}/usr/lib/x86_64-linux-gnu/pulseaudio:${Bun.env.LD_LIBRARY_PATH ?? ""}`,
 			PULSE_RUNTIME_PATH: runtime,
 		},
 		stdout: "pipe",

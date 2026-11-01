@@ -1,5 +1,9 @@
 import { $ } from "bun"
 
+import { getVoice } from "../src/speech/catalog.ts"
+import { checkPdfSelection } from "./check-pdf-selection.ts"
+import { pdfSpeechCheck } from "./check-pdf-speech.ts"
+
 const accessOnly = Bun.env.PDF_CHECK_ACCESS_ONLY === "1"
 if (!accessOnly) {
 	const child = Bun.spawn(["bun", import.meta.path], {
@@ -9,24 +13,43 @@ if (!accessOnly) {
 	})
 	if ((await child.exited) !== 0) throw new Error("PDF permission recovery check failed")
 }
+const speechCheck = Bun.env.PDF_CHECK_SPEECH === "1" && !accessOnly
 const root = import.meta.dir.replace(/\/scripts$/, "")
 const extension = `${root}/.cache/pdf-probe`
 await $`rm -rf ${extension}`.quiet()
 await $`mkdir -p ${extension}`.quiet()
 await $`cp -R ${root + "/.output/chrome-mv3/."} ${extension}`.quiet()
+if (speechCheck) {
+	const built = await Bun.build({
+		entrypoints: [`${root}/scripts/check-pdf-speech.ts`],
+		outdir: extension,
+		naming: "check-pdf-speech.js",
+		target: "browser",
+	})
+	if (!built.success) throw new Error(`Speech probe bundle failed: ${built.logs.join("\n")}`)
+}
 const manifest = await Bun.file(`${extension}/manifest.json`).json()
 const pdf = Bun.file(`${root}/.cache/benchmarks/muni-thesis.pdf`)
 if (!(await pdf.exists()) || new TextDecoder().decode(new Uint8Array(await pdf.slice(0, 5).arrayBuffer())) !== "%PDF-")
 	throw new Error("Provision the actual thesis PDF before running this benchmark")
+const modelPath = getVoice("en_US-ljspeech-medium").url.split("/resolve/")[1]!
+const model = Bun.file(`${root}/.cache/piper/${modelPath}`)
+const config = Bun.file(`${root}/.cache/piper/${modelPath}.json`)
+if (speechCheck && (!(await model.exists()) || !(await config.exists())))
+	throw new Error("Provision the pinned English model/config in .cache/piper before running the speech probe")
 const server = Bun.serve({
 	hostname: "127.0.0.1",
 	port: 0,
-	fetch: () =>
-		new Response(pdf, {
+	fetch: (request) => {
+		const path = new URL(request.url).pathname
+		if (speechCheck && path === "/model") return new Response(model)
+		if (speechCheck && path === "/config") return new Response(config)
+		return new Response(pdf, {
 			headers: {
 				"Content-Type": "application/pdf",
 			},
-		}),
+		})
+	},
 })
 const source = Bun.env.PDF_SOURCE_URL ?? server.url.href + "thesis.pdf"
 if (!accessOnly) {
@@ -121,6 +144,9 @@ async function probe() {
 	})()`)
 		if (distant.highlighted !== "Bibliography" || distant.scroll < 1000 || distant.textPages >= 60)
 			throw new Error(`Lazy PDF mapping failed: ${JSON.stringify(distant)}`)
+		const selection = await view.evaluate(checkPdfSelection)
+		const speech = speechCheck ? await view.evaluate(pdfSpeechCheck(server.url.href)) : undefined
+		if (speechCheck) console.log("Cross-page neural speech:", JSON.stringify(speech))
 		const record = {
 			recordedAt: new Date().toISOString(),
 			browser: await view.cdp("Browser.getVersion"),
@@ -129,14 +155,20 @@ async function probe() {
 			permissionRecovery,
 			source: Bun.env.PDF_SOURCE_URL ? "remote MUNI source" : "cached MUNI bytes served without CORS",
 			distant,
+			selection,
+			speech,
 			navigationMs,
 			textReadyMs,
 			readyMs: performance.now() - started,
-			limits:
-				"First checks missing-permission recovery, then uses a test-only origin grant to verify actual privileged fetch without CORS, rendering, and text mapping. Native permission dialog, PDF action, and speech are not covered.",
+			limits: speechCheck
+				? "Test-only host grant, cached MUNI PDF and pinned cached English model; actual CPU worker PCM and word timing validation across the acknowledgement/abstract page boundary. Does not validate physical audio quality, hardware GPU behavior, or target-device latency."
+				: "First checks missing-permission recovery, then uses a test-only origin grant to verify actual privileged fetch without CORS, rendering, and text mapping. Native permission dialog, PDF action, and speech are not covered.",
 		}
 		await $`mkdir -p ${root + "/docs/evidence"}`.quiet()
-		await Bun.write(`${root}/docs/evidence/pdf-rendering-2026-10-30.json`, JSON.stringify(record, null, 2) + "\n")
+		await Bun.write(
+			`${root}/docs/evidence/${speechCheck ? "pdf-cross-page-speech-2026-11-01" : "pdf-rendering-2026-10-30"}.json`,
+			JSON.stringify(record, null, 2) + "\n",
+		)
 		console.log(JSON.stringify(record, null, 2))
 	} finally {
 		view.close()

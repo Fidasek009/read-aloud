@@ -3,6 +3,7 @@ import { browser } from "wxt/browser"
 import type { SpeechClip } from "./protocol.ts"
 
 import { voiceChoice } from "./catalog.ts"
+import { SpeechTextError } from "./errors.ts"
 import { readVoice } from "./vault.ts"
 
 export class SpeechEngine {
@@ -70,7 +71,12 @@ export class SpeechEngine {
 			clearTimeout(pending.timer)
 			this.pending.delete(data.id)
 			if (data.ok === true) pending.resolve(data)
-			else pending.reject(new Error("error" in data && typeof data.error === "string" ? data.error : "Speech failed"))
+			else {
+				const message = "error" in data && typeof data.error === "string" ? data.error : "Speech failed"
+				pending.reject(
+					"code" in data && data.code === "unreadable-text" ? new SpeechTextError(message) : new Error(message),
+				)
+			}
 		}
 		this.worker.onerror = () => this.stopWorker(new Error("The speech worker stopped unexpectedly"))
 		const loaded = await this.request(
@@ -123,7 +129,7 @@ export class SpeechEngine {
 		try {
 			value = await this.request({ type: "synthesize", text, speed })
 		} catch (error) {
-			if (epoch !== this.epoch || this.backend === "cpu") throw error
+			if (epoch !== this.epoch || this.backend === "cpu" || error instanceof SpeechTextError) throw error
 			const voice = this.voice
 			this.stopWorker()
 			await this.initialize(voice, "cpu", epoch)

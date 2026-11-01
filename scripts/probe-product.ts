@@ -1,6 +1,7 @@
 import { $ } from "bun"
 
 import { readingChunks, sentenceTarget } from "../src/reading/document.ts"
+import { checkVolume, observePlayerAudio } from "./check-player-controls.ts"
 
 // This copied test manifest grants only the fixture origin. Native action /
 // context-menu activation and the activeTab grant are not covered by this test.
@@ -9,6 +10,7 @@ const extension = `${root}/.cache/product-probe/chromium`
 await $`rm -rf ${extension}`.quiet()
 await $`mkdir -p ${extension}`.quiet()
 await $`cp -R ${root + "/.output/chrome-mv3/."} ${extension}`.quiet()
+await observePlayerAudio(extension)
 const manifest = await Bun.file(`${extension}/manifest.json`).json()
 assert(!manifest.host_permissions?.length, "The product must not request access to all sites")
 manifest.host_permissions = ["http://127.0.0.1/*", "https://filipkrasa.salonek.org/*"]
@@ -97,15 +99,15 @@ try {
 		(value) => value === 178,
 	)
 	console.log("Voice catalog loaded; no model download requested.")
-	await view.evaluate("document.querySelector('section .primary').click()")
-	await waitFor(
-		() => view.evaluate<string>("document.querySelector('#status').textContent"),
-		(value) => /ready|failed|unexpected|interrupted/i.test(value),
-		120,
+	const catalogShot = await view.cdp<{ data: string }>("Page.captureScreenshot", { format: "png" })
+	await Bun.write(`${root}/.cache/product-probe/voices-compact.png`, Uint8Array.fromBase64(catalogShot.data))
+	assert(
+		await view.evaluate(
+			"Array.from(document.querySelector('#language').options).find(option=>option.value==='cs-CZ').text==='Czech'",
+		),
+		"Redundant Czech region label remains",
 	)
-	const download = await view.evaluate<string>("document.querySelector('#status').textContent")
-	assert(download.includes("ready"), download)
-	console.log("Explicit download passed integrity check and persisted.")
+	await view.evaluate("chrome.storage.local.set({voice:'en_US-ljspeech-medium#999'})")
 	const tab: any = await view.evaluate(`chrome.tabs.create({url:${JSON.stringify(server.url.href)}, active:true})`)
 	const targets = await view.cdp<any>("Target.getTargets")
 	const target = targets.targetInfos.find(
@@ -124,10 +126,7 @@ try {
 			throw new Error(result.exceptionDetails.text + ": " + result.exceptionDetails.exception?.description)
 		return result.result.value
 	}
-	await waitFor(
-		() => evaluate("document.readyState"),
-		(value) => value === "complete",
-	)
+	await waitFor(() => evaluate("document.readyState === 'complete' && !!document.querySelector('#selection')"), Boolean)
 	await view.evaluate(`chrome.scripting.executeScript({target:{tabId:${tab.id}},files:['content-scripts/reader.js']})`)
 	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#selection'))")
 	const contexts: { id: number; origin: string; auxData?: { isDefault?: boolean } }[] = []
@@ -166,6 +165,75 @@ try {
 		return result.result.value
 	}
 	await call(sessionId, "Page.bringToFront")
+
+	await waitFor(
+		() => player("document.querySelector('#bar').dataset.view"),
+		(value) => value === "setup",
+	)
+	assert(
+		await player("document.querySelector('#playback').hidden && !document.querySelector('#setup').hidden"),
+		"No-voice state exposes empty playback controls",
+	)
+	await player("indexedDB.open=()=>{throw Error('Embedded frame storage is unavailable')}")
+	for (const [name, width, dark] of [
+		["setup-dark", 1000, true],
+		["setup-narrow", 360, false],
+	] as const) {
+		await call(sessionId, "Emulation.setDeviceMetricsOverride", {
+			width,
+			height: 600,
+			deviceScaleFactor: 1,
+			mobile: false,
+		})
+		await call(playerSession, "Emulation.setEmulatedMedia", {
+			features: [{ name: "prefers-color-scheme", value: dark ? "dark" : "light" }],
+		})
+		await waitFor(
+			() => player("Math.abs(innerHeight-document.querySelector('#bar').getBoundingClientRect().height)<2"),
+			Boolean,
+		)
+		const layout = await player(
+			"({width:innerWidth,content:document.documentElement.scrollWidth,height:innerHeight,actions:Array.from(document.querySelectorAll('button,a,input,select')).filter(el=>el.getClientRects().length).map(el=>el.id)})",
+		)
+		assert(
+			layout.content <= layout.width && layout.height < 100 && layout.actions.join(",") === "setup,close",
+			JSON.stringify(layout),
+		)
+		const shot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
+		await Bun.write(`${root}/.cache/product-probe/${name}.png`, Uint8Array.fromBase64(shot.data))
+	}
+	await call(sessionId, "Emulation.clearDeviceMetricsOverride")
+	await call(playerSession, "Emulation.setEmulatedMedia", {
+		features: [{ name: "prefers-color-scheme", value: "light" }],
+	})
+	await player("document.querySelector('#setup').focus()")
+	await call(sessionId, "Input.dispatchKeyEvent", {
+		type: "keyDown",
+		key: "Tab",
+		code: "Tab",
+		windowsVirtualKeyCode: 9,
+	})
+	await call(sessionId, "Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 })
+	assert(await player("document.activeElement.id==='close'"), "Setup does not tab directly to Close")
+	console.log("No-voice layout passed in dark and narrow views; only Choose a voice and Close are visible.")
+	await view.evaluate("document.querySelector('section .primary').click()")
+	await waitFor(
+		() => view.evaluate<string>("document.querySelector('#status').textContent"),
+		(value) => /ready|failed|unexpected|interrupted/i.test(value),
+		120,
+	)
+	const download = await view.evaluate<string>("document.querySelector('#status').textContent")
+	assert(download.includes("ready"), download)
+	console.log("Explicit download passed integrity check and persisted.")
+
+	await waitFor(
+		() => player("document.querySelector('#bar').dataset.view"),
+		(value) => value === "playback",
+	)
+	assert(
+		await player("document.querySelector('#voice').value==='en_US-ljspeech-medium'"),
+		"Stale preference left the voice picker empty",
+	)
 	await player(
 		"globalThis.probeHighlights=[];const originalSend=chrome.runtime.sendMessage;chrome.runtime.sendMessage=(...args)=>{if(args[0]?.command==='highlight')probeHighlights.push({start:args[0].start,end:args[0].end});return originalSend(...args)}",
 	)
@@ -213,6 +281,84 @@ try {
 	console.log("Highlighted source word:", highlight)
 	const cold = (await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
 	console.log("Cold first-buffer timings:", JSON.stringify(cold))
+	const volume = await player(checkVolume)
+	console.log("Volume controls:", JSON.stringify(volume))
+	const volumeShot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
+	await Bun.write(`${root}/.cache/product-probe/volume-open.png`, Uint8Array.fromBase64(volumeShot.data))
+	await call(sessionId, "Input.dispatchKeyEvent", {
+		type: "keyDown",
+		key: "Escape",
+		code: "Escape",
+		windowsVirtualKeyCode: 27,
+	})
+	await call(sessionId, "Input.dispatchKeyEvent", {
+		type: "keyUp",
+		key: "Escape",
+		code: "Escape",
+		windowsVirtualKeyCode: 27,
+	})
+	assert(
+		await player(
+			"!document.querySelector('#volume-panel').matches(':popover-open') && !!document.querySelector('#bar')",
+		),
+		"Escape closed the player instead of the volume panel",
+	)
+	await player("document.querySelector('#sound').click()")
+	await call(sessionId, "Input.dispatchMouseEvent", {
+		type: "mousePressed",
+		x: 10,
+		y: 180,
+		button: "left",
+		clickCount: 1,
+	})
+	await call(sessionId, "Input.dispatchMouseEvent", {
+		type: "mouseReleased",
+		x: 10,
+		y: 180,
+		button: "left",
+		clickCount: 1,
+	})
+	assert(
+		await player("!document.querySelector('#volume-panel').matches(':popover-open')"),
+		"Clicking the source page left the volume panel open",
+	)
+	await player(
+		"document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))",
+	)
+	await player("document.querySelector('#play').click()")
+	for (const [name, width] of [
+		["playback-dark", 1000],
+		["playback-narrow", 360],
+	] as const) {
+		await call(sessionId, "Emulation.setDeviceMetricsOverride", {
+			width,
+			height: 600,
+			deviceScaleFactor: 1,
+			mobile: false,
+		})
+		await call(playerSession, "Emulation.setEmulatedMedia", {
+			features: [{ name: "prefers-color-scheme", value: "dark" }],
+		})
+		await waitFor(
+			() => player("Math.abs(innerHeight-document.querySelector('#bar').getBoundingClientRect().height)<2"),
+			Boolean,
+		)
+		const layout = await player(
+			"({width:innerWidth,content:document.documentElement.scrollWidth,height:innerHeight,quiet:document.querySelector('#message').classList.contains('quiet')})",
+		)
+		assert(
+			layout.quiet && layout.content <= layout.width && layout.height < (width > 500 ? 55 : 120),
+			JSON.stringify(layout),
+		)
+		const shot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
+		await Bun.write(`${root}/.cache/product-probe/${name}.png`, Uint8Array.fromBase64(shot.data))
+	}
+	await call(sessionId, "Emulation.clearDeviceMetricsOverride")
+	await call(playerSession, "Emulation.setEmulatedMedia", {
+		features: [{ name: "prefers-color-scheme", value: "light" }],
+	})
+	await player("document.querySelector('#play').click()")
+
 	const paddingBefore = await evaluate("document.documentElement.style.paddingTop")
 	const hostCountBefore = await evaluate("document.querySelectorAll('[data-read-aloud]').length")
 	await view.evaluate(
@@ -233,22 +379,17 @@ try {
 		barSize.width <= 80 && barSize.viewport < 140,
 		`Playback controls grew unexpectedly: ${JSON.stringify(barSize)}`,
 	)
+	if ((await player("document.querySelector('#play').getAttribute('aria-label')")) === "Pause")
+		await player("document.querySelector('#play').click()")
+	const originalSession = await player("location.hash")
 	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
-	const restarted = await view.evaluate<any>(
-		`chrome.tabs.sendMessage(${tab.id},{type:'start-reading',mode:'selection'},{frameId:0})`,
+	await player("document.querySelector('#play').click()", true)
+	const selectedText = await evaluate("document.querySelector('#warm-selection').textContent")
+	await waitFor(
+		() => player("chrome.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"),
+		(value) => value?.text === selectedText,
 	)
-	assert(restarted.reuse, "A second selection discarded the loaded engine")
-	const background = (await view.cdp<any>("Target.getTargets")).targetInfos.find(
-		(target: any) => target.type === "service_worker" && target.url.includes(id),
-	)
-	assert(background, "The background worker is missing")
-	const backgroundSession = (
-		await view.cdp<any>("Target.attachToTarget", { targetId: background.targetId, flatten: false })
-	).sessionId
-	await call(backgroundSession, "Runtime.evaluate", {
-		expression: `chrome.runtime.sendMessage({type:'reset-reader',session:${JSON.stringify(restarted.session)}})`,
-		awaitPromise: true,
-	})
+	assert((await player("location.hash")) === originalSession, "Play replaced the existing selection reader")
 	await waitFor(
 		async () =>
 			(await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance?.recordedAt,
@@ -262,6 +403,7 @@ try {
 			evaluate("Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')"),
 		(value) => value === "A",
 	)
+
 	await player("document.querySelector('#next').click()")
 	await waitFor(
 		() =>
@@ -273,6 +415,23 @@ try {
 		() =>
 			evaluate("Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')"),
 		(value) => value === "A",
+	)
+	await player("document.querySelector('#next').click()")
+	await waitFor(
+		() => player("document.querySelector('#status').textContent"),
+		(value) => value === "Finished",
+	)
+	assert(await player("document.querySelector('#next').disabled"), "Selection continued beyond its final sentence")
+	await player("document.querySelector('#play').click()", true)
+	await waitFor(
+		() =>
+			evaluate("Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')"),
+		(value) => value === "Fresh",
+	)
+	assert(
+		(await player("chrome.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"))
+			.text === selectedText,
+		"Replay escaped the selected text",
 	)
 	const shot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
 	await Bun.write(`${root}/.cache/product-probe/reading.png`, Uint8Array.fromBase64(shot.data))
@@ -316,8 +475,12 @@ try {
 		return result.result.value
 	}
 	await waitFor(
-		() => remote(mdSession, "document.readyState"),
-		(state) => state === "complete",
+		() =>
+			remote(
+				mdSession,
+				"document.readyState === 'complete' && location.href === 'https://filipkrasa.salonek.org/projects/md-dash/' && !!document.querySelector('main')",
+			),
+		Boolean,
 	)
 	await view.evaluate(
 		`chrome.scripting.executeScript({target:{tabId:${mdTab.id}},files:['content-scripts/reader.js']})`,
@@ -356,9 +519,9 @@ try {
 	for (let n = 0; n < 5; n++) {
 		mdCursor = sentenceTarget(mdChunks, mdCursor, 1)
 		assert(mdCursor > 0, "MD Dash must have several sentence boundaries")
-		await mdControl(
-			"probeWords.length=0;freezeOnHighlight=true;document.querySelector('#next').click();document.querySelector('#play').click()",
-		)
+		await mdControl("probeWords.length=0;freezeOnHighlight=true;document.querySelector('#next').click()")
+		await waitFor(() => mdControl("!document.querySelector('#play').disabled"), Boolean)
+		await mdControl("document.querySelector('#play').click()")
 		await waitFor(
 			() => mdControl("probeWords.at(-1)?.start??-1"),
 			(value) => value >= mdChunks[mdCursor]!.start && value < mdChunks[mdCursor]!.end,
@@ -367,9 +530,9 @@ try {
 	}
 	mdCursor = sentenceTarget(mdChunks, mdCursor, -1)
 	assert(mdCursor > 0, "The previous MD Dash sentence should not be the article start")
-	await mdControl(
-		"probeWords.length=0;freezeOnHighlight=true;document.querySelector('#previous').click();document.querySelector('#play').click()",
-	)
+	await mdControl("probeWords.length=0;freezeOnHighlight=true;document.querySelector('#previous').click()")
+	await waitFor(() => mdControl("!document.querySelector('#play').disabled"), Boolean)
+	await mdControl("document.querySelector('#play').click()")
 	await waitFor(
 		() => mdControl("probeWords.at(-1)?.start??-1"),
 		(value) => value >= mdChunks[mdCursor]!.start && value < mdChunks[mdCursor]!.end,
@@ -377,13 +540,21 @@ try {
 	)
 	const mdShot = await call(mdSession, "Page.captureScreenshot", { format: "png" })
 	await Bun.write(`${root}/.cache/product-probe/md-dash.png`, Uint8Array.fromBase64(mdShot.data))
-	await mdControl("document.querySelector('#close').click()")
 	console.log("MD Dash next/previous navigation passed without restarting at the article beginning.")
 	await view.evaluate("document.querySelector('section .danger').click()")
 	await waitFor(
 		() => view.evaluate<string>("document.querySelector('#status').textContent"),
 		(value) => value.includes("deleted"),
 	)
+	await waitFor(
+		() => mdControl("document.querySelector('#bar').dataset.view"),
+		(value) => value === "setup",
+	)
+	assert(
+		await mdControl("document.querySelector('#playback').hidden && !document.querySelector('#setup').hidden"),
+		"Deleting the last voice did not restore setup",
+	)
+	await mdControl("document.querySelector('#close').click()")
 	console.log("Pause, close, and voice deletion passed.")
 	await Bun.write(
 		`${root}/docs/evidence/chrome-product-2026-10-30.json`,
@@ -399,11 +570,19 @@ try {
 						"Development VM first-buffer readiness, not target-hardware audible latency; warm uses a different opening sentence in the same live engine.",
 				},
 				passed: [
+					"no-voice state hides unusable controls",
+					"live voice installation and deletion transitions",
+					"stale voice preference recovery",
+					"extension-owned storage despite unavailable iframe storage",
 					"explicit download",
 					"integrity",
 					"model storage",
+					"compact language and voice labels",
+					"volume output gain, mute, persistence, no synthesis restart, and keyboard dismissal",
 					"local speech",
 					"word highlighting",
+					"Play replaces the previous scope with the current selection",
+					"selection completion and replay stay within the selection",
 					"pause",
 					"close",
 					"delete",

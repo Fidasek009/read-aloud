@@ -74,7 +74,12 @@ export class SpeechClient {
 			throw new Error("Invalid speech response")
 		const bytes = Uint8Array.fromBase64(clip.pcm)
 		if (bytes.byteLength % 4) throw new Error("Invalid speech buffer")
-		return { pcm: new Float32Array(bytes.buffer), sampleRate: clip.sampleRate, words: clip.words }
+		return {
+			pcm: new Float32Array(bytes.buffer),
+			sampleRate: clip.sampleRate,
+			words: clip.words,
+			skippedText: clip.skippedText === true,
+		}
 	}
 	cancelQueued() {
 		if (this.port) void this.request({ type: "cancel" }).catch(() => {})

@@ -1,9 +1,10 @@
 export interface ReaderRequest {
 	session: string
-	command: string
+	command: "document" | "selection" | "highlight" | "resize" | "close"
 	start?: number
 	end?: number
 	height?: number
+	width?: number
 }
 
 export type ReaderHost = (message: ReaderRequest) => Promise<unknown>

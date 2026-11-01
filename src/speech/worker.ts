@@ -3,6 +3,7 @@ import * as ort from "onnxruntime-web"
 
 import type { VoiceConfig } from "./catalog.ts"
 
+import { SpeechTextError } from "./errors.ts"
 import { alignWords, tokenizeEvents, tokenizeText } from "./phonemes.ts"
 
 declare const SPEECH_BACKEND: "wasm" | "webgpu"
@@ -125,7 +126,12 @@ self.onmessage = async ({ data }: MessageEvent<unknown>) => {
 			])
 		} else throw new Error("Invalid speech request")
 	} catch (error) {
-		self.postMessage({ id, ok: false, error: error instanceof Error ? error.message : "Speech could not be generated" })
+		self.postMessage({
+			id,
+			ok: false,
+			error: error instanceof Error ? error.message : "Speech could not be generated",
+			code: error instanceof SpeechTextError ? "unreadable-text" : undefined,
+		})
 	} finally {
 		busy = false
 	}

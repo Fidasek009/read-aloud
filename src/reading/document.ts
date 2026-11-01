@@ -1,3 +1,5 @@
+import { normalizeDocument } from "./normalize.ts"
+
 export interface TextRun {
 	from: number
 	to: number
@@ -17,11 +19,17 @@ export function captureDocument(mode: "selection" | "article"): ReadingDocument 
 	let root: Node =
 		range?.commonAncestorContainer ?? document.querySelector("article, main, [role=main]") ?? document.body
 	if (root.nodeType === Node.TEXT_NODE) root = root.parentNode!
-	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+	const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT)
 	const runs: TextRun[] = []
 	let text = "",
 		lastBlock: Element | null = null
-	for (let node = walker.nextNode() as Text | null; node; node = walker.nextNode() as Text | null) {
+	for (let candidate = walker.nextNode(); candidate; candidate = walker.nextNode()) {
+		if (candidate instanceof HTMLBRElement) {
+			if (text && (!range || range.intersectsNode(candidate))) text += "\n"
+			continue
+		}
+		if (!(candidate instanceof Text)) continue
+		const node = candidate
 		const parent = node.parentElement
 		if (!parent || parent.closest("script,style,noscript,template,[hidden],[aria-hidden=true],[data-read-aloud]"))
 			continue
@@ -45,7 +53,7 @@ export function captureDocument(mode: "selection" | "article"): ReadingDocument 
 			throw new Error("This page is too long to read in one session. Select a smaller section.")
 	}
 	if (!text.trim()) throw new Error("No readable text was found on this page.")
-	return { text, runs }
+	return normalizeDocument({ text, runs })
 }
 
 export function sourceRange(source: ReadingDocument, start: number, end: number): Range | null {

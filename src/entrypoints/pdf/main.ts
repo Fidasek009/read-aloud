@@ -5,8 +5,9 @@ import { browser } from "wxt/browser"
 
 import type { ReaderRequest } from "../../reading/host.ts"
 
-import { captureDocument, type ReadingDocument, sourceRange, type TextRun } from "../../reading/document.ts"
-import { locateSelection } from "../../reading/selection.ts"
+import { type ReadingDocument, sourceRange, type TextRun } from "../../reading/document.ts"
+import { normalizeDocument } from "../../reading/normalize.ts"
+import { locateSelection, selectRange } from "../../reading/selection.ts"
 import "pdfjs-dist/web/pdf_viewer.css"
 import "./style.css"
 
@@ -67,7 +68,10 @@ function stop() {
 async function start(mode: "article" | "selection", initial?: ReadingDocument) {
 	revision++
 	if (!complete.text.trim()) throw new Error("This PDF has no readable text layer.")
-	source = initial ?? (mode === "selection" ? captureDocument("selection") : complete)
+	const selection = window.getSelection()
+	source =
+		initial ??
+		(mode === "selection" ? selectRange(complete, selection?.rangeCount ? selection.getRangeAt(0) : null) : complete)
 	if (mode === "selection") window.getSelection()?.removeAllRanges()
 	if (frame) {
 		frame.contentWindow?.dispatchEvent(new Event("read-aloud-source-changed"))
@@ -83,12 +87,25 @@ async function start(mode: "article" | "selection", initial?: ReadingDocument) {
 window.readAloudHost = async (message: ReaderRequest) => {
 	if (message.session !== session) throw new Error("This reading session has ended")
 	if (message.command === "document") return { text: source.text }
+	if (message.command === "selection") {
+		const selection = window.getSelection()
+		if (!selection?.toString().trim()) return { text: null }
+		const captured = selectRange(complete, selection.rangeCount ? selection.getRangeAt(0) : null)
+		revision++
+		source = captured
+		selection.removeAllRanges()
+		CSS.highlights?.delete(key)
+		return { text: source.text }
+	}
 	if (message.command === "close") {
 		stop()
 		return { ok: true }
 	}
-	if (message.command === "resize" && typeof message.height === "number" && frame)
-		frame.style.height = `${Math.min(180, Math.max(64, message.height))}px`
+	if (message.command === "resize" && typeof message.height === "number" && frame) {
+		frame.style.height = `${Math.min(180, Math.max(44, message.height))}px`
+		if (typeof message.width === "number" && Number.isFinite(message.width))
+			controls.style.maxWidth = `${Math.min(640, Math.max(240, message.width))}px`
+	}
 	if (message.command === "highlight" && typeof message.start === "number" && typeof message.end === "number") {
 		const current = revision
 		for (const run of source.runs.filter((run) => run.from < message.end! && run.to > message.start!)) {
@@ -266,22 +283,23 @@ async function load() {
 		for (const item of content.items) {
 			if (!("str" in item)) continue
 			if (!item.str) {
+				if (item.hasEOL && !result.text.endsWith("\n")) result.text += "\n"
 				state.runs.push(undefined)
 				continue
 			}
-			if (result.text && !/\s$/u.test(result.text) && !/^\s/u.test(item.str)) result.text += " "
 			const node = document.createTextNode(item.str)
 			const run = { from: result.text.length, to: result.text.length + item.str.length, node, offset: 0 }
 			owners.set(node, { page: state, run })
 			state.runs.push(run)
 			result.runs.push(run)
 			result.text += item.str
+			if (item.hasEOL) result.text += "\n"
 		}
-		result.text += "\n"
+		result.text = result.text.replace(/\n?$/u, "\n\n")
 		renderers.set(section, state)
 		observer.observe(section)
 	}
-	complete = result
+	complete = normalizeDocument(result, true)
 	let requested: ReadingDocument | undefined
 	status.textContent = ""
 	if (params.get("mode") === "selection" && tabId !== undefined) {

@@ -10,8 +10,28 @@
 		<main>
 			<h1>Choose your voice</h1>
 			<p>Listen to a sample, then download the voices you want. Reading stays on your device.</p>
-			<label class="search" for="search">Find a voice</label>
-			<input id="search" type="search" placeholder="Search voices or languages" autocomplete="off" />
+			<div class="filters" role="search" aria-label="Filter voices">
+				<label for="search"
+					>Search
+					<input id="search" type="search" placeholder="Voice name or language" autocomplete="off" />
+				</label>
+				<label for="language"
+					>Language
+					<select id="language">
+						<option value="">All languages</option>
+					</select>
+				</label>
+				<label for="quality"
+					>Quality
+					<select id="quality">
+						<option value="">All qualities</option>
+						<option value="x_low">Extra low</option>
+						<option value="low">Low</option>
+						<option value="medium">Medium</option>
+						<option value="high">High</option>
+					</select>
+				</label>
+			</div>
 			<p id="count" aria-live="polite"></p>
 			<div id="voices"></div>
 			<p id="status" role="status" aria-live="polite"></p>

@@ -4,6 +4,26 @@ export interface SpeechClip {
 	pcm: Float32Array<ArrayBuffer>
 	sampleRate: number
 	words: WordTiming[]
+	skippedText?: boolean
+}
+
+export interface VoiceChange {
+	id: string
+	deleted: boolean
+	revision: string
+}
+export function isVoiceChange(value: unknown): value is VoiceChange {
+	return (
+		!!value &&
+		typeof value === "object" &&
+		"id" in value &&
+		typeof value.id === "string" &&
+		value.id.length <= 160 &&
+		"deleted" in value &&
+		typeof value.deleted === "boolean" &&
+		"revision" in value &&
+		typeof value.revision === "string"
+	)
 }
 
 export type SpeechRequest = { id: number } & (
@@ -14,7 +34,7 @@ export interface SpeechResponse {
 	ok: boolean
 	error?: string
 	diagnostics?: Record<string, unknown>
-	clip?: { pcm: string; sampleRate: number; words: WordTiming[] }
+	clip?: { pcm: string; sampleRate: number; words: WordTiming[]; skippedText?: boolean }
 }
 export function speechRequest(value: unknown): value is SpeechRequest {
 	if (!value || typeof value !== "object" || !("id" in value) || !Number.isSafeInteger(value.id) || !("type" in value))

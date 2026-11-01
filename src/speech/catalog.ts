@@ -43,6 +43,20 @@ export const voices: readonly Voice[] = catalog.voices.map((voice) => ({
 		: null,
 	termsUrl: `https://huggingface.co/rhasspy/piper-voices/blob/${catalog.revision}/${voice.path.replace(/[^/]+$/, "MODEL_CARD")}`,
 }))
+const languageNames = new Intl.DisplayNames(["en"], { type: "language" })
+const locales = new Map<string, Set<string>>()
+for (const voice of voices) {
+	const language = new Intl.Locale(voice.locale.replaceAll("_", "-")).language
+	if (!locales.has(language)) locales.set(language, new Set())
+	locales.get(language)!.add(voice.locale)
+}
+
+/** Keep regional names only when they distinguish available catalog locales. */
+export function languageLabel(voice: Voice): string {
+	const language = new Intl.Locale(voice.locale.replaceAll("_", "-")).language
+	return locales.get(language)!.size > 1 ? voice.language : (languageNames.of(language) ?? voice.language)
+}
+
 const byId = new Map(voices.map((voice) => [voice.id, voice]))
 export function getVoice(id: string): Voice {
 	const voice = byId.get(id)

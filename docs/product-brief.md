@@ -87,3 +87,31 @@ Previously asked questions on setup, reading scope, hardware, downloads, Piper's
 - Fix Previous on the actual MD Dash article, not just prose fixtures.
 - The reported PDF failure is the MUNI thesis in latest-stable Zen. The user's test machine has a 20-core CPU and an 8-GB-VRAM GPU, using the US medium voice. Those are diagnostic details, not replacements for the 4-core/8-GB baseline. The precise Zen version and GPU model are unknown.
 - The agent owns implementation decisions and may refactor first-party code autonomously. The user is the product owner; keep the agreed requirements intact and report evidence honestly.
+
+## Voice-list filters — 2026-10-30
+
+Provide separate, visible **Language** and **Quality** dropdowns alongside search. All three filters combine; default to all languages and qualities. Quality choices are Extra low, Low, Medium, and High. Keep filtering entirely local and show clear feedback for an empty result.
+
+Per-model license information belongs behind a compact **License** link. Keep full URLs and extended provenance text out of the model cards.
+
+## Playback readiness — 2026-10-30
+
+An empty or disabled playback bar is not an acceptable setup screen. With no usable downloaded voice, show only a compact explanation, **Choose a voice**, and Close. Once a voice is available, show the compact playback controls with a populated voice choice. Routine Reading/Paused status belongs in accessible announcements, not a permanent second row; show visible feedback when preparation, a playback gesture, or an error needs attention. Size the embedded surface to its actual content, including narrow layouts and dark mode.
+
+## Slow and failed voice downloads — 2026-10-30
+
+A progressing download must not stop merely because it takes a long time. Report stalls and network failures on the affected model card, keep the error visible through filtering, and let the user retry explicitly. Distinguish cancellation from failure. Partial or unverified files must never appear installed.
+
+## Play respects the current selection — 2026-10-30
+
+If text is selected when the user presses Play in the existing overlay, read only that selection, replacing the previous article or selection. Preserve exact selection boundaries and highlighting on web pages and in our PDF reader. With no fresh selection, resume or replay the current reading scope. Previous/next and playback completion stay within that scope. Pause keeps its usual behavior.
+
+Preserve meaningful dots in domains such as `consensus.app`, where “dot” should be spoken. Sentence-ending periods should remain natural pauses. Correct PDF whitespace mapping rather than stripping periods or inserting spaces indiscriminately after them.
+
+
+## Reading polish and recovery — 2026-11-01
+
+- Shorten redundant language-region labels. Preserve the region when it distinguishes available catalog locales, including English. Keep the overlay voice picker compact.
+- Include volume in the listening controls with a clear hierarchy. Reveal its native slider from a speaker button; persist the setting and apply it to playback without changing speech or pitch.
+- Join explicitly line-hyphenated words such as `in-\nfrastructure`, preserving real compounds such as `pre-exascale` and domain dots. Highlight all printed fragments of the spoken word.
+- Prevent avoidable phonemizer annotation failures. For source-specific pronunciation failures, isolate the problematic passage, preserve usable speech, and tell the user if any text was skipped. Cancellation and runtime failures must remain distinguishable from content failures.

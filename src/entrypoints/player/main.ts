@@ -1,16 +1,15 @@
 import { browser } from "wxt/browser"
 
 import { readingChunks, sentenceTarget } from "../../reading/document.ts"
-import { parentReaderHost } from "../../reading/host.ts"
-import { voiceChoice, voices } from "../../speech/catalog.ts"
+import { parentReaderHost, type ReaderRequest } from "../../reading/host.ts"
+import { languageLabel, voiceChoice, voices } from "../../speech/catalog.ts"
 import { SpeechClient } from "../../speech/client.ts"
-import { type SpeechClip } from "../../speech/protocol.ts"
-import { installedVoices, onVoicesChanged } from "../../speech/vault.ts"
+import { isVoiceChange, type SpeechClip } from "../../speech/protocol.ts"
 import "./style.css"
 
 const session = location.hash.slice(1)
 const host = parentReaderHost()
-const send = (command: string, payload: object = {}) =>
+const send = (command: ReaderRequest["command"], payload: object = {}) =>
 	host
 		? host({ session, command, ...payload })
 		: browser.runtime.sendMessage({ type: "reader", session, command, ...payload })
@@ -22,8 +21,45 @@ const speed = document.querySelector<HTMLInputElement>("#speed")!
 const rate = document.querySelector<HTMLSpanElement>("#rate")!
 const voiceSelect = document.querySelector<HTMLSelectElement>("#voice")!
 const status = document.querySelector<HTMLSpanElement>("#status")!
+const bar = document.querySelector<HTMLDivElement>("#bar")!
+const playback = document.querySelector<HTMLDivElement>("#playback")!
+const message = document.querySelector<HTMLDivElement>("#message")!
+const setup = document.querySelector<HTMLAnchorElement>("#setup")!
 const engine = new SpeechClient()
 const context = new AudioContext()
+const output = context.createGain()
+output.connect(context.destination)
+const volume = document.querySelector<HTMLInputElement>("#volume")!
+const volumePanel = document.querySelector<HTMLDivElement>("#volume-panel")!
+const volumeLevel = document.querySelector<HTMLOutputElement>("#volume-level")!
+function updateVolume() {
+	const level = Number(volume.value)
+	// A perceptual taper makes the quiet half of the slider useful. Smooth gain
+	// changes at the output, so volume never restarts synthesis or alters pitch.
+	output.gain.setTargetAtTime((level / 100) ** 2, context.currentTime, 0.015)
+	volumeLevel.value = `${level}%`
+	volume.setAttribute("aria-valuetext", `${level} percent`)
+	button("sound").title = `Volume · ${level}%`
+	document
+		.querySelector("#sound-waves")!
+		.setAttribute(
+			"d",
+			level === 0
+				? "m16 9 6 6m0-6-6 6"
+				: level < 50
+					? "M15 8a6 6 0 0 1 0 8"
+					: "M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14",
+		)
+}
+volume.oninput = updateVolume
+volume.onchange = () => void browser.storage.local.set({ volume: Number(volume.value) })
+volumePanel.addEventListener("toggle", resizeBar)
+// Native light dismissal is scoped to this iframe's document.
+window.addEventListener("blur", () => {
+	if (volumePanel.matches(":popover-open")) volumePanel.hidePopover()
+})
+let skippedText = false,
+	consecutiveSkipped = 0
 let text = "",
 	chunks = readingChunks(""),
 	cursor = 0,
@@ -37,14 +73,50 @@ let generating = false,
 	lastWord = -1
 let began = performance.now(),
 	firstBuffer = true
+let checkingVoices = true,
+	hasVoices = false,
+	preparing = false,
+	selecting = false,
+	failed = false,
+	voiceRevision = 0
+let closed = false,
+	initializationRevision = 0
 
 function updateControls() {
-	document.querySelector("#play-icon")!.setAttribute("d", paused || ended ? "m8 5 11 7-11 7z" : "M8 5v14M16 5v14")
-	play.setAttribute("aria-label", paused || ended ? "Play" : "Pause")
-	play.title = paused || ended ? "Play" : "Pause"
-	play.setAttribute("aria-pressed", String(!paused && !ended))
-	previous.disabled = cursor <= 0
-	next.disabled = sentenceTarget(chunks, cursor, 1) < 0
+	const playing = !!active && !paused && !ended && context.state === "running"
+	document.querySelector("#play-icon")!.setAttribute("d", playing ? "M8 5v14M16 5v14" : "m8 5 11 7-11 7z")
+	play.setAttribute("aria-label", playing ? "Pause" : "Play")
+	play.title = ended ? "Read again" : playing ? "Pause" : "Play"
+	play.setAttribute("aria-pressed", String(playing))
+	play.disabled = !hasVoices || preparing || selecting
+	previous.disabled = !hasVoices || preparing || selecting || cursor <= 0
+	next.disabled = !hasVoices || preparing || selecting || sentenceTarget(chunks, cursor, 1) < 0
+	speed.disabled = !hasVoices
+	voiceSelect.disabled = !hasVoices
+	playback.hidden = !hasVoices
+	button("close").title = hasVoices ? "Stop reading" : "Close"
+	button("close").setAttribute("aria-label", hasVoices ? "Stop reading" : "Close")
+	setup.hidden = hasVoices || (checkingVoices && !failed)
+	bar.dataset.view = hasVoices ? "playback" : setup.hidden ? "loading" : "setup"
+	message.classList.toggle("quiet", hasVoices && !preparing && !awaitingGesture && !failed && !skippedText)
+	voiceSelect.title =
+		voiceSelect.selectedOptions[0]?.parentElement instanceof HTMLOptGroupElement
+			? voiceSelect.selectedOptions[0].parentElement.label
+			: "Voice"
+	resizeBar()
+}
+
+function resizeBar() {
+	if (closed) return
+	if (volumePanel.matches(":popover-open")) {
+		const anchor = button("sound").getBoundingClientRect()
+		const width = volumePanel.getBoundingClientRect().width
+		volumePanel.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, anchor.left + anchor.width / 2 - width / 2))}px`
+	}
+	void send("resize", {
+		height: Math.ceil(bar.getBoundingClientRect().height),
+		width: hasVoices ? 500 : checkingVoices ? 320 : 400,
+	}).catch(() => {})
 }
 
 function halt() {
@@ -56,14 +128,18 @@ function halt() {
 		active = undefined
 	}
 	queue = []
+	generating = false
 	lastWord = -1
 	void send("highlight", { start: 0, end: 0 }).catch(() => {})
 }
 
 async function begin(index: number, offset?: number) {
+	if (closed || !hasVoices) return
 	halt()
 	began = performance.now()
 	firstBuffer = true
+	skippedText = false
+	consecutiveSkipped = 0
 	const current = epoch
 	cursor = Math.min(Math.max(0, index), chunks.length - 1)
 	const selectedChunk = chunks[cursor]
@@ -72,7 +148,9 @@ async function begin(index: number, offset?: number) {
 			? offset
 			: undefined
 	ended = false
-	status.textContent = "Preparing voice on your device…"
+	preparing = true
+	failed = false
+	status.textContent = "Preparing voice…"
 	updateControls()
 	try {
 		await engine.load(voiceSelect.value)
@@ -85,10 +163,13 @@ async function begin(index: number, offset?: number) {
 }
 
 function fail(error: unknown) {
+	if (closed) return
 	halt()
 	engine.dispose()
 	status.textContent = error instanceof Error ? error.message : "Reading could not continue."
 	paused = true
+	preparing = false
+	failed = true
 	updateControls()
 }
 
@@ -103,6 +184,9 @@ async function fill(current: number, firstOffset?: number) {
 			const offset = index === cursor && firstOffset !== undefined ? firstOffset : chunk.start
 			const clip = await engine.synthesize(text.slice(offset, chunk.end), Number(speed.value))
 			if (current !== epoch) return
+			consecutiveSkipped = clip.skippedText && !clip.words.length ? consecutiveSkipped + 1 : 0
+			if (consecutiveSkipped >= 3)
+				throw new Error("This voice cannot read this passage. Choose another voice or select different text.")
 			queue.push({ clip, offset, index })
 			if (!active) startNext(current)
 		}
@@ -118,12 +202,14 @@ function startNext(current: number) {
 	const item = queue.shift()
 	if (!item) return
 	cursor = item.index
+	skippedText ||= item.clip.skippedText === true
 	const buffer = context.createBuffer(1, item.clip.pcm.length, item.clip.sampleRate)
 	buffer.copyToChannel(item.clip.pcm, 0)
 	const source = context.createBufferSource()
 	source.buffer = buffer
-	source.connect(context.destination)
+	source.connect(output)
 	active = { source, started: context.currentTime, clip: item.clip, offset: item.offset }
+	preparing = false
 	if (firstBuffer) {
 		firstBuffer = false
 		void browser.storage.local.set({
@@ -141,7 +227,7 @@ function startNext(current: number) {
 		cursor++
 		if (cursor >= chunks.length) {
 			ended = true
-			status.textContent = "Finished"
+			status.textContent = skippedText ? "Finished · Some text could not be read." : "Finished"
 			updateControls()
 			void send("highlight", { start: 0, end: 0 })
 			return
@@ -157,7 +243,13 @@ function startNext(current: number) {
 			awaitingGesture = true
 		}
 	}
-	status.textContent = awaitingGesture ? "Press Play to start listening." : paused ? "Paused" : "Reading on your device"
+	status.textContent = awaitingGesture
+		? "Press Play to start listening."
+		: paused
+			? "Paused"
+			: skippedText
+				? "Skipped text this voice could not read."
+				: "Reading"
 	updateControls()
 }
 
@@ -174,22 +266,56 @@ function highlight() {
 }
 
 play.onclick = async () => {
+	if (selecting || closed) return
 	awaitingGesture = false
 	try {
-		if (ended) {
-			paused = false
-			await context.resume()
-			void begin(0)
+		if (active && !paused && !ended && context.state === "running") {
+			paused = true
+			await context.suspend()
+			status.textContent = "Paused"
+			updateControls()
 			return
 		}
-		paused = !paused
-		if (paused) await context.suspend()
-		else await context.resume()
-		if (!paused && !active && !generating) void begin(Math.min(cursor, chunks.length - 1))
-		status.textContent = paused ? "Paused" : active ? "Reading on your device" : "Preparing voice on your device…"
+		selecting = true
+		updateControls()
+		const current = epoch
+		const selection: unknown = await send("selection")
+		if (closed || current !== epoch) return
+		if (selection && typeof selection === "object" && "error" in selection && typeof selection.error === "string")
+			throw new Error(selection.error)
+		if (
+			!selection ||
+			typeof selection !== "object" ||
+			!("text" in selection) ||
+			(selection.text !== null && (typeof selection.text !== "string" || !selection.text.trim()))
+		)
+			throw new Error("This selection could not be read. Please try again.")
+		if (selection.text !== null || ended) {
+			if (typeof selection.text === "string") {
+				text = selection.text
+				chunks = readingChunks(text, voiceChoice(voiceSelect.value).voice.locale)
+			}
+			paused = false
+			// begin stops the previous buffer before the audio context can resume it.
+			void begin(0)
+			await context.resume()
+			return
+		}
+		paused = false
+		await context.resume()
+		if (closed || current !== epoch) return
+		if (!active && !generating) void begin(Math.min(cursor, chunks.length - 1))
+		status.textContent = active
+			? skippedText
+				? "Skipped text this voice could not read."
+				: "Reading"
+			: "Preparing voice…"
 		updateControls()
 	} catch (error) {
 		fail(error)
+	} finally {
+		selecting = false
+		if (!closed) updateControls()
 	}
 }
 previous.onclick = () => void begin(Math.max(0, sentenceTarget(chunks, cursor, -1)))
@@ -198,6 +324,7 @@ next.onclick = () => {
 	if (index >= 0) void begin(index)
 }
 button("close").onclick = () => {
+	closed = true
 	halt()
 	engine.dispose()
 	void context.close()
@@ -213,43 +340,81 @@ speed.onchange = () => {
 }
 voiceSelect.onchange = () => {
 	void browser.storage.local.set({ voice: voiceSelect.value })
+	const position = chunks[cursor]?.start ?? 0
+	chunks = readingChunks(text, voiceChoice(voiceSelect.value).voice.locale)
+	cursor = Math.max(
+		0,
+		chunks.findIndex((chunk) => chunk.end > position),
+	)
 	void begin(Math.min(cursor, chunks.length - 1))
 }
 
 async function refreshVoices() {
-	const installed = new Set(await installedVoices())
+	const current = ++voiceRevision
+	const response: unknown = await browser.runtime.sendMessage({ type: "installed-voices" })
+	if (!Array.isArray(response) || !response.every((id) => typeof id === "string"))
+		throw new Error("Your voices could not be loaded. Open Voices and try again.")
+	const installed = new Set<string>(response)
 	const preferences = await browser.storage.local.get(["voice", "speed"])
+	if (closed || current !== voiceRevision) return hasVoices
+	const previousChoice = voiceSelect.value
 	voiceSelect.replaceChildren()
 	for (const voice of voices.filter((voice) => installed.has(voice.id))) {
 		const group = document.createElement("optgroup")
-		group.label = `${voice.name} · ${voice.quality.replace("x_low", "extra low")} · ${voice.language}`
+		group.label = `${voice.name} · ${voice.quality.replace("x_low", "extra low")} · ${languageLabel(voice)}`
 		const names = new Map(Object.entries(voice.speakerNames ?? {}).map(([name, id]) => [id, name]))
 		for (let speaker = 0; speaker < voice.speakers; speaker++) {
 			const option = document.createElement("option")
 			option.value = speaker ? `${voice.id}#${speaker}` : voice.id
 			option.textContent =
-				voice.speakers > 1 ? `${voice.name} · ${names.get(speaker) ?? `Speaker ${speaker + 1}`}` : group.label
+				voice.speakers > 1
+					? `${voice.name} · ${names.get(speaker) ?? `Speaker ${speaker + 1}`}`
+					: `${voice.name} · ${voice.quality.replace("x_low", "extra low")}`
 			group.append(option)
 		}
 		voiceSelect.append(group)
 	}
-	if (typeof preferences.voice === "string" && installed.has(preferences.voice.split("#")[0]!))
-		voiceSelect.value = preferences.voice
-	return installed.size > 0
+	for (const preferred of [preferences.voice, previousChoice]) {
+		if (typeof preferred === "string" && Array.from(voiceSelect.options).some((option) => option.value === preferred)) {
+			voiceSelect.value = preferred
+			break
+		}
+	}
+	hasVoices = voiceSelect.options.length > 0
+	checkingVoices = false
+	updateControls()
+	return hasVoices
 }
 
-onVoicesChanged(async (id, deleted) => {
+async function voicesChanged(id: string, deleted: boolean) {
+	if (closed) return
+	const wasWaiting = !hasVoices
 	if (deleted && id === voiceSelect.value.split("#")[0]) {
 		halt()
 		engine.dispose()
 		paused = true
-		status.textContent = "This voice was deleted. Choose a downloaded voice."
-		updateControls()
+		preparing = false
+		failed = true
+		status.textContent = "Voice removed. Press Play to use another downloaded voice."
 	}
-	if (await refreshVoices()) {
-		play.disabled = false
-		updateControls()
+	if (!(await refreshVoices())) {
+		halt()
+		engine.dispose()
+		paused = true
+		preparing = false
+		failed = false
+		awaitingGesture = false
+		status.textContent = "No voice downloaded."
+	} else if (wasWaiting && !deleted && text.trim()) {
+		paused = false
+		chunks = readingChunks(text, voiceChoice(voiceSelect.value).voice.locale)
+		await begin(0)
 	}
+	updateControls()
+}
+browser.storage.onChanged.addListener((changes, area) => {
+	const change: unknown = changes.voiceChange?.newValue
+	if (area === "local" && isVoiceChange(change)) void voicesChanged(change.id, change.deleted).catch(fail)
 })
 browser.runtime.onMessage.addListener((message: unknown, sender) => {
 	if (
@@ -268,21 +433,20 @@ browser.runtime.onMessage.addListener((message: unknown, sender) => {
 	}
 })
 window.addEventListener("pagehide", () => {
+	closed = true
 	halt()
 	engine.dispose()
 	void context.close()
 })
-new ResizeObserver(() => {
-	void send("resize", { height: Math.ceil(document.querySelector("#bar")!.getBoundingClientRect().height) }).catch(
-		() => {},
-	)
-}).observe(document.querySelector("#bar")!)
+new ResizeObserver(resizeBar).observe(bar)
 window.addEventListener("keydown", (event) => {
-	if (event.key === "Escape") button("close").click()
+	if (event.key === "Escape" && !volumePanel.matches(":popover-open")) button("close").click()
 })
 
 async function initialize() {
+	const current = ++initializationRevision
 	const source: unknown = await send("document")
+	if (closed || current !== initializationRevision) return
 	if (
 		!source ||
 		typeof source !== "object" ||
@@ -293,22 +457,33 @@ async function initialize() {
 		throw new Error("Start reading from a page or a text selection.")
 	text = source.text
 	const available = await refreshVoices()
-	const preferences = await browser.storage.local.get("speed")
+	const preferences = await browser.storage.local.get(["speed", "volume"])
+	if (closed || current !== initializationRevision) return
 	if (typeof preferences.speed === "number" && preferences.speed >= 0.5 && preferences.speed <= 2)
 		speed.value = String(preferences.speed)
 	rate.textContent = `${Number(speed.value)}×`
+	if (
+		typeof preferences.volume === "number" &&
+		Number.isFinite(preferences.volume) &&
+		preferences.volume >= 0 &&
+		preferences.volume <= 100
+	)
+		volume.value = String(preferences.volume)
+	updateVolume()
 	chunks = readingChunks(text, available ? voiceChoice(voiceSelect.value).voice.locale : "en")
 	if (!available) {
 		paused = true
-		play.disabled = true
-		previous.disabled = true
-		next.disabled = true
-		status.textContent = "Download a voice to start listening."
+		preparing = false
+		failed = false
+		awaitingGesture = false
+		status.textContent = "No voice downloaded."
+		updateControls()
 		return
 	}
 	await begin(0)
 }
 requestAnimationFrame(highlight)
+context.onstatechange = updateControls
 void initialize().catch(fail)
 window.addEventListener("read-aloud-source-changed", () => {
 	halt()

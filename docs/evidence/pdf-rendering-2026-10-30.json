@@ -1,26 +1,38 @@
 {
-	"recordedAt": "2026-10-30T09:00:37.627Z",
+	"recordedAt": "2026-11-01T17:16:27.263Z",
 	"browser": {
 		"protocolVersion": "1.3",
-		"product": "Chrome/156.0.8078.4",
-		"revision": "@f842f52ef39fd97b449eb27cff414bf05a98ddce",
-		"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
-		"jsVersion": "15.6.75"
+		"product": "Chrome/155.0.8059.12",
+		"revision": "@384c82079f60e0b79cdca6e49efd5cfceefa5b74",
+		"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+		"jsVersion": "15.5.35.7"
 	},
 	"pdfSha256": "30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32",
 	"pages": 60,
-	"characters": 85678,
+	"characters": 85185,
 	"highlighted": "Virtual Research Environment",
 	"content": true,
 	"permissionRecovery": "Verified separately without a host grant",
-	"source": "remote MUNI source",
+	"source": "cached MUNI bytes served without CORS",
 	"distant": {
 		"highlighted": "Bibliography",
-		"scroll": 58093,
-		"textPages": 3
+		"scroll": 58066,
+		"textPages": 2
 	},
-	"navigationMs": 582.4905230000004,
-	"textReadyMs": 28181.660184000004,
-	"readyMs": 28513.305281000004,
+	"selection": {
+		"crossPageCharacters": 532,
+		"layoutHyphenation": true,
+		"compoundHighlight": true,
+		"abstractCharacters": 1480,
+		"sentenceSpacing": true,
+		"exactSelection": true,
+		"highlighted": "This",
+		"emptySelectionRejected": true,
+		"playSelection": true,
+		"domainPreserved": "Consensus.app"
+	},
+	"navigationMs": 1131.8460520000008,
+	"textReadyMs": 26304.933795999998,
+	"readyMs": 26918.311002000002,
 	"limits": "First checks missing-permission recovery, then uses a test-only origin grant to verify actual privileged fetch without CORS, rendering, and text mapping. Native permission dialog, PDF action, and speech are not covered."
 }

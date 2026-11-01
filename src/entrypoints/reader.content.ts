@@ -58,14 +58,14 @@ export default defineContentScript({
 					host = document.createElement("div")
 					host.dataset.readAloud = ""
 					host.style.cssText =
-						"all:initial!important;position:fixed!important;top:12px!important;left:50%!important;transform:translateX(-50%)!important;width:calc(100vw - 24px)!important;max-width:720px!important;z-index:2147483647!important;display:block!important;"
+						"all:initial!important;position:fixed!important;top:12px!important;left:50%!important;transform:translateX(-50%)!important;width:calc(100vw - 24px)!important;max-width:640px!important;z-index:2147483647!important;display:block!important;"
 					const shadow = host.attachShadow({ mode: "open" })
 					frame = document.createElement("iframe")
 					frame.title = "Read Aloud playback controls"
 					frame.src = `${browser.runtime.getURL("/player.html")}#${session}`
 					frame.allow = "autoplay"
 					frame.style.cssText =
-						"display:block;width:100%;height:88px;border:0;color-scheme:light dark;border-radius:14px;box-shadow:0 6px 30px #0003;"
+						"display:block;width:100%;height:52px;border:0;color-scheme:light dark;border-radius:12px;box-shadow:0 6px 30px #0003;"
 					shadow.append(frame)
 					document.documentElement.append(host, style)
 					return Promise.resolve({ ok: true })
@@ -85,13 +85,29 @@ export default defineContentScript({
 			)
 				return
 			if (message.command === "document") return Promise.resolve({ text: source?.text ?? "" })
+			if (message.command === "selection") {
+				if (!window.getSelection()?.toString().trim()) return Promise.resolve({ text: null })
+				try {
+					source = captureDocument("selection")
+					window.getSelection()?.removeAllRanges()
+					CSS.highlights?.delete(key)
+					return Promise.resolve({ text: source.text })
+				} catch (error) {
+					return Promise.resolve({
+						error: error instanceof Error ? error.message : "This selection could not be read.",
+					})
+				}
+			}
 			if (message.command === "close") {
 				close()
 				return Promise.resolve({ ok: true })
 			}
 			if (message.command === "resize" && "height" in message && typeof message.height === "number" && frame) {
-				const height = Math.min(180, Math.max(64, message.height))
+				const height = Math.min(180, Math.max(44, message.height))
 				frame.style.height = `${height}px`
+				if (host && "width" in message && typeof message.width === "number" && Number.isFinite(message.width)) {
+					host.style.setProperty("max-width", `${Math.min(640, Math.max(240, message.width))}px`, "important")
+				}
 			}
 			if (
 				message.command === "highlight" &&

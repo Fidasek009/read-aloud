@@ -29,3 +29,10 @@ test("grapheme voice tokens keep original word spans and reject unreadable chara
 	expect(tokens.words[6]).toEqual({ start: 2, end: 3 })
 	expect(() => tokenizeText("123", map, "uk")).toThrow("cannot read")
 })
+
+test("language labels omit redundant regions and keep catalog dialects distinct", async () => {
+	const { getVoice, languageLabel } = await import("../../../src/speech/catalog.ts")
+	expect(languageLabel(getVoice("cs_CZ-jirka-medium"))).toBe("Czech")
+	expect(languageLabel(getVoice("en_US-ljspeech-medium"))).toBe("English (United States)")
+	expect(languageLabel(getVoice("en_GB-alan-medium"))).toBe("English (Great Britain)")
+})

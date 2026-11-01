@@ -57,3 +57,36 @@ test("alignment uses actual acoustic frames, rejects malformed outputs and unsup
 		),
 	).toThrow("cannot pronounce")
 })
+
+test("valid phonemizer spans remain distinct in scripts without spaces; unmappable annotations retain speech", () => {
+	const tokens = tokenizeEvents(
+		"今天很好",
+		[
+			{ type: "word", textPosition: 1, length: 2 },
+			{ type: "phoneme", textPosition: 1, length: 0, phoneme: "a" },
+			{ type: "word", textPosition: 3, length: 2 },
+			{ type: "phoneme", textPosition: 3, length: 0, phoneme: "b" },
+		],
+		map,
+	)
+	expect(
+		alignWords(
+			tokens,
+			tokens.ids.map(() => 1),
+			256,
+		).timings.map(({ start, end }) => ({ start, end })),
+	).toEqual([
+		{ start: 0, end: 2 },
+		{ start: 2, end: 4 },
+	])
+	const unmapped = tokenizeEvents(
+		"a",
+		[
+			{ type: "word", textPosition: 99, length: 1 },
+			{ type: "phoneme", textPosition: 99, length: 0, phoneme: "a" },
+		],
+		map,
+	)
+	expect(unmapped.symbols).toContain("a")
+	expect(unmapped.words.every((word) => word === null)).toBe(true)
+})

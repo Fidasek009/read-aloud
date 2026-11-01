@@ -1,10 +1,14 @@
 import { $ } from "bun"
 
+import { checkPdfSelection } from "./check-pdf-selection.ts"
+import { checkVolume, observePlayerAudio } from "./check-player-controls.ts"
+
 const root = import.meta.dir.replace(/\/scripts$/, "")
 const out = `${root}/.cache/product-probe/firefox`
 await $`rm -rf ${out}`.quiet()
 await $`mkdir -p ${out} ${root + "/.cache/product-probe/profiles"}`.quiet()
 await $`cp -R ${root + "/.output/firefox-mv3/."} ${out}`.quiet()
+await observePlayerAudio(out)
 const manifest = await Bun.file(`${out}/manifest.json`).json()
 // Test-only grant for scripted entry; native Firefox action activation is a separate gate.
 manifest.host_permissions = ["http://127.0.0.1/*", "https://is.muni.cz/*"]
@@ -14,7 +18,7 @@ const server = Bun.serve({
 	port: 0,
 	fetch: () =>
 		new Response(
-			'<!doctype html><main><h1>Čtení na vašem zařízení</h1><p id="selection">Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.</p><p>Další věta pro ověření přehrávání.</p></main>',
+			'<!doctype html><main><h1>Čtení na vašem zařízení</h1><p id="selection">Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.</p><p id="warm-selection">Jenom tento výběr.</p><p>Další věta pro ověření přehrávání.</p></main>',
 			{ headers: { "Content-Type": "text/html;charset=utf-8" } },
 		),
 })
@@ -116,14 +120,7 @@ try {
 		() => script<number>("document.querySelectorAll('section').length"),
 		(value) => value === 178,
 	)
-	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .primary').click()`)
-	const download = await waitFor(
-		() => script<string>("document.querySelector('#status').textContent"),
-		(value) => /ready|failed|unexpected|interrupted/i.test(value),
-		120,
-	)
-	assert(download.includes("ready"), download)
-	console.log("Firefox Czech voice download, integrity check, and persistence passed.")
+	await script("browser.storage.local.set({voice:'cs_CZ-jirka-medium#999'})")
 	const tab = await script<{ id: number }>(`browser.tabs.create({url:${JSON.stringify(server.url.href)},active:true})`)
 	let sourceHandle = ""
 	await waitFor(
@@ -158,6 +155,51 @@ try {
 		15,
 	)
 	await run("/frame", { id: frame })
+
+	await waitFor(
+		() => script("document.querySelector('#bar').dataset.view"),
+		(value) => value === "setup",
+	)
+	assert(
+		await script("document.querySelector('#playback').hidden && !document.querySelector('#setup').hidden"),
+		"Firefox exposed empty playback controls",
+	)
+	await script("document.querySelector('#setup').focus()")
+	await run("/actions", {
+		actions: [
+			{
+				type: "key",
+				id: "setup-keyboard",
+				actions: [
+					{ type: "keyDown", value: "\uE004" },
+					{ type: "keyUp", value: "\uE004" },
+				],
+			},
+		],
+	})
+	assert(await script("document.activeElement.id==='close'"), "Firefox setup keyboard order is incorrect")
+	await script("indexedDB.open=()=>{throw Error('Embedded frame storage is unavailable')}")
+	await run("/frame", { id: null })
+	await run("/window", { handle: voicesHandle })
+	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .primary').click()`)
+	const download = await waitFor(
+		() => script<string>("document.querySelector('#status').textContent"),
+		(value) => /ready|failed|unexpected|interrupted/i.test(value),
+		120,
+	)
+	assert(download.includes("ready"), download)
+	console.log("Firefox Czech voice download, integrity check, and persistence passed.")
+
+	await run("/window", { handle: sourceHandle })
+	await run("/frame", { id: frame })
+	await waitFor(
+		() => script("document.querySelector('#bar').dataset.view"),
+		(value) => value === "playback",
+	)
+	assert(
+		await script("document.querySelector('#voice').value==='cs_CZ-jirka-medium'"),
+		"Firefox stale preference left an empty voice picker",
+	)
 	let status = await waitFor(
 		() => script<string>("document.querySelector('#status')?.textContent"),
 		(value) => typeof value === "string" && !/Getting|Preparing/.test(value),
@@ -170,7 +212,10 @@ try {
 	await script(
 		"document.addEventListener('click',event=>document.body.setAttribute('data-probe-target',event.target.id+':'+event.isTrusted),true)",
 	)
-	if (status.includes("Press Play")) {
+	if (
+		status.includes("Press Play") ||
+		(await script("document.querySelector('#play').getAttribute('aria-label')")) === "Play"
+	) {
 		// Gecko's pointer coordinates are wrong for this transformed shadow iframe.
 		// Focus + trusted keyboard input also verifies keyboard activation.
 		await script("document.querySelector('#play').focus()")
@@ -219,20 +264,121 @@ try {
 	await run("/frame", { id: frame })
 	const cold = (await script<any>("browser.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
 	console.log("Firefox cold first-buffer timings:", JSON.stringify(cold))
+	const volume = await script<any>(checkVolume)
+	assert(volume?.muted, "Firefox volume failed: " + JSON.stringify(volume))
+	console.log("Firefox volume controls:", JSON.stringify(volume))
+	await run("/actions", {
+		actions: [
+			{
+				type: "key",
+				id: "volume-keyboard",
+				actions: [
+					{ type: "keyDown", value: "\uE00C" },
+					{ type: "keyUp", value: "\uE00C" },
+				],
+			},
+		],
+	})
+	assert(
+		await script(
+			"!document.querySelector('#volume-panel').matches(':popover-open') && !!document.querySelector('#bar')",
+		),
+		"Firefox Escape closed the player instead of the volume panel",
+	)
+	await script("document.querySelector('#sound').click()")
+	await run("/frame", { id: null })
+	await run("/actions", {
+		actions: [
+			{
+				type: "pointer",
+				id: "volume-outside",
+				parameters: { pointerType: "mouse" },
+				actions: [
+					{ type: "pointerMove", duration: 0, x: 10, y: 180 },
+					{ type: "pointerDown", button: 0 },
+					{ type: "pointerUp", button: 0 },
+				],
+			},
+		],
+	})
+	await run("/frame", { id: frame })
+	assert(
+		await script("!document.querySelector('#volume-panel').matches(':popover-open')"),
+		"Firefox source-page click left the volume panel open",
+	)
+	await script(
+		"(()=>{document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))})()",
+	)
 	await script("document.querySelector('#play').click()")
 	await waitFor(
 		() => script<string>("document.querySelector('#status').textContent"),
 		(value) => value === "Paused",
 	)
-	await script("document.querySelector('#close').click()")
+	const originalSession = await script("location.hash")
 	await run("/frame", { id: null })
-	await waitFor(() => script("!document.querySelector('[data-read-aloud]')"), Boolean)
+	await script("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
+	await run("/frame", { id: frame })
+	const pressPlay = async () => {
+		await script("document.querySelector('#play').focus()")
+		await run("/actions", {
+			actions: [
+				{
+					type: "key",
+					id: "keyboard",
+					actions: [
+						{ type: "keyDown", value: "\uE007" },
+						{ type: "keyUp", value: "\uE007" },
+					],
+				},
+			],
+		})
+	}
+	await pressPlay()
+	await waitFor(
+		() => script<any>("browser.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"),
+		(value) => value?.text === "Jenom tento výběr.",
+	)
+	assert((await script("location.hash")) === originalSession, "Play replaced the existing Firefox reader")
+	await waitFor(
+		() => script("document.querySelector('#status').textContent"),
+		(value) => value === "Finished",
+	)
+	assert(await script("document.querySelector('#next').disabled"), "Firefox escaped the selected text")
+	await pressPlay()
+	await waitFor(
+		() => script("document.querySelector('#play').getAttribute('aria-label')"),
+		(value) => value === "Pause",
+	)
+	assert(
+		(
+			await script<any>(
+				"browser.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})",
+			)
+		).text === "Jenom tento výběr.",
+		"Firefox replay escaped the selected text",
+	)
+	await script("document.querySelector('#play').click()")
+	await run("/frame", { id: null })
 	await run("/window", { handle: voicesHandle })
 	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .danger').click()`)
 	await waitFor(
 		() => script<string>("document.querySelector('#status').textContent"),
 		(value) => value.includes("deleted"),
 	)
+	await run("/window", { handle: sourceHandle })
+	await run("/frame", { id: frame })
+	await waitFor(
+		() => script("document.querySelector('#bar').dataset.view"),
+		(value) => value === "setup",
+	)
+	assert(
+		await script("document.querySelector('#playback').hidden && !document.querySelector('#setup').hidden"),
+		"Firefox deletion left unusable playback controls",
+	)
+	await script("document.querySelector('#close').click()")
+	await run("/frame", { id: null })
+	await waitFor(() => script("!document.querySelector('[data-read-aloud]')"), Boolean)
+	await run("/window", { handle: voicesHandle })
 	console.log("Firefox pause, close, and deletion passed.")
 	const originalPdf = await script<{ id: number }>(
 		`browser.tabs.create({url:'https://is.muni.cz/th/wdhgd/bc.pdf',active:false})`,
@@ -273,6 +419,8 @@ try {
 		pdf.pages === 60 && pdf.characters > 50000 && pdf.highlighted === "Virtual Research Environment",
 		`Firefox PDF mapping failed: ${JSON.stringify(pdf)}`,
 	)
+	const pdfSelection = await script<{ exactSelection?: boolean }>(checkPdfSelection)
+	assert(pdfSelection.exactSelection, `Firefox PDF selection failed: ${JSON.stringify(pdfSelection)}`)
 	await run("/window", { handle: voicesHandle })
 	assert(
 		await script(`browser.tabs.get(${originalPdf.id}).then(()=>true,()=>false)`),
@@ -289,12 +437,19 @@ try {
 				performance: { cold, caveat: "Development VM with virtual audio, not target-hardware latency acceptance." },
 				virtualAudio: Boolean(Bun.env.PULSE_SERVER),
 				pdf,
+				pdfSelection,
 				passed: [
+					"no-voice state hides unusable controls",
+					"live installation recovers a stale preference",
+					"extension-owned storage despite unavailable iframe storage",
 					"explicit download",
 					"integrity",
 					"model storage",
 					"local speech",
 					"Czech word highlighting",
+					"keyboard Play reads only the current selection",
+					"volume output gain, mute, persistence, no synthesis restart, and keyboard dismissal",
+					"selection completion and replay stay within the selection",
 					"pause",
 					"close",
 					"delete",

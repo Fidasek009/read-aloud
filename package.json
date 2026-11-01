@@ -25,7 +25,8 @@
 		"zip:firefox": "bun --bun run wxt zip --browser firefox --mv3",
 		"probe:chrome": "bun scripts/probe-product.ts",
 		"probe:firefox": "bun scripts/probe-product-firefox.ts",
-		"probe:pdf": "bun scripts/probe-pdf.ts"
+		"probe:pdf": "bun scripts/probe-pdf.ts",
+		"probe:pdf:speech": "PDF_CHECK_SPEECH=1 bun scripts/probe-pdf.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "1.4.4",

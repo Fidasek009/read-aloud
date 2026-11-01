@@ -1,15 +1,38 @@
 import { type Browser, browser } from "wxt/browser"
 
 import { SpeechEngine } from "./engine.ts"
-import { speechRequest } from "./protocol.ts"
+import { isVoiceChange, speechRequest } from "./protocol.ts"
 import { SpeechService } from "./service.ts"
+import { installedVoices } from "./vault.ts"
 
 export function installSpeechBroker() {
+	// Read from extension-owned storage, never the embedded frame's partition.
+	browser.runtime.onMessage.addListener((message: unknown, sender) => {
+		if (
+			sender.id !== browser.runtime.id ||
+			!sender.url ||
+			!message ||
+			typeof message !== "object" ||
+			!("type" in message) ||
+			message.type !== "installed-voices"
+		)
+			return
+		const url = new URL(sender.url),
+			own = new URL(browser.runtime.getURL("/"))
+		if (url.protocol !== own.protocol || url.host !== own.host || url.pathname !== "/player.html") return
+		return installedVoices()
+	})
 	const local = import.meta.env.BROWSER === "firefox" ? new SpeechService(new SpeechEngine()) : undefined
 	const clients = new Map<string, Browser.runtime.Port>()
 	let host: Browser.runtime.Port | undefined
 	let opening: Promise<void> | undefined
 	let connected: (() => void) | undefined
+	browser.storage.onChanged.addListener((changes, area) => {
+		const change: unknown = changes.voiceChange?.newValue
+		if (area !== "local" || !isVoiceChange(change) || !change.deleted) return
+		local?.voiceDeleted(change.id)
+		host?.postMessage({ deletedVoice: change.id })
+	})
 	const ready = () =>
 		(opening ??= (async () => {
 			if (host) return

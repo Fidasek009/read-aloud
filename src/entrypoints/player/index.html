@@ -6,42 +6,60 @@
 		<title>Read Aloud</title>
 	</head>
 	<body>
-		<div id="bar" role="group" aria-label="Read Aloud playback">
-			<button id="previous" title="Previous sentence" aria-label="Previous sentence">
-				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M19 5l-10 7 10 7z" /></svg>
-			</button>
-			<button id="play" title="Pause" aria-label="Pause" class="play">
-				<svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-icon" d="M8 5v14M16 5v14" /></svg>
-			</button>
-			<button id="next" title="Next sentence" aria-label="Next sentence">
-				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M5 5l10 7-10 7z" /></svg>
-			</button>
-			<label class="speed"
-				><span>Speed</span
-				><input id="speed" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed" /><span
-					id="rate"
-					>1×</span
-				></label
-			>
-			<select id="voice" aria-label="Voice"></select>
-			<a
-				id="manage"
-				class="icon"
-				href="voices.html"
-				target="_blank"
-				rel="noopener"
-				title="Voices and settings"
-				aria-label="Voices and settings"
-				><svg viewBox="0 0 24 24" aria-hidden="true">
-					<path
-						d="m9 3-.7 3a7 7 0 0 0-1.5.9L4 6l-2 3.5 2.2 2v1L2 14.5 4 18l2.8-.9a7 7 0 0 0 1.5.9l.7 3h4l.7-3a7 7 0 0 0 1.5-.9L18 18l2-3.5-2.2-2v-1L20 9.5 18 6l-2.8.9a7 7 0 0 0-1.5-.9L13 3z"
-					/>
-					<circle cx="11" cy="12" r="3" /></svg
-			></a>
-			<button id="close" title="Stop reading" aria-label="Stop reading">
+		<div id="bar" role="group" aria-label="Read Aloud" data-view="loading">
+			<div id="playback" hidden>
+				<div id="transport" role="group" aria-label="Playback">
+					<button id="previous" title="Previous sentence" aria-label="Previous sentence">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M19 5l-10 7 10 7z" /></svg>
+					</button>
+					<button id="play" title="Play" aria-label="Play" class="play" disabled>
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path id="play-icon" d="m8 5 11 7-11 7z" /></svg>
+					</button>
+					<button id="next" title="Next sentence" aria-label="Next sentence">
+						<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M5 5l10 7-10 7z" /></svg>
+					</button>
+				</div>
+				<div id="adjustments" role="group" aria-label="Listening controls">
+					<label class="speed"
+						><input id="speed" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed" /><span
+							id="rate"
+							>1×</span
+						></label
+					>
+					<button id="sound" popovertarget="volume-panel" title="Volume" aria-label="Volume">
+						<svg viewBox="0 0 24 24" aria-hidden="true">
+							<path d="m11 5-6 4H2v6h3l6 4z" />
+							<path id="sound-waves" d="M15 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14" />
+						</svg>
+					</button>
+				</div>
+				<div id="voice-controls" role="group" aria-label="Voice controls">
+					<select id="voice" aria-label="Voice"></select>
+					<a
+						id="manage"
+						class="icon"
+						href="voices.html"
+						target="_blank"
+						rel="noopener"
+						title="Voices and settings"
+						aria-label="Voices and settings"
+						><svg viewBox="0 0 24 24" aria-hidden="true">
+							<path
+								d="m9 3-.7 3a7 7 0 0 0-1.5.9L4 6l-2 3.5 2.2 2v1L2 14.5 4 18l2.8-.9a7 7 0 0 0 1.5.9l.7 3h4l.7-3a7 7 0 0 0 1.5-.9L18 18l2-3.5-2.2-2v-1L20 9.5 18 6l-2.8.9a7 7 0 0 0-1.5-.9L13 3z"
+							/>
+							<circle cx="11" cy="12" r="3" /></svg
+					></a>
+				</div>
+			</div>
+			<div id="volume-panel" popover aria-label="Volume" role="group">
+				<label for="volume">Volume <output id="volume-level" for="volume">100%</output></label>
+				<input id="volume" type="range" min="0" max="100" step="1" value="100" aria-label="Volume" autofocus />
+			</div>
+			<div id="message"><span id="status" role="status" aria-live="polite">Getting ready…</span></div>
+			<a id="setup" href="voices.html" target="_blank" rel="noopener" hidden>Choose a voice</a>
+			<button id="close" title="Close" aria-label="Close">
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
 			</button>
-			<div id="message"><span id="status" role="status" aria-live="polite">Getting ready…</span></div>
 		</div>
 		<script type="module" src="./main.ts"></script>
 	</body>
