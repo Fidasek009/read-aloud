@@ -1,7 +1,8 @@
 import { $ } from "bun"
 
 import { checkPdfSelection } from "./check-pdf-selection.ts"
-import { checkVolume, observePlayerAudio } from "./check-player-controls.ts"
+import { checkSpeedPanel, checkVolume, failNextPlayback, observePlayerAudio } from "./check-player-controls.ts"
+import { observeContextMenu } from "./observe-context-menu.ts"
 
 const root = import.meta.dir.replace(/\/scripts$/, "")
 const out = `${root}/.cache/product-probe/firefox`
@@ -9,6 +10,7 @@ await $`rm -rf ${out}`.quiet()
 await $`mkdir -p ${out} ${root + "/.cache/product-probe/profiles"}`.quiet()
 await $`cp -R ${root + "/.output/firefox-mv3/."} ${out}`.quiet()
 await observePlayerAudio(out)
+await observeContextMenu(out)
 const manifest = await Bun.file(`${out}/manifest.json`).json()
 // Test-only grant for scripted entry; native Firefox action activation is a separate gate.
 manifest.host_permissions = ["http://127.0.0.1/*", "https://is.muni.cz/*"]
@@ -180,14 +182,29 @@ try {
 	assert(await script("document.activeElement.id==='close'"), "Firefox setup keyboard order is incorrect")
 	await script("indexedDB.open=()=>{throw Error('Embedded frame storage is unavailable')}")
 	await run("/frame", { id: null })
+	await script("window.getSelection().selectAllChildren(document.querySelector('#selection'))")
+	await run("/frame", { id: frame })
+	const initialMenu = await script(
+		`browser.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
+	)
+	assert(initialMenu?.ok, `Firefox initial context-menu route failed: ${JSON.stringify(initialMenu)}`)
+	await waitFor(
+		() => script("document.body.dataset.probeControlChange"),
+		(value) => value === "local:true",
+		5,
+	)
+	await run("/frame", { id: null })
 	await run("/window", { handle: voicesHandle })
 	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .primary').click()`)
-	const download = await waitFor(
-		() => script<string>("document.querySelector('#status').textContent"),
-		(value) => /ready|failed|unexpected|interrupted/i.test(value),
+	await waitFor(
+		() => script<boolean>("!!document.querySelector('[data-voice=\"cs_CZ-jirka-medium\"] .danger')"),
+		Boolean,
 		120,
 	)
-	assert(download.includes("ready"), download)
+	assert(
+		await script("document.querySelector('#status').textContent===''"),
+		"Download added a page-level success notice",
+	)
 	console.log("Firefox Czech voice download, integrity check, and persistence passed.")
 
 	await run("/window", { handle: sourceHandle })
@@ -309,12 +326,16 @@ try {
 	await script(
 		"(()=>{document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))})()",
 	)
-	await script("document.querySelector('#play').click()")
-	await waitFor(
-		() => script<string>("document.querySelector('#status').textContent"),
-		(value) => value === "Paused",
-	)
+	console.log("Firefox speed panel:", JSON.stringify(await script(checkSpeedPanel)))
 	const originalSession = await script("location.hash")
+	await script(failNextPlayback)
+	console.log("Firefox recovery test: waiting for the injected output failure.")
+	await waitFor(
+		() => script("document.querySelector('#status').textContent"),
+		(value) => value === "Reading could not continue.",
+	)
+	assert(await script("!document.querySelector('#play').disabled"), "Firefox failure disabled retry")
+	console.log("Firefox recovery test: failure exposed Play.")
 	await run("/frame", { id: null })
 	await script("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
 	await run("/frame", { id: frame })
@@ -334,6 +355,7 @@ try {
 		})
 	}
 	await pressPlay()
+	console.log("Firefox recovery test: Play requested the new selection.")
 	await waitFor(
 		() => script<any>("browser.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"),
 		(value) => value?.text === "Jenom tento výběr.",
@@ -344,6 +366,7 @@ try {
 		(value) => value === "Finished",
 	)
 	assert(await script("document.querySelector('#next').disabled"), "Firefox escaped the selected text")
+	console.log("Firefox recovery test: selection completed.")
 	await pressPlay()
 	await waitFor(
 		() => script("document.querySelector('#play').getAttribute('aria-label')"),
@@ -357,13 +380,52 @@ try {
 		).text === "Jenom tento výběr.",
 		"Firefox replay escaped the selected text",
 	)
+	await script(failNextPlayback)
+	console.log("Firefox recovery test: testing a second failure before the context-menu command.")
+	await waitFor(
+		() => script("document.querySelector('#status').textContent"),
+		(value) => value === "Reading could not continue.",
+	)
+	await run("/frame", { id: null })
+	await script("window.getSelection().selectAllChildren(document.querySelector('#selection'))")
+	await run("/frame", { id: frame })
+	const menuRestart = await script<{ ok?: boolean; error?: string; probeError?: string }>(
+		`browser.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
+	)
+	assert(menuRestart?.ok, `Firefox background menu test failed: ${JSON.stringify(menuRestart)}`)
+	const restartStatus = await waitFor(
+		() => script<string>("document.querySelector('#status').textContent"),
+		(value) => value !== "Reading could not continue." && !value.includes("Getting") && !value.includes("Preparing"),
+	)
+	console.log(
+		"Firefox context-menu restart:",
+		restartStatus,
+		await script(
+			"({context:window.__probeAudio.gain.context.state,activation:navigator.userActivation.hasBeenActive})",
+		),
+	)
+	assert(
+		/^(Reading|Press Play to start listening\.)$/.test(restartStatus),
+		`Firefox context-menu restart failed: ${restartStatus}`,
+	)
+	if (restartStatus.includes("Press Play")) await pressPlay()
+	await waitFor(
+		() => script("document.querySelector('#play').getAttribute('aria-label')"),
+		(value) => value === "Pause",
+	)
+	console.log("Firefox Play and context-menu commands recovered from playback failure.")
 	await script("document.querySelector('#play').click()")
+	await waitFor(
+		() => script("document.querySelector('#status').textContent"),
+		(value) => value === "Paused",
+		5,
+	)
 	await run("/frame", { id: null })
 	await run("/window", { handle: voicesHandle })
 	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .danger').click()`)
 	await waitFor(
-		() => script<string>("document.querySelector('#status').textContent"),
-		(value) => value.includes("deleted"),
+		() => script<boolean>("!document.querySelector('[data-voice=\"cs_CZ-jirka-medium\"] .danger')"),
+		Boolean,
 	)
 	await run("/window", { handle: sourceHandle })
 	await run("/frame", { id: frame })
@@ -449,6 +511,9 @@ try {
 					"Czech word highlighting",
 					"keyboard Play reads only the current selection",
 					"volume output gain, mute, persistence, no synthesis restart, and keyboard dismissal",
+					"floating speed and volume panels leave bar height unchanged",
+					"Play and background context-menu commands recover from playback failure",
+					"PDF close and context-menu restart without Tab.url, with a new session",
 					"selection completion and replay stay within the selection",
 					"pause",
 					"close",

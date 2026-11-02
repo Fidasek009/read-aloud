@@ -1,18 +1,21 @@
 import type { ReadingDocument } from "./document.ts"
 
-import { layoutHyphenation } from "./normalize.ts"
+import { layoutHyphenation, normalizeDocument } from "./normalize.ts"
+import { projectRun } from "./runs.ts"
 
 function sliceDocument(source: ReadingDocument, start: number, end: number): ReadingDocument {
 	return {
 		text: source.text.slice(start, end),
 		runs: source.runs
 			.filter((run) => run.to > start && run.from < end)
-			.map((run) => ({
-				node: run.node,
-				from: Math.max(run.from, start) - start,
-				to: Math.min(run.to, end) - start,
-				offset: run.offset + Math.max(0, start - run.from),
-			})),
+			.map((run) =>
+				projectRun(
+					run,
+					Math.max(run.from, start) - start,
+					Math.min(run.to, end) - start,
+					run.offset + Math.max(0, start - run.from),
+				),
+			),
 	}
 }
 
@@ -68,6 +71,8 @@ function normalized(text: string) {
 
 /** Match a native PDF selection without reading beyond it or losing DOM offsets. */
 export function locateSelection(source: ReadingDocument, selection: string): ReadingDocument {
+	// Matching normalized text must also return normalized speech, not a raw slice.
+	source = normalizeDocument(source, true)
 	const haystack = normalized(source.text)
 	const needle = normalized(selection).value.trim()
 	if (!needle) throw new Error("Select some PDF text first.")

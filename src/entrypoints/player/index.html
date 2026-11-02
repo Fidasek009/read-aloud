@@ -20,12 +20,14 @@
 					</button>
 				</div>
 				<div id="adjustments" role="group" aria-label="Listening controls">
-					<label class="speed"
-						><input id="speed" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed" /><span
-							id="rate"
-							>1×</span
-						></label
+					<button
+						id="rate"
+						popovertarget="speed-panel"
+						title="Reading speed · 1×"
+						aria-label="Reading speed, 1 times normal"
 					>
+						1×
+					</button>
 					<button id="sound" popovertarget="volume-panel" title="Volume" aria-label="Volume">
 						<svg viewBox="0 0 24 24" aria-hidden="true">
 							<path d="m11 5-6 4H2v6h3l6 4z" />
@@ -51,15 +53,19 @@
 					></a>
 				</div>
 			</div>
-			<div id="volume-panel" popover aria-label="Volume" role="group">
-				<label for="volume">Volume <output id="volume-level" for="volume">100%</output></label>
-				<input id="volume" type="range" min="0" max="100" step="1" value="100" aria-label="Volume" autofocus />
-			</div>
 			<div id="message"><span id="status" role="status" aria-live="polite">Getting ready…</span></div>
 			<a id="setup" href="voices.html" target="_blank" rel="noopener" hidden>Choose a voice</a>
 			<button id="close" title="Close" aria-label="Close">
 				<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
 			</button>
+		</div>
+		<div id="speed-panel" class="adjustment-panel" popover aria-label="Reading speed" role="group">
+			<label for="speed">Speed <output id="speed-level" for="speed">1×</output></label>
+			<input id="speed" type="range" min="0.5" max="2" step="0.1" value="1" aria-label="Reading speed" autofocus />
+		</div>
+		<div id="volume-panel" class="adjustment-panel" popover aria-label="Volume" role="group">
+			<label for="volume">Volume <output id="volume-level" for="volume">100%</output></label>
+			<input id="volume" type="range" min="0" max="100" step="1" value="100" aria-label="Volume" autofocus />
 		</div>
 		<script type="module" src="./main.ts"></script>
 	</body>

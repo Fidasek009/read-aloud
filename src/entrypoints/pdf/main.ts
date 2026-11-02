@@ -7,6 +7,7 @@ import type { ReaderRequest } from "../../reading/host.ts"
 
 import { type ReadingDocument, sourceRange, type TextRun } from "../../reading/document.ts"
 import { normalizeDocument } from "../../reading/normalize.ts"
+import { isPdfCommand } from "../../reading/pdf-control.ts"
 import { locateSelection, selectRange } from "../../reading/selection.ts"
 import "pdfjs-dist/web/pdf_viewer.css"
 import "./style.css"
@@ -16,7 +17,7 @@ const status = document.querySelector<HTMLParagraphElement>("#status")!
 const controls = document.querySelector<HTMLDivElement>("#controls")!
 const params = new URLSearchParams(location.search)
 const key = "read-aloud-current-word"
-const session = crypto.randomUUID()
+let session = ""
 let source: ReadingDocument = { text: "", runs: [] }
 let complete: ReadingDocument = source
 let frame: HTMLIFrameElement | undefined
@@ -24,19 +25,51 @@ let tabId: number | undefined
 let alive = true
 let revision = 0
 let allowStart = true
+let pendingSelection: ReadingDocument | undefined
+function captureSelection() {
+	const selection = getSelection()
+	if (selection?.toString().trim() && selection.rangeCount) {
+		try {
+			pendingSelection = selectRange(complete, selection.getRangeAt(0))
+		} catch {
+			pendingSelection = undefined
+		}
+	}
+}
+function takeSelection(): ReadingDocument | undefined {
+	const selection = getSelection()
+	const captured = selection?.toString().trim()
+		? selectRange(complete, selection.rangeCount ? selection.getRangeAt(0) : null)
+		: pendingSelection
+	pendingSelection = undefined
+	selection?.removeAllRanges()
+	return captured
+}
+document.addEventListener("selectionchange", captureSelection)
+pages.addEventListener("contextmenu", captureSelection)
+pages.addEventListener("pointerdown", (event) => {
+	if (event.button === 0) pendingSelection = undefined
+})
+document.addEventListener("keydown", (event) => {
+	if (event.key === "Escape" || event.key.startsWith("Arrow")) pendingSelection = undefined
+})
+// Only the PDF layer owner rebinds nodes; normalized/sliced views are read-only.
+interface PdfTextRun extends TextRun {
+	node: Text
+}
 interface PageState {
 	page: PDFPageProxy
 	canvas: HTMLCanvasElement
 	container: HTMLDivElement
 	content: Awaited<ReturnType<PDFPageProxy["getTextContent"]>>
 	viewport: ReturnType<PDFPageProxy["getViewport"]>
-	runs: (TextRun | undefined)[]
+	runs: (PdfTextRun | undefined)[]
 	task?: RenderTask
 	visible: boolean
 	textReady?: Promise<void>
 	pending: Promise<void>
 }
-const owners = new WeakMap<Text, { page: PageState; run: TextRun }>()
+const owners = new WeakMap<Text, PageState>()
 
 function ensureText(state: PageState): Promise<void> {
 	return (state.textReady ??= (async () => {
@@ -53,13 +86,15 @@ function ensureText(state: PageState): Promise<void> {
 			if (!(node instanceof Text) || node.data !== run.node.data)
 				throw new Error("The PDF text layer could not be mapped accurately.")
 			run.node = node
-			owners.set(node, { page: state, run })
+			owners.set(node, state)
 		}
 	})())
 }
 
 function stop() {
 	revision++
+	pendingSelection = undefined
+	session = ""
 	frame?.remove()
 	frame = undefined
 	CSS.highlights?.delete(key)
@@ -68,52 +103,79 @@ function stop() {
 async function start(mode: "article" | "selection", initial?: ReadingDocument) {
 	revision++
 	if (!complete.text.trim()) throw new Error("This PDF has no readable text layer.")
-	const selection = window.getSelection()
-	source =
-		initial ??
-		(mode === "selection" ? selectRange(complete, selection?.rangeCount ? selection.getRangeAt(0) : null) : complete)
-	if (mode === "selection") window.getSelection()?.removeAllRanges()
+	const selected = initial ?? (mode === "selection" ? takeSelection() : complete)
+	if (!selected) throw new Error("Select some PDF text first.")
+	source = selected
+	pendingSelection = undefined
 	if (frame) {
 		frame.contentWindow?.dispatchEvent(new Event("read-aloud-source-changed"))
 		return
 	}
 	frame = document.createElement("iframe")
+	session = crypto.randomUUID()
 	frame.title = "Read Aloud playback controls"
 	frame.allow = "autoplay"
 	frame.src = `${browser.runtime.getURL("/player.html")}#${session}`
 	controls.append(frame)
 }
 
+browser.storage.onChanged.addListener((changes, area) => {
+	const command: unknown = changes.pdfCommand?.newValue
+	if (area !== "local" || !isPdfCommand(command) || command.tabId !== tabId || !alive) return
+	if (command.action === "stop") {
+		allowStart = false
+		stop()
+		return
+	}
+	if (command.reveal && frame?.isConnected) {
+		frame.focus()
+		return
+	}
+	allowStart = true
+	void start(command.mode).then(
+		() => {
+			status.textContent = ""
+		},
+		(error) => {
+			status.textContent =
+				error instanceof Error
+					? error.message
+					: "This PDF could not be read. Select the text again and try Read selection."
+		},
+	)
+})
+
 window.readAloudHost = async (message: ReaderRequest) => {
 	if (message.session !== session) throw new Error("This reading session has ended")
 	if (message.command === "document") return { text: source.text }
 	if (message.command === "selection") {
-		const selection = window.getSelection()
-		if (!selection?.toString().trim()) return { text: null }
-		const captured = selectRange(complete, selection.rangeCount ? selection.getRangeAt(0) : null)
-		revision++
-		source = captured
-		selection.removeAllRanges()
-		CSS.highlights?.delete(key)
-		return { text: source.text }
+		try {
+			const captured = takeSelection()
+			if (!captured) return { text: null }
+			revision++
+			source = captured
+			CSS.highlights?.delete(key)
+			return { text: source.text }
+		} catch (error) {
+			return {
+				error: error instanceof Error ? error.message : "This PDF selection could not be read. Select it again.",
+			}
+		}
 	}
 	if (message.command === "close") {
 		stop()
 		return { ok: true }
 	}
 	if (message.command === "resize" && typeof message.height === "number" && frame) {
-		frame.style.height = `${Math.min(180, Math.max(44, message.height))}px`
+		frame.style.height = `${Math.min(240, Math.max(44, message.height))}px`
 		if (typeof message.width === "number" && Number.isFinite(message.width))
 			controls.style.maxWidth = `${Math.min(640, Math.max(240, message.width))}px`
 	}
 	if (message.command === "highlight" && typeof message.start === "number" && typeof message.end === "number") {
 		const current = revision
 		for (const run of source.runs.filter((run) => run.from < message.end! && run.to > message.start!)) {
-			const owner = owners.get(run.node)
-			if (owner) {
-				await ensureText(owner.page)
-				run.node = owner.run.node
-			}
+			const page = owners.get(run.node)
+			if (page) await ensureText(page)
 		}
 		if (current !== revision || !alive || !frame) return { ok: false }
 		const range = sourceRange(source, message.start, message.end)
@@ -289,7 +351,7 @@ async function load() {
 			}
 			const node = document.createTextNode(item.str)
 			const run = { from: result.text.length, to: result.text.length + item.str.length, node, offset: 0 }
-			owners.set(node, { page: state, run })
+			owners.set(node, state)
 			state.runs.push(run)
 			result.runs.push(run)
 			result.text += item.str
@@ -308,7 +370,7 @@ async function load() {
 		await browser.storage.session.remove(name)
 		if (typeof stored[name] !== "string")
 			throw new Error("The PDF selection is no longer available. Select it in this reader and try again.")
-		requested = locateSelection(result, stored[name])
+		requested = locateSelection(complete, stored[name])
 	}
 	if (params.has("source") && tabId !== undefined) {
 		const { pdfReaders } = await browser.storage.session.get("pdfReaders")

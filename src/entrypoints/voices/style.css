@@ -124,6 +124,9 @@ select:focus-visible {
 #count {
 	font-size: 13px;
 }
+#status:empty {
+	display: none;
+}
 #voices {
 	margin-top: 12px;
 }

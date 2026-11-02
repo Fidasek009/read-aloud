@@ -9,6 +9,24 @@ export interface ReaderRequest {
 
 export type ReaderHost = (message: ReaderRequest) => Promise<unknown>
 
+export interface ReaderChange {
+	session: string
+	revision: string
+}
+
+export function isReaderChange(value: unknown): value is ReaderChange {
+	return (
+		!!value &&
+		typeof value === "object" &&
+		"session" in value &&
+		typeof value.session === "string" &&
+		value.session.length <= 80 &&
+		"revision" in value &&
+		typeof value.revision === "string" &&
+		value.revision.length <= 80
+	)
+}
+
 declare global {
 	interface Window {
 		readAloudHost?: ReaderHost

@@ -1,7 +1,45 @@
 import { expect, test } from "bun:test"
 
 import { normalizeDocument } from "../../../src/reading/normalize.ts"
-import { locateSelection } from "../../../src/reading/selection.ts"
+import { locateSelection, selectRange } from "../../../src/reading/selection.ts"
+
+test("PDF selection follows late text-layer binding through normalization and slicing", () => {
+	const values = ["nev-", "ertheless"]
+	const runs = values.map((data, index) => ({
+		node: { data, isConnected: false } as Text,
+		from: index ? 5 : 0,
+		to: index ? 14 : 4,
+		offset: 0,
+	}))
+	const canonical = normalizeDocument({ text: "nev-\nertheless", runs }, true)
+	const scope = locateSelection(canonical, "nevertheless")
+	const nodes = values.map((data) => ({ data, isConnected: true }) as Text)
+	for (let index = 0; index < runs.length; index++) runs[index]!.node = nodes[index]!
+	const range = {
+		collapsed: false,
+		startContainer: nodes[0],
+		startOffset: 0,
+		endContainer: nodes[1],
+		endOffset: 9,
+		intersectsNode: (node: Node) => nodes.includes(node as Text),
+	} as unknown as Range
+	expect(selectRange(canonical, range).text).toBe("nevertheless")
+	expect(selectRange(scope, range).text).toBe("nevertheless")
+	expect(scope.runs[0]!.node).toBe(nodes[0]!)
+	expect(scope.runs[1]!.node).toBe(nodes[1]!)
+})
+
+test("a native PDF selection returns dehyphenated speech for the reported abstract sentence", () => {
+	const raw =
+		"Their day-to-day use is nev-\nertheless constrained by four limitations: the absence of systematic\nperformance tuning, the command-line nature of the dominant sim-\nulation engines, the lack of standardized data stewardship, and the\ndisconnection of analysis from the rest of the workflow."
+	const expected =
+		"Their day-to-day use is nevertheless constrained by four limitations: the absence of systematic performance tuning, the command-line nature of the dominant simulation engines, the lack of standardized data stewardship, and the disconnection of analysis from the rest of the workflow."
+	const node = { data: raw } as Text
+	const selected = locateSelection({ text: raw, runs: [{ node, from: 0, to: raw.length, offset: 0 }] }, raw)
+	expect(selected.text).toBe(expected)
+	for (const run of selected.runs)
+		expect(selected.text.slice(run.from, run.to)).toBe(node.data.slice(run.offset, run.offset + run.to - run.from))
+})
 
 test("line-end hyphenation joins speech while source runs retain exact DOM characters", () => {
 	const values = ["Read in-", "frastructure and pre-exascale. co\u00adoperate.\nNext paragraph."]

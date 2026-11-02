@@ -1,9 +1,16 @@
 import { defineBackground } from "#imports"
 import { browser } from "wxt/browser"
 
+import type { ReaderChange } from "../reading/host.ts"
+import type { PdfAction, PdfCommand } from "../reading/pdf-control.ts"
+
 import { installSpeechBroker } from "../speech/broker.ts"
 
 export default defineBackground(() => {
+	const commandPdf = (tabId: number, action: PdfAction) =>
+		browser.storage.local.set({
+			pdfCommand: { ...action, tabId, revision: crypto.randomUUID() } satisfies PdfCommand,
+		})
 	installSpeechBroker()
 	browser.runtime.onInstalled.addListener(async (details) => {
 		await browser.contextMenus.removeAll()
@@ -11,9 +18,19 @@ export default defineBackground(() => {
 		browser.contextMenus.create({ id: "read-page", title: "Read this page", contexts: ["page"] })
 		if (details.reason === "install") await browser.tabs.create({ url: browser.runtime.getURL("/voices.html") })
 	})
-	const start = async (tabId: number, mode: "selection" | "article", selection?: string, reveal = false) => {
+	const start = async (
+		tabId: number,
+		mode: "selection" | "article",
+		selection?: string,
+		reveal = false,
+		pageUrl?: string,
+	) => {
 		try {
 			const tab = await browser.tabs.get(tabId)
+			// Own extension tabs can omit Tab.url without the broad tabs permission.
+			// The native context-menu event supplies the invoking document URL.
+			const documentUrl = pageUrl?.startsWith(browser.runtime.getURL("/pdf.html")) ? pageUrl : (tab.url ?? pageUrl)
+			await browser.action.setBadgeText({ tabId, text: "" })
 			const previous = await browser.storage.session.get("readingTab")
 			const existingPdf = reveal ? await browser.storage.session.get("pdfReaders") : {}
 			const revealsPreviousPdf =
@@ -23,15 +40,14 @@ export default defineBackground(() => {
 				(existingPdf.pdfReaders as Record<string, unknown>)[String(previous.readingTab)] === tabId
 			if (typeof previous.readingTab === "number" && previous.readingTab !== tabId && !revealsPreviousPdf) {
 				await browser.tabs.sendMessage(previous.readingTab, { type: "stop-reading" }, { frameId: 0 }).catch(() => {})
-				await browser.runtime.sendMessage({ type: "pdf-stop", tabId: previous.readingTab }).catch(() => {})
+				await commandPdf(previous.readingTab, { action: "stop" })
 			}
-			if (tab.url?.startsWith(browser.runtime.getURL("/pdf.html"))) {
-				const result = await browser.runtime.sendMessage({ type: "pdf-read", tabId, mode, reveal })
-				if (result?.error) throw new Error(String(result.error))
+			if (documentUrl?.startsWith(browser.runtime.getURL("/pdf.html"))) {
+				await commandPdf(tabId, { action: "read", mode, reveal })
 				await browser.storage.session.set({ readingTab: tabId })
 				return
 			}
-			if (tab.url && /^https?:/u.test(tab.url) && /\.pdf(?:$|[?#])/iu.test(tab.url)) {
+			if (documentUrl && /^https?:/u.test(documentUrl) && /\.pdf(?:$|[?#])/iu.test(documentUrl)) {
 				if (reveal) {
 					const { pdfReaders } = await browser.storage.session.get("pdfReaders")
 					if (pdfReaders && typeof pdfReaders === "object") {
@@ -46,7 +62,7 @@ export default defineBackground(() => {
 				if (mode === "selection" && !selection?.trim()) throw new Error("Select some PDF text first.")
 				if (selection && selection.length > 500_000) throw new Error("Select a smaller part of the PDF to read.")
 				const url = new URL(browser.runtime.getURL("/pdf.html"))
-				url.searchParams.set("src", tab.url)
+				url.searchParams.set("src", documentUrl)
 				url.searchParams.set("mode", mode)
 				url.searchParams.set("source", String(tabId))
 				const reader = await browser.tabs.create({ url: "about:blank", active: false })
@@ -60,7 +76,6 @@ export default defineBackground(() => {
 				}
 				return
 			}
-			await browser.action.setBadgeText({ tabId, text: "" })
 			const message = { type: "start-reading", mode, reveal }
 			let result
 			try {
@@ -71,7 +86,10 @@ export default defineBackground(() => {
 			}
 			if (result?.error) throw new Error(String(result.error))
 			await browser.storage.session.set({ readingTab: tabId })
-			if (result?.reuse) await browser.runtime.sendMessage({ type: "reset-reader", session: result.session })
+			if (result?.reuse)
+				await browser.storage.local.set({
+					readerChange: { session: result.session, revision: crypto.randomUUID() } satisfies ReaderChange,
+				})
 		} catch (error) {
 			await browser.action.setBadgeText({ tabId, text: "!" })
 			await browser.action.setTitle({
@@ -82,7 +100,13 @@ export default defineBackground(() => {
 	}
 	browser.contextMenus.onClicked.addListener((info, tab) => {
 		if (tab?.id !== undefined)
-			void start(tab.id, info.menuItemId === "read-selection" ? "selection" : "article", info.selectionText)
+			return start(
+				tab.id,
+				info.menuItemId === "read-selection" ? "selection" : "article",
+				info.selectionText,
+				false,
+				info.pageUrl,
+			)
 	})
 	browser.action.onClicked.addListener((tab) => {
 		if (tab.id !== undefined) void start(tab.id, "article", undefined, true)
@@ -93,7 +117,7 @@ export default defineBackground(() => {
 		const readers = stored.pdfReaders as Record<string, number>
 		for (const [reader, source] of Object.entries(readers)) {
 			if (source === sourceTab) {
-				await browser.runtime.sendMessage({ type: "pdf-stop", tabId: Number(reader) }).catch(() => {})
+				await commandPdf(Number(reader), { action: "stop" })
 				delete readers[reader]
 			}
 			if (removed && Number(reader) === sourceTab) {

@@ -179,9 +179,8 @@ async function render() {
 					await browser.storage.local.set({
 						voiceChange: { id: voice.id, deleted: true, revision: crypto.randomUUID() },
 					})
-					status.textContent = `${voice.name} deleted.`
 				} catch {
-					status.textContent = "The voice could not be deleted. Please try again."
+					downloadNotice(voice.id, "The voice could not be deleted. Please try again.", true)
 				}
 				await render()
 				return
@@ -199,7 +198,6 @@ async function render() {
 					if (visible) visible.value = value
 					if (value === 1) {
 						downloadNotice(voice.id, "Finishing download…")
-						status.textContent = `${voice.name}: Finishing download…`
 					}
 				})
 				const preferences = await browser.storage.local.get("voice")
@@ -208,7 +206,6 @@ async function render() {
 					voiceChange: { id: voice.id, deleted: false, revision: crypto.randomUUID() },
 				})
 				downloadNotice(voice.id)
-				status.textContent = `${voice.name} is ready. Select text and choose Read selection from the right-click menu.`
 			} catch (error) {
 				const cancelled =
 					task.controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")
@@ -222,7 +219,6 @@ async function render() {
 								: error.message
 							: "Download failed."
 				downloadNotice(voice.id, message, !cancelled)
-				status.textContent = `${voice.name}: ${message}`
 			} finally {
 				downloads.delete(voice.id)
 				await render()

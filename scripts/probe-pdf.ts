@@ -3,6 +3,7 @@ import { $ } from "bun"
 import { getVoice } from "../src/speech/catalog.ts"
 import { checkPdfSelection } from "./check-pdf-selection.ts"
 import { pdfSpeechCheck } from "./check-pdf-speech.ts"
+import { observeContextMenu } from "./observe-context-menu.ts"
 
 const accessOnly = Bun.env.PDF_CHECK_ACCESS_ONLY === "1"
 if (!accessOnly) {
@@ -19,6 +20,7 @@ const extension = `${root}/.cache/pdf-probe`
 await $`rm -rf ${extension}`.quiet()
 await $`mkdir -p ${extension}`.quiet()
 await $`cp -R ${root + "/.output/chrome-mv3/."} ${extension}`.quiet()
+await observeContextMenu(extension)
 if (speechCheck) {
 	const built = await Bun.build({
 		entrypoints: [`${root}/scripts/check-pdf-speech.ts`],
@@ -162,7 +164,7 @@ async function probe() {
 			readyMs: performance.now() - started,
 			limits: speechCheck
 				? "Test-only host grant, cached MUNI PDF and pinned cached English model; actual CPU worker PCM and word timing validation across the acknowledgement/abstract page boundary. Does not validate physical audio quality, hardware GPU behavior, or target-device latency."
-				: "First checks missing-permission recovery, then uses a test-only origin grant to verify actual privileged fetch without CORS, rendering, and text mapping. Native permission dialog, PDF action, and speech are not covered.",
+				: "Checks missing-permission recovery, privileged fetch without CORS, rendering, text mapping, and the installed context-menu handler's close/reopen path with Tab.url omitted. Uses a test-only origin grant; native menu UI, activeTab grant, permission dialog, and speech are not covered.",
 		}
 		await $`mkdir -p ${root + "/docs/evidence"}`.quiet()
 		await Bun.write(

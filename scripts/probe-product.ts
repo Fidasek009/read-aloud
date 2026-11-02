@@ -1,7 +1,8 @@
 import { $ } from "bun"
 
 import { readingChunks, sentenceTarget } from "../src/reading/document.ts"
-import { checkVolume, observePlayerAudio } from "./check-player-controls.ts"
+import { checkSpeedPanel, checkVolume, failNextPlayback, observePlayerAudio } from "./check-player-controls.ts"
+import { observeContextMenu } from "./observe-context-menu.ts"
 
 // This copied test manifest grants only the fixture origin. Native action /
 // context-menu activation and the activeTab grant are not covered by this test.
@@ -11,6 +12,7 @@ await $`rm -rf ${extension}`.quiet()
 await $`mkdir -p ${extension}`.quiet()
 await $`cp -R ${root + "/.output/chrome-mv3/."} ${extension}`.quiet()
 await observePlayerAudio(extension)
+await observeContextMenu(extension)
 const manifest = await Bun.file(`${extension}/manifest.json`).json()
 assert(!manifest.host_permissions?.length, "The product must not request access to all sites")
 manifest.host_permissions = ["http://127.0.0.1/*", "https://filipkrasa.salonek.org/*"]
@@ -188,6 +190,9 @@ try {
 		await call(playerSession, "Emulation.setEmulatedMedia", {
 			features: [{ name: "prefers-color-scheme", value: dark ? "dark" : "light" }],
 		})
+		await call(sessionId, "Emulation.setEmulatedMedia", {
+			features: [{ name: "prefers-color-scheme", value: dark ? "dark" : "light" }],
+		})
 		await waitFor(
 			() => player("Math.abs(innerHeight-document.querySelector('#bar').getBoundingClientRect().height)<2"),
 			Boolean,
@@ -206,6 +211,9 @@ try {
 	await call(playerSession, "Emulation.setEmulatedMedia", {
 		features: [{ name: "prefers-color-scheme", value: "light" }],
 	})
+	await call(sessionId, "Emulation.setEmulatedMedia", {
+		features: [{ name: "prefers-color-scheme", value: "light" }],
+	})
 	await player("document.querySelector('#setup').focus()")
 	await call(sessionId, "Input.dispatchKeyEvent", {
 		type: "keyDown",
@@ -217,13 +225,11 @@ try {
 	assert(await player("document.activeElement.id==='close'"), "Setup does not tab directly to Close")
 	console.log("No-voice layout passed in dark and narrow views; only Choose a voice and Close are visible.")
 	await view.evaluate("document.querySelector('section .primary').click()")
-	await waitFor(
-		() => view.evaluate<string>("document.querySelector('#status').textContent"),
-		(value) => /ready|failed|unexpected|interrupted/i.test(value),
-		120,
+	await waitFor(() => view.evaluate<boolean>("!!document.querySelector('section .danger')"), Boolean, 120)
+	assert(
+		await view.evaluate("document.querySelector('#status').textContent===''"),
+		"Download added a page-level success notice",
 	)
-	const download = await view.evaluate<string>("document.querySelector('#status').textContent")
-	assert(download.includes("ready"), download)
 	console.log("Explicit download passed integrity check and persisted.")
 
 	await waitFor(
@@ -325,6 +331,7 @@ try {
 	await player(
 		"document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))",
 	)
+	console.log("Speed panel:", JSON.stringify(await player(checkSpeedPanel)))
 	await player("document.querySelector('#play').click()")
 	for (const [name, width] of [
 		["playback-dark", 1000],
@@ -337,6 +344,9 @@ try {
 			mobile: false,
 		})
 		await call(playerSession, "Emulation.setEmulatedMedia", {
+			features: [{ name: "prefers-color-scheme", value: "dark" }],
+		})
+		await call(sessionId, "Emulation.setEmulatedMedia", {
 			features: [{ name: "prefers-color-scheme", value: "dark" }],
 		})
 		await waitFor(
@@ -352,9 +362,22 @@ try {
 		)
 		const shot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
 		await Bun.write(`${root}/.cache/product-probe/${name}.png`, Uint8Array.fromBase64(shot.data))
+		if (name === "playback-dark") {
+			await player("document.querySelector('#rate').click()")
+			await waitFor(
+				() => player("innerHeight>document.querySelector('#bar').getBoundingClientRect().height+50"),
+				Boolean,
+			)
+			const panelShot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
+			await Bun.write(`${root}/.cache/product-probe/speed-dark.png`, Uint8Array.fromBase64(panelShot.data))
+			await player("document.querySelector('#speed-panel').hidePopover()")
+		}
 	}
 	await call(sessionId, "Emulation.clearDeviceMetricsOverride")
 	await call(playerSession, "Emulation.setEmulatedMedia", {
+		features: [{ name: "prefers-color-scheme", value: "light" }],
+	})
+	await call(sessionId, "Emulation.setEmulatedMedia", {
 		features: [{ name: "prefers-color-scheme", value: "light" }],
 	})
 	await player("document.querySelector('#play').click()")
@@ -373,7 +396,7 @@ try {
 		"Toolbar activation duplicated controls",
 	)
 	const barSize = await player(
-		"({width:document.querySelector('#speed').getBoundingClientRect().width,height:document.querySelector('#bar').getBoundingClientRect().height,viewport:innerHeight})",
+		"({width:document.querySelector('#rate').getBoundingClientRect().width,height:document.querySelector('#bar').getBoundingClientRect().height,viewport:innerHeight})",
 	)
 	assert(
 		barSize.width <= 80 && barSize.viewport < 140,
@@ -382,6 +405,25 @@ try {
 	if ((await player("document.querySelector('#play').getAttribute('aria-label')")) === "Pause")
 		await player("document.querySelector('#play').click()")
 	const originalSession = await player("location.hash")
+	await player(failNextPlayback)
+	await waitFor(
+		() => player("document.querySelector('#status').textContent"),
+		(value) => value === "Reading could not continue.",
+	)
+	assert(await player("!document.querySelector('#play').disabled"), "Failure disabled retry")
+	await call(sessionId, "Emulation.setDeviceMetricsOverride", {
+		width: 360,
+		height: 600,
+		deviceScaleFactor: 1,
+		mobile: false,
+	})
+	await waitFor(
+		() =>
+			player("innerWidth<360 && Math.abs(innerHeight-document.querySelector('#bar').getBoundingClientRect().height)<2"),
+		Boolean,
+	)
+	console.log("Narrow error-state speed panel:", JSON.stringify(await player(checkSpeedPanel)))
+	await call(sessionId, "Emulation.clearDeviceMetricsOverride")
 	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
 	await player("document.querySelector('#play').click()", true)
 	const selectedText = await evaluate("document.querySelector('#warm-selection').textContent")
@@ -397,42 +439,65 @@ try {
 	)
 	const warm = (await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
 	console.log("Warm first-buffer timings:", JSON.stringify(warm))
-	await player("document.querySelector('#next').click()")
-	await waitFor(
-		() =>
-			evaluate("Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')"),
-		(value) => value === "A",
+	assert(
+		(await player("!document.querySelector('#message').classList.contains('quiet')")) === false,
+		"Recovered player retained its error",
 	)
+	console.log("A new selection recovered from a forced playback failure.")
+	const waitWord = async (word: string) => {
+		try {
+			await waitFor(
+				() =>
+					player(
+						`probeHighlights.some(word=>word.start===${selectedText.indexOf(word)}&&word.end===${selectedText.indexOf(word) + word.length})`,
+					),
+				Boolean,
+			)
+		} catch (error) {
+			console.log(
+				"Navigation failure:",
+				word,
+				await player(
+					"({status:document.querySelector('#status').textContent,play:document.querySelector('#play').getAttribute('aria-label'),disabled:document.querySelector('#play').disabled,context:window.__probeAudio.gain.context.state,sources:window.__probeAudio.sources,highlights:probeHighlights.slice(-10)})",
+				),
+			)
+			throw error
+		}
+	}
+	await player("probeHighlights.length=0;document.querySelector('#next').click()")
+	await waitWord("A")
 
-	await player("document.querySelector('#next').click()")
-	await waitFor(
-		() =>
-			evaluate("Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')"),
-		(value) => value === "Your",
-	)
-	await player("document.querySelector('#previous').click()")
-	await waitFor(
-		() =>
-			evaluate("Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')"),
-		(value) => value === "A",
-	)
+	await player("probeHighlights.length=0;document.querySelector('#next').click()")
+	await waitWord("Your")
+	await player("probeHighlights.length=0;document.querySelector('#previous').click()")
+	await waitWord("A")
 	await player("document.querySelector('#next').click()")
 	await waitFor(
 		() => player("document.querySelector('#status').textContent"),
 		(value) => value === "Finished",
 	)
 	assert(await player("document.querySelector('#next').disabled"), "Selection continued beyond its final sentence")
-	await player("document.querySelector('#play').click()", true)
-	await waitFor(
-		() =>
-			evaluate("Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')"),
-		(value) => value === "Fresh",
-	)
+	await player("probeHighlights.length=0;document.querySelector('#play').click()", true)
+	await waitWord("Fresh")
 	assert(
 		(await player("chrome.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"))
 			.text === selectedText,
 		"Replay escaped the selected text",
 	)
+	await player(failNextPlayback)
+	await waitFor(
+		() => player("document.querySelector('#status').textContent"),
+		(value) => value === "Reading could not continue.",
+	)
+	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#selection'))")
+	await view.evaluate(
+		`chrome.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
+	)
+	await waitFor(
+		() => player("document.querySelector('#play').getAttribute('aria-label')"),
+		(value) => value === "Pause",
+	)
+	console.log("The context-menu command recovered the existing reader from failure.")
 	const shot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
 	await Bun.write(`${root}/.cache/product-probe/reading.png`, Uint8Array.fromBase64(shot.data))
 	await player("document.querySelector('#play').click()")
@@ -542,10 +607,7 @@ try {
 	await Bun.write(`${root}/.cache/product-probe/md-dash.png`, Uint8Array.fromBase64(mdShot.data))
 	console.log("MD Dash next/previous navigation passed without restarting at the article beginning.")
 	await view.evaluate("document.querySelector('section .danger').click()")
-	await waitFor(
-		() => view.evaluate<string>("document.querySelector('#status').textContent"),
-		(value) => value.includes("deleted"),
-	)
+	await waitFor(() => view.evaluate<boolean>("!document.querySelector('section .danger')"), Boolean)
 	await waitFor(
 		() => mdControl("document.querySelector('#bar').dataset.view"),
 		(value) => value === "setup",
@@ -579,6 +641,8 @@ try {
 					"model storage",
 					"compact language and voice labels",
 					"volume output gain, mute, persistence, no synthesis restart, and keyboard dismissal",
+					"floating speed and volume panels leave bar height unchanged",
+					"Play and background context-menu commands recover from playback failure",
 					"local speech",
 					"word highlighting",
 					"Play replaces the previous scope with the current selection",

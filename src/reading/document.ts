@@ -3,7 +3,7 @@ import { normalizeDocument } from "./normalize.ts"
 export interface TextRun {
 	from: number
 	to: number
-	node: Text
+	readonly node: Text
 	offset: number
 }
 export interface ReadingDocument {

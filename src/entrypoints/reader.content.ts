@@ -65,7 +65,7 @@ export default defineContentScript({
 					frame.src = `${browser.runtime.getURL("/player.html")}#${session}`
 					frame.allow = "autoplay"
 					frame.style.cssText =
-						"display:block;width:100%;height:52px;border:0;color-scheme:light dark;border-radius:12px;box-shadow:0 6px 30px #0003;"
+						"display:block;width:100%;height:52px;border:0;border-radius:12px;color-scheme:light dark;"
 					shadow.append(frame)
 					document.documentElement.append(host, style)
 					return Promise.resolve({ ok: true })
@@ -103,7 +103,7 @@ export default defineContentScript({
 				return Promise.resolve({ ok: true })
 			}
 			if (message.command === "resize" && "height" in message && typeof message.height === "number" && frame) {
-				const height = Math.min(180, Math.max(44, message.height))
+				const height = Math.min(240, Math.max(44, message.height))
 				frame.style.height = `${height}px`
 				if (host && "width" in message && typeof message.width === "number" && Number.isFinite(message.width)) {
 					host.style.setProperty("max-width", `${Math.min(640, Math.max(240, message.width))}px`, "important")

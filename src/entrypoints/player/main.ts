@@ -1,7 +1,7 @@
 import { browser } from "wxt/browser"
 
 import { readingChunks, sentenceTarget } from "../../reading/document.ts"
-import { parentReaderHost, type ReaderRequest } from "../../reading/host.ts"
+import { isReaderChange, parentReaderHost, type ReaderRequest } from "../../reading/host.ts"
 import { languageLabel, voiceChoice, voices } from "../../speech/catalog.ts"
 import { SpeechClient } from "../../speech/client.ts"
 import { isVoiceChange, type SpeechClip } from "../../speech/protocol.ts"
@@ -18,7 +18,8 @@ const play = button("play"),
 	previous = button("previous"),
 	next = button("next")
 const speed = document.querySelector<HTMLInputElement>("#speed")!
-const rate = document.querySelector<HTMLSpanElement>("#rate")!
+const rate = button("rate")
+const speedLevel = document.querySelector<HTMLOutputElement>("#speed-level")!
 const voiceSelect = document.querySelector<HTMLSelectElement>("#voice")!
 const status = document.querySelector<HTMLSpanElement>("#status")!
 const bar = document.querySelector<HTMLDivElement>("#bar")!
@@ -31,6 +32,7 @@ const output = context.createGain()
 output.connect(context.destination)
 const volume = document.querySelector<HTMLInputElement>("#volume")!
 const volumePanel = document.querySelector<HTMLDivElement>("#volume-panel")!
+const panels = [document.querySelector<HTMLDivElement>("#speed-panel")!, volumePanel]
 const volumeLevel = document.querySelector<HTMLOutputElement>("#volume-level")!
 function updateVolume() {
 	const level = Number(volume.value)
@@ -53,10 +55,10 @@ function updateVolume() {
 }
 volume.oninput = updateVolume
 volume.onchange = () => void browser.storage.local.set({ volume: Number(volume.value) })
-volumePanel.addEventListener("toggle", resizeBar)
+for (const panel of panels) panel.addEventListener("toggle", resizeBar)
 // Native light dismissal is scoped to this iframe's document.
 window.addEventListener("blur", () => {
-	if (volumePanel.matches(":popover-open")) volumePanel.hidePopover()
+	for (const panel of panels) if (panel.matches(":popover-open")) panel.hidePopover()
 })
 let skippedText = false,
 	consecutiveSkipped = 0
@@ -108,14 +110,18 @@ function updateControls() {
 
 function resizeBar() {
 	if (closed) return
-	if (volumePanel.matches(":popover-open")) {
-		const anchor = button("sound").getBoundingClientRect()
-		const width = volumePanel.getBoundingClientRect().width
-		volumePanel.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, anchor.left + anchor.width / 2 - width / 2))}px`
+	let height = bar.getBoundingClientRect().bottom
+	for (const panel of panels) {
+		if (!panel.matches(":popover-open")) continue
+		const anchor = (panel === volumePanel ? button("sound") : rate).getBoundingClientRect()
+		const width = panel.getBoundingClientRect().width
+		panel.style.left = `${Math.max(8, Math.min(innerWidth - width - 8, anchor.left + anchor.width / 2 - width / 2))}px`
+		panel.style.top = `${height + 8}px`
+		height = panel.getBoundingClientRect().bottom + 12
 	}
 	void send("resize", {
-		height: Math.ceil(bar.getBoundingClientRect().height),
-		width: hasVoices ? 500 : checkingVoices ? 320 : 400,
+		height: Math.ceil(height),
+		width: hasVoices ? 460 : checkingVoices ? 320 : 400,
 	}).catch(() => {})
 }
 
@@ -135,6 +141,10 @@ function halt() {
 
 async function begin(index: number, offset?: number) {
 	if (closed || !hasVoices) return
+	if (failed) {
+		paused = false
+		awaitingGesture = false
+	}
 	halt()
 	began = performance.now()
 	firstBuffer = true
@@ -171,6 +181,14 @@ function fail(error: unknown) {
 	preparing = false
 	failed = true
 	updateControls()
+}
+
+async function resumeAudio(current: number) {
+	try {
+		await context.resume()
+	} catch (error) {
+		if (!closed && current === epoch) fail(error)
+	}
 }
 
 async function fill(current: number, firstOffset?: number) {
@@ -237,7 +255,7 @@ function startNext(current: number) {
 	}
 	source.start()
 	if (!paused && context.state !== "running") {
-		if (navigator.userActivation.hasBeenActive) void context.resume().catch(fail)
+		if (navigator.userActivation.hasBeenActive) void resumeAudio(current)
 		else {
 			paused = true
 			awaitingGesture = true
@@ -267,6 +285,7 @@ function highlight() {
 
 play.onclick = async () => {
 	if (selecting || closed) return
+	let attempt = epoch
 	awaitingGesture = false
 	try {
 		if (active && !paused && !ended && context.state === "running") {
@@ -290,19 +309,21 @@ play.onclick = async () => {
 			(selection.text !== null && (typeof selection.text !== "string" || !selection.text.trim()))
 		)
 			throw new Error("This selection could not be read. Please try again.")
-		if (selection.text !== null || ended) {
+		if (selection.text !== null || ended || failed) {
+			const restartIndex = selection.text !== null || ended ? 0 : Math.min(cursor, chunks.length - 1)
 			if (typeof selection.text === "string") {
 				text = selection.text
 				chunks = readingChunks(text, voiceChoice(voiceSelect.value).voice.locale)
 			}
 			paused = false
 			// begin stops the previous buffer before the audio context can resume it.
-			void begin(0)
-			await context.resume()
+			void begin(restartIndex)
+			attempt = epoch
+			await resumeAudio(attempt)
 			return
 		}
 		paused = false
-		await context.resume()
+		await resumeAudio(current)
 		if (closed || current !== epoch) return
 		if (!active && !generating) void begin(Math.min(cursor, chunks.length - 1))
 		status.textContent = active
@@ -312,7 +333,7 @@ play.onclick = async () => {
 			: "Preparing voice…"
 		updateControls()
 	} catch (error) {
-		fail(error)
+		if (!closed && attempt === epoch) fail(error)
 	} finally {
 		selecting = false
 		if (!closed) updateControls()
@@ -330,10 +351,14 @@ button("close").onclick = () => {
 	void context.close()
 	void send("close")
 }
-speed.oninput = () => {
+function updateSpeed() {
 	rate.textContent = `${Number(speed.value)}×`
+	rate.title = `Reading speed · ${rate.textContent}`
+	rate.setAttribute("aria-label", `Reading speed, ${Number(speed.value)} times normal`)
+	speedLevel.value = rate.textContent
 	speed.setAttribute("aria-valuetext", `${Number(speed.value)} times normal speed`)
 }
+speed.oninput = updateSpeed
 speed.onchange = () => {
 	void browser.storage.local.set({ speed: Number(speed.value) })
 	void begin(Math.min(cursor, chunks.length - 1), lastWord < 0 ? undefined : lastWord)
@@ -415,21 +440,10 @@ async function voicesChanged(id: string, deleted: boolean) {
 browser.storage.onChanged.addListener((changes, area) => {
 	const change: unknown = changes.voiceChange?.newValue
 	if (area === "local" && isVoiceChange(change)) void voicesChanged(change.id, change.deleted).catch(fail)
-})
-browser.runtime.onMessage.addListener((message: unknown, sender) => {
-	if (
-		sender.id === browser.runtime.id &&
-		!sender.tab &&
-		message &&
-		typeof message === "object" &&
-		"type" in message &&
-		message.type === "reset-reader" &&
-		"session" in message &&
-		message.session === session
-	) {
+	const reset: unknown = changes.readerChange?.newValue
+	if (!closed && area === "local" && isReaderChange(reset) && reset.session === session) {
 		halt()
-		void initialize().catch(fail)
-		return Promise.resolve({ ok: true })
+		void initialize()
 	}
 })
 window.addEventListener("pagehide", () => {
@@ -440,52 +454,62 @@ window.addEventListener("pagehide", () => {
 })
 new ResizeObserver(resizeBar).observe(bar)
 window.addEventListener("keydown", (event) => {
-	if (event.key === "Escape" && !volumePanel.matches(":popover-open")) button("close").click()
+	if (event.key === "Escape" && !panels.some((panel) => panel.matches(":popover-open"))) button("close").click()
 })
 
 async function initialize() {
 	const current = ++initializationRevision
-	const source: unknown = await send("document")
-	if (closed || current !== initializationRevision) return
-	if (
-		!source ||
-		typeof source !== "object" ||
-		!("text" in source) ||
-		typeof source.text !== "string" ||
-		!source.text.trim()
-	)
-		throw new Error("Start reading from a page or a text selection.")
-	text = source.text
-	const available = await refreshVoices()
-	const preferences = await browser.storage.local.get(["speed", "volume"])
-	if (closed || current !== initializationRevision) return
-	if (typeof preferences.speed === "number" && preferences.speed >= 0.5 && preferences.speed <= 2)
-		speed.value = String(preferences.speed)
-	rate.textContent = `${Number(speed.value)}×`
-	if (
-		typeof preferences.volume === "number" &&
-		Number.isFinite(preferences.volume) &&
-		preferences.volume >= 0 &&
-		preferences.volume <= 100
-	)
-		volume.value = String(preferences.volume)
-	updateVolume()
-	chunks = readingChunks(text, available ? voiceChoice(voiceSelect.value).voice.locale : "en")
-	if (!available) {
-		paused = true
-		preparing = false
-		failed = false
+	const generation = epoch
+	preparing = true
+	status.textContent = "Getting ready…"
+	updateControls()
+	try {
+		const source: unknown = await send("document")
+		if (closed || current !== initializationRevision || generation !== epoch) return
+		if (
+			!source ||
+			typeof source !== "object" ||
+			!("text" in source) ||
+			typeof source.text !== "string" ||
+			!source.text.trim()
+		)
+			throw new Error("Start reading from a page or a text selection.")
+		text = source.text
+		const available = await refreshVoices()
+		const preferences = await browser.storage.local.get(["speed", "volume"])
+		if (closed || current !== initializationRevision || generation !== epoch) return
+		if (typeof preferences.speed === "number" && preferences.speed >= 0.5 && preferences.speed <= 2)
+			speed.value = String(preferences.speed)
+		updateSpeed()
+		if (
+			typeof preferences.volume === "number" &&
+			Number.isFinite(preferences.volume) &&
+			preferences.volume >= 0 &&
+			preferences.volume <= 100
+		)
+			volume.value = String(preferences.volume)
+		updateVolume()
+		chunks = readingChunks(text, available ? voiceChoice(voiceSelect.value).voice.locale : "en")
+		if (!available) {
+			paused = true
+			preparing = false
+			failed = false
+			awaitingGesture = false
+			status.textContent = "No voice downloaded."
+			updateControls()
+			return
+		}
+		paused = false
 		awaitingGesture = false
-		status.textContent = "No voice downloaded."
-		updateControls()
-		return
+		await begin(0)
+	} catch (error) {
+		if (!closed && current === initializationRevision && generation === epoch) fail(error)
 	}
-	await begin(0)
 }
 requestAnimationFrame(highlight)
 context.onstatechange = updateControls
-void initialize().catch(fail)
+void initialize()
 window.addEventListener("read-aloud-source-changed", () => {
 	halt()
-	void initialize().catch(fail)
+	void initialize()
 })

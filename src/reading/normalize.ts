@@ -1,5 +1,7 @@
 import type { ReadingDocument, TextRun } from "./document.ts"
 
+import { projectRun } from "./runs.ts"
+
 /** Only explicit line breaks authorize removing a printed hyphen. */
 export const layoutHyphenation = /(?<=\p{L})[-\u00ad][\t ]*\r?\n[\t ]*(?=\p{Ll})|\u00ad/gu
 
@@ -20,12 +22,7 @@ export function normalizeDocument(source: ReadingDocument, pdf = false): Reading
 			const left = Math.max(start, run.from),
 				right = Math.min(end, run.to)
 			if (left < right)
-				runs.push({
-					node: run.node,
-					from: from + left - start,
-					to: from + right - start,
-					offset: run.offset + left - run.from,
-				})
+				runs.push(projectRun(run, from + left - start, from + right - start, run.offset + left - run.from))
 		}
 	}
 	for (const match of source.text.matchAll(pattern)) {

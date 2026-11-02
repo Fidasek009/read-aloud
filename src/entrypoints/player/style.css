@@ -28,6 +28,7 @@ body {
 	border: 1px solid var(--line);
 	border-radius: 12px;
 	background: var(--surface);
+	box-shadow: 0 2px 8px #0002;
 }
 #playback {
 	display: flex;
@@ -108,18 +109,10 @@ a:focus-visible {
 #voice-controls {
 	flex: 1 1 148px;
 }
-.speed {
-	display: flex;
-	flex: 0 0 auto;
-	gap: 5px;
-	align-items: center;
-	color: var(--muted);
-	font-size: 12px;
-}
 #rate {
-	min-width: 28px;
+	width: 40px;
+	font: inherit;
 	font-variant-numeric: tabular-nums;
-	color: inherit;
 }
 input[type="range"] {
 	appearance: none;
@@ -169,12 +162,9 @@ input[type="range"]::-moz-range-thumb {
 	background: var(--surface);
 	text-overflow: ellipsis;
 }
-#bar:has(#volume-panel:popover-open) {
-	padding-bottom: 76px;
-}
-#volume-panel {
+.adjustment-panel {
 	position: fixed;
-	inset: auto auto 8px 8px;
+	inset: 60px auto auto 8px;
 	margin: 0;
 	width: 184px;
 	padding: 8px 12px;
@@ -183,16 +173,17 @@ input[type="range"]::-moz-range-thumb {
 	background: var(--surface);
 	color: inherit;
 	font-size: 12px;
+	box-shadow: 0 4px 10px #0003;
 }
-#volume-panel label {
+.adjustment-panel label {
 	display: flex;
 	justify-content: space-between;
 }
-#volume-level {
+.adjustment-panel output {
 	color: var(--muted);
 	font-variant-numeric: tabular-nums;
 }
-#volume {
+.adjustment-panel input {
 	display: block;
 	width: 100%;
 }

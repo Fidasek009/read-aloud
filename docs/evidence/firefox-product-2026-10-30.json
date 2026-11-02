@@ -1,22 +1,22 @@
 {
-	"recordedAt": "2026-11-01T17:37:00.566Z",
+	"recordedAt": "2026-11-02T09:21:20.291Z",
 	"browserVersion": "159.0",
 	"voice": "cs_CZ-jirka-medium",
 	"performance": {
 		"cold": {
 			"backend": "cpu",
 			"voice": "cs_CZ-jirka-medium",
-			"modelReadMs": 346,
-			"loadMs": 6679,
+			"modelReadMs": 440,
+			"loadMs": 7249,
 			"threads": 1,
 			"crossOriginIsolated": false,
-			"phonemizerMs": 176,
-			"sessionMs": 6292,
-			"workerLoadMs": 6295,
-			"synthesisMs": 418,
-			"timeToFirstBufferMs": 7139,
+			"phonemizerMs": 177,
+			"sessionMs": 6760,
+			"workerLoadMs": 6766,
+			"synthesisMs": 483,
+			"timeToFirstBufferMs": 7814,
 			"audioContextState": "running",
-			"recordedAt": "2026-11-01T17:36:50.170Z"
+			"recordedAt": "2026-11-02T09:21:05.453Z"
 		},
 		"caveat": "Development VM with virtual audio, not target-hardware latency acceptance."
 	},
@@ -27,6 +27,9 @@
 		"highlighted": "Virtual Research Environment"
 	},
 	"pdfSelection": {
+		"contextMenuRestart": true,
+		"closedSessionRejected": true,
+		"floatingControlsDoNotShiftPages": true,
 		"crossPageCharacters": 532,
 		"layoutHyphenation": true,
 		"compoundHighlight": true,
@@ -49,6 +52,9 @@
 		"Czech word highlighting",
 		"keyboard Play reads only the current selection",
 		"volume output gain, mute, persistence, no synthesis restart, and keyboard dismissal",
+		"floating speed and volume panels leave bar height unchanged",
+		"Play and background context-menu commands recover from playback failure",
+		"PDF close and context-menu restart without Tab.url, with a new session",
 		"selection completion and replay stay within the selection",
 		"pause",
 		"close",

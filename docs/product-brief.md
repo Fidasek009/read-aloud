@@ -113,5 +113,6 @@ Preserve meaningful dots in domains such as `consensus.app`, where “dot” sho
 
 - Shorten redundant language-region labels. Preserve the region when it distinguishes available catalog locales, including English. Keep the overlay voice picker compact.
 - Include volume in the listening controls with a clear hierarchy. Reveal its native slider from a speaker button; persist the setting and apply it to playback without changing speech or pitch.
+- Speed and volume should use consistent floating adjustments, keeping the playback bar compact. Download/delete completion needs no separate success message anywhere: the card's button/progress is the feedback. Keep failures beside the affected card. A failed or closed reader must accept a fresh selection without reloading the source page.
 - Join explicitly line-hyphenated words such as `in-\nfrastructure`, preserving real compounds such as `pre-exascale` and domain dots. Highlight all printed fragments of the spoken word.
 - Prevent avoidable phonemizer annotation failures. For source-specific pronunciation failures, isolate the problematic passage, preserve usable speech, and tell the user if any text was skipped. Cancellation and runtime failures must remain distinguishable from content failures.
