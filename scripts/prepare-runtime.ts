@@ -85,7 +85,6 @@ for (const [source, target] of [
 	await copyAsset(source, `${out}/licenses/${target}`, out)
 const pdf = `${root}/node_modules/pdfjs-dist`
 const pdfOut = `${root}/public/pdf-runtime`
-await copyAsset(`${pdf}/build/pdf.worker.mjs`, `${pdfOut}/pdf.worker.mjs`, pdfOut)
 await copyAsset(`${pdf}/LICENSE`, `${pdfOut}/LICENSE`, pdfOut)
 for (const folder of ["cmaps", "standard_fonts", "wasm", "iccs"])
 	await copyDirectory(`${pdf}/${folder}`, `${pdfOut}/${folder}`, pdfOut)

@@ -26,3 +26,11 @@ test("PDF discovery accepts older source-less tabs but rejects another tab or em
 	expect(isPdfReaderContext({ tabId: 4, frameId: 0, documentUrl: reader }, 3, root, source, 7)).toBe(false)
 	expect(isPdfReaderContext({ tabId: 3, frameId: 0 }, 3, root, source, 7)).toBe(false)
 })
+
+test("reader sources support extensionless documents and local user-selected files", () => {
+	for (const source of ["https://arxiv.org/pdf/2404.07981", "file:///home/user/Downloads/paper.pdf"]) {
+		const url = `${root}pdf.html?src=${encodeURIComponent(source)}&source=7`
+		expect(isPdfReaderUrl(url, root, source, 7)).toBe(true)
+	}
+	expect(isPdfReaderUrl(`${root}pdf.html?src=${encodeURIComponent("javascript:alert(1)")}`, root)).toBe(false)
+})

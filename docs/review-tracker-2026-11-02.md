@@ -51,7 +51,7 @@ This is a working assessment of the supplied review, not a release checklist or 
 | m17 | Partial | Failed PDF text-layer work can retry, with visible feedback. Normal highlighting passes both browser probes; injected failure and retry remain untested. |
 | m18 | Fixed | Shared pure sender helpers validate identity, protocol, host, path and background metadata; malformed URLs safely fail. Focused tests and Chrome/Firefox production flows pass. |
 | m19 | Fixed | Concrete worker/engine/performance types and allowlists now filter transport and persisted diagnostics. Unknown text, URLs, raw errors, malformed timings and unknown voice strings are excluded; focused tests cover privacy filtering. Warm sessions do not retain cold timings. |
-| m20 | Open | PDF detection still relies on URL suffix. |
+| m20 | Fixed | Document routing uses content type when inspection is allowed; protected viewers open a byte-validated PDF.js reader rather than relying on filename suffixes. Chrome extensionless endpoints and Chrome/Firefox local File selection pass browser regressions. |
 | m21 | Partial | Runtime build root now uses Bun's file-URL conversion; Windows build has not been tested. |
 | m22 | Open | Legacy configs remain in the vault. Existing prototype users may have voices stored without configs; the claim that no consumer exists is unverified. Removing the bridge needs a tested migration or clear re-download flow. |
 | m23 | Partial | Model IDs and quality labels now have shared helpers; malformed multi-separator speaker choices are rejected. Broader speaker-name presentation still needs catalog-wide review. |

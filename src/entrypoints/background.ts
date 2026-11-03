@@ -87,7 +87,25 @@ export default defineBackground(() => {
 					await browser.storage.session.set({ [readingKeys.currentTab]: tabId })
 					return
 				}
-				if (documentUrl && /^https?:/u.test(documentUrl) && /\.pdf(?:$|[?#])/iu.test(documentUrl)) {
+				// Inspect the loaded document, never its filename. Native PDF viewers
+				// block injection; the reader verifies bytes after explicit site access.
+				let documentType: string | undefined
+				if (documentUrl && /^(?:https?|file):/u.test(documentUrl)) {
+					try {
+						const [result] = await browser.scripting.executeScript({
+							target: { tabId },
+							func: () => document.contentType,
+						})
+						if (typeof result?.result === "string") documentType = result.result
+					} catch {
+						/* Protected viewers require extension-owned document access. */
+					}
+				}
+				if (
+					documentUrl &&
+					/^(?:https?|file):/u.test(documentUrl) &&
+					(documentType === undefined || documentType === "application/pdf")
+				) {
 					if (mode === "selection" && !selection?.trim()) throw new Error("Select some PDF text first.")
 					if (selection && selection.length > 500_000) throw new Error("Select a smaller part of the PDF to read.")
 					const url = new URL(browser.runtime.getURL("/pdf.html"))

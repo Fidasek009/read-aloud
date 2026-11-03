@@ -13,7 +13,8 @@ export function isPdfReaderUrl(
 		const rawSource = url.searchParams.get("src")
 		if (!rawSource) return false
 		const actualSource = new URL(rawSource)
-		if (actualSource.protocol !== "https:" && actualSource.protocol !== "http:") return false
+		if (actualSource.protocol !== "https:" && actualSource.protocol !== "http:" && actualSource.protocol !== "file:")
+			return false
 		if (sourceUrl) {
 			const expectedSource = new URL(sourceUrl)
 			actualSource.hash = expectedSource.hash = ""

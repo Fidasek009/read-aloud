@@ -62,10 +62,13 @@ const server = Bun.serve({
 		})
 	},
 })
-const source = Bun.env.PDF_SOURCE_URL ?? server.url.href + "thesis.pdf"
+const source = Bun.env.PDF_SOURCE_URL ?? server.url.href + (Bun.env.PDF_SOURCE_PATH ?? "thesis.pdf")
 if (!accessOnly) {
 	const pdfUrl = new URL(source)
-	manifest.host_permissions = [`${pdfUrl.protocol}//${pdfUrl.hostname}/*`]
+	manifest.host_permissions = [
+		`${pdfUrl.protocol}//${pdfUrl.hostname}/*`,
+		...(Bun.env.PDF_DIRECT_LOCAL === "1" ? ["file:///*"] : []),
+	]
 	await Bun.write(`${extension}/manifest.json`, JSON.stringify(manifest))
 }
 const executable = await chromeExecutable()
@@ -112,6 +115,12 @@ async function probe() {
 		const status = await view.evaluate<string>("document.querySelector('#status').textContent")
 		if (status) throw new Error(status)
 		const textReadyMs = performance.now() - started
+		if (Bun.env.PDF_SMOKE === "1") {
+			const pages = await view.evaluate<number>("document.querySelectorAll('.pdf-page').length")
+			if (pages < 1) throw new Error("The PDF has no pages")
+			console.log(JSON.stringify({ source, pages, textReadyMs }))
+			return
+		}
 		const result = await view.evaluate<{
 			pages: number
 			characters: number
@@ -209,7 +218,7 @@ async function probe() {
 			pdfSha256: new Bun.CryptoHasher("sha256").update(await pdf.arrayBuffer()).digest("hex"),
 			...result,
 			permissionRecovery,
-			source: Bun.env.PDF_SOURCE_URL ? "remote MUNI source" : "cached MUNI bytes served without CORS",
+			source: Bun.env.PDF_SOURCE_URL ? "remote PDF source" : "cached MUNI bytes served without CORS",
 			distant,
 			selection,
 			selectionReadyMs,
@@ -228,6 +237,45 @@ async function probe() {
 			JSON.stringify(record, null, 2) + "\n",
 		)
 		console.log(JSON.stringify(record, null, 2))
+		if (Bun.env.PDF_LOCAL === "1") {
+			await view.navigate(
+				`chrome-extension://${id}/pdf.html?src=${encodeURIComponent(Bun.pathToFileURL(`${root}/.cache/benchmarks/muni-thesis.pdf`).href)}`,
+			)
+			if (Bun.env.PDF_DIRECT_LOCAL !== "1") {
+				await waitForPdf(
+					() =>
+						view.evaluate<boolean>(
+							"Array.from(document.querySelectorAll('#status button')).some(button=>button.textContent==='Choose file instead')",
+						),
+					Boolean,
+				)
+				await view.evaluate(
+					"Array.from(document.querySelectorAll('#status button')).find(button=>button.textContent==='Choose file instead').click()",
+				)
+				await waitForPdf(() => view.evaluate<boolean>("!!document.querySelector('#status input[type=file]')"), Boolean)
+				const document = await view.cdp<{ root: { nodeId: number } }>("DOM.getDocument")
+				const input = await view.cdp<{ nodeId: number }>("DOM.querySelector", {
+					nodeId: document.root.nodeId,
+					selector: "input[type=file]",
+				})
+				await view.cdp("DOM.setFileInputFiles", {
+					nodeId: input.nodeId,
+					files: [`${root}/.cache/benchmarks/muni-thesis.pdf`],
+				})
+			}
+			await waitForPdf(
+				() =>
+					view.evaluate<boolean>(
+						"document.querySelector('#status').textContent==='' && document.querySelectorAll('.pdf-page').length===60",
+					),
+				Boolean,
+			)
+			console.log(
+				Bun.env.PDF_DIRECT_LOCAL === "1"
+					? "Local PDF opened directly without a file chooser."
+					: "Local PDF fallback opened from a user-selected File.",
+			)
+		}
 	} finally {
 		view.close()
 		server.stop(true)

@@ -71,7 +71,7 @@ export default defineContentScript({
 					frame = document.createElement("iframe")
 					frame.title = "Read Aloud playback controls"
 					frame.src = `${browser.runtime.getURL("/player.html")}#${session}`
-					frame.allow = "autoplay"
+					if (import.meta.env.BROWSER !== "firefox") frame.allow = "autoplay"
 					frame.style.cssText =
 						"display:block;width:100%;height:52px;border:0;border-radius:12px;color-scheme:light dark;"
 					shadow.append(frame)

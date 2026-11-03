@@ -62,13 +62,15 @@ export function selectRange(source: ReadingDocument, range: Range | null): Readi
 	return sliceDocument(source, start, end)
 }
 
+const graphemes = new Intl.Segmenter(undefined, { granularity: "grapheme" })
 function normalized(text: string) {
 	let value = "",
 		offset = 0
 	const positions: number[] = []
+	const ends: number[] = []
 	const removed = [...text.matchAll(layoutHyphenation)]
 	let removal = 0
-	for (const character of text) {
+	for (const { segment: character } of graphemes.segment(text)) {
 		while (removed[removal] && offset >= removed[removal]!.index + removed[removal]![0].length) removal++
 		const deletion = removed[removal]
 		if (deletion && offset >= deletion.index) {
@@ -78,18 +80,20 @@ function normalized(text: string) {
 		if (/\s/u.test(character)) {
 			if (value && !value.endsWith(" ")) {
 				positions.push(offset)
+				ends.push(offset + character.length)
 				value += " "
 			}
 		} else {
 			for (const unit of character.normalize("NFKC").split("")) {
 				positions.push(offset)
+				ends.push(offset + character.length)
 				value += unit
 			}
 		}
 		offset += character.length
 	}
 	positions.push(text.length)
-	return { value, positions }
+	return { value, positions, ends }
 }
 
 /** Match a native PDF selection without reading beyond it or losing DOM offsets. */
@@ -105,7 +109,43 @@ export function locateSelection(source: ReadingDocument, selection: string): Rea
 	if (haystack.value.indexOf(needle, match + 1) >= 0)
 		throw new Error("This selection appears more than once. Select it in this reader to choose its exact location.")
 	const start = haystack.positions[match]!
-	const last = haystack.positions[match + needle.length - 1]!
-	const end = last + (source.text.codePointAt(last)! > 0xffff ? 2 : 1)
+	const end = haystack.ends[match + needle.length - 1]!
 	return sliceDocument(source, start, end)
+}
+
+/** Keep the already-playing native text unchanged while mapping its word offsets to PDF text. */
+export function mapNativeSelection(source: ReadingDocument, selection: string) {
+	const document = locateSelection(source, selection)
+	const native = normalized(selection)
+	const printed = normalized(document.text)
+	const needle = native.value.trim()
+	const match = printed.value.indexOf(needle)
+	if (match < 0) throw new Error("The selection could not be mapped to the printed text.")
+	const boundary = (offset: number) => {
+		let low = 0,
+			high = native.positions.length
+		while (low < high) {
+			const middle = (low + high) >>> 1
+			if (native.positions[middle]! < offset) low = middle + 1
+			else high = middle
+		}
+		return Math.min(low, needle.length)
+	}
+	return {
+		document,
+		range(start: number, end: number): { start: number; end: number } | null {
+			if (
+				!Number.isSafeInteger(start) ||
+				!Number.isSafeInteger(end) ||
+				start < 0 ||
+				end <= start ||
+				end > selection.length
+			)
+				return null
+			const first = boundary(start),
+				last = boundary(end) - 1
+			if (first > last || first >= needle.length) return null
+			return { start: printed.positions[match + first]!, end: printed.ends[match + last]! }
+		},
+	}
 }

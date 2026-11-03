@@ -31,13 +31,13 @@ export default defineConfig({
 					cross_origin_opener_policy: { value: "same-origin" as const },
 				}
 			: {}),
-		optional_host_permissions: ["https://*/*", "http://*/*"],
+		optional_host_permissions: ["https://*/*", "http://*/*", "file:///*"],
 		action: { default_title: "Read this page" },
 		options_ui: { page: "voices.html", open_in_tab: true },
 		web_accessible_resources: [{ resources: ["player.html"], matches: ["<all_urls>"] }],
 		content_security_policy: {
 			extension_pages:
-				"script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; worker-src 'self'; connect-src 'self' http: https:",
+				"script-src 'self' 'wasm-unsafe-eval'; object-src 'none'; worker-src 'self'; connect-src 'self' http: https: file:",
 		},
 		...(browser === "firefox"
 			? {

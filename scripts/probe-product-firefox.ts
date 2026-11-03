@@ -107,8 +107,8 @@ async function command<T = any>(path: string, body?: unknown, method = "POST"): 
 }
 const run = <T = any>(path: string, body?: unknown) => command<T>(`/session/${session}${path}`, body)
 const script = <T = any>(expression: string, args: unknown[] = []): Promise<T> =>
-	run("/execute/async", {
-		script: `const done=arguments[arguments.length-1]; Promise.resolve().then(()=>(${expression})).then(done,error=>done({probeError:error.message}));`,
+	run("/execute/sync", {
+		script: `return (${expression});`,
 		args,
 	})
 try {
@@ -637,6 +637,35 @@ try {
 			2,
 		) + "\n",
 	)
+	if (Bun.env.PDF_LOCAL === "1") {
+		await run("/url", {
+			url: `moz-extension://${uuid}/pdf.html?src=${encodeURIComponent(Bun.pathToFileURL(`${root}/.cache/benchmarks/muni-thesis.pdf`).href)}`,
+		})
+		await waitFor(
+			() =>
+				script<boolean>(
+					"Array.from(document.querySelectorAll('#status button')).some(button=>button.textContent==='Choose file instead')",
+				),
+			Boolean,
+		)
+		await script(
+			"Array.from(document.querySelectorAll('#status button')).find(button=>button.textContent==='Choose file instead').click()",
+		)
+		await waitFor(() => script<boolean>("!!document.querySelector('#status input[type=file]')"), Boolean)
+		const input = await run<Record<string, string>>("/element", { using: "css selector", value: "input[type=file]" })
+		const element = input["element-6066-11e4-a52e-4f735466cecf"]
+		assert(element, "Local PDF chooser is missing")
+		await run(`/element/${element}/value`, { text: `${root}/.cache/benchmarks/muni-thesis.pdf` })
+		await waitFor(
+			() =>
+				script<boolean>(
+					"document.querySelector('#status').textContent==='' && document.querySelectorAll('.pdf-page').length===60",
+				),
+			Boolean,
+			90,
+		)
+		console.log("Firefox local PDF opened from a user-selected File without file URL permissions.")
+	}
 } finally {
 	if (session) await command(`/session/${session}`, undefined, "DELETE").catch(() => {})
 	driver.kill()
