@@ -5,7 +5,8 @@ interface AudioObservation {
 	stops: number
 	starts: { when: number; duration: number; requestedAt: number }[]
 	lastStop: number
-	gain?: GainNode
+	elements: HTMLMediaElement[]
+	mediaActions: Map<MediaSessionAction, MediaSessionActionHandler | null>
 }
 
 type ProbeWindow = Window &
@@ -18,9 +19,20 @@ type ProbeWindow = Window &
 /** Self-contained: serialized into the copied test package, never the shipped extension. */
 function installAudioObservation() {
 	const probeWindow = window as ProbeWindow
-	const NativeAudioContext = window.AudioContext
-	const audio: AudioObservation = { sources: 0, stops: 0, starts: [], lastStop: 0 }
+	const audio: AudioObservation = {
+		sources: 0,
+		stops: 0,
+		starts: [],
+		lastStop: 0,
+		mediaActions: new Map(),
+		elements: [],
+	}
 	probeWindow.__probeAudio = audio
+	const register = navigator.mediaSession.setActionHandler.bind(navigator.mediaSession)
+	navigator.mediaSession.setActionHandler = (action, handler) => {
+		register(action, handler)
+		audio.mediaActions.set(action, handler)
+	}
 	window.addEventListener("error", (event) => {
 		document.documentElement.dataset.probeError = String(event.message)
 	})
@@ -34,34 +46,36 @@ function installAudioObservation() {
 		if (change && typeof change === "object" && "session" in change)
 			document.body.dataset.probeControlChange = `${area}:${change.session === location.hash.slice(1)}`
 	})
-	window.AudioContext = class extends NativeAudioContext {
-		override createGain() {
-			const gain = super.createGain()
-			audio.gain = gain
-			return gain
+	const NativeAudio = window.Audio
+	window.Audio = function (src?: string) {
+		if (document.body.hasAttribute("data-probe-fail-buffer")) {
+			document.body.removeAttribute("data-probe-fail-buffer")
+			throw new Error("Internal test diagnostic")
 		}
-		override createBufferSource() {
-			if (document.body.hasAttribute("data-probe-fail-buffer")) {
-				document.body.removeAttribute("data-probe-fail-buffer")
-				throw new Error("Internal test diagnostic")
-			}
-			audio.sources++
-			const source = super.createBufferSource()
-			const stop = source.stop.bind(source)
-			const start = source.start.bind(source)
-			source.stop = (...args: Parameters<AudioBufferSourceNode["stop"]>) => {
+		const element = new NativeAudio(src)
+		audio.elements.push(element)
+		audio.sources++
+		const pause = element.pause.bind(element),
+			play = element.play.bind(element)
+		element.pause = () => {
+			if (!element.paused) {
 				audio.stops++
 				audio.lastStop = performance.now()
-				return stop(...args)
 			}
-			source.start = (when = 0, ...args: [offset?: number, duration?: number]) => {
-				if (!source.buffer) throw new Error("Audio source has no buffer")
-				audio.starts.push({ when, duration: source.buffer.duration, requestedAt: performance.now() })
-				return start(when, ...args)
-			}
-			return source
+			pause()
 		}
-	}
+		element.play = async () => {
+			const wasPaused = element.paused
+			await play()
+			if (wasPaused)
+				audio.starts.push({
+					when: performance.now() / 1000,
+					duration: element.duration,
+					requestedAt: performance.now(),
+				})
+		}
+		return element
+	} as unknown as typeof Audio
 }
 
 /** Observe the real output graph; allow one explicit output failure in copied test packages only. */
@@ -89,8 +103,24 @@ async function verifyVolume() {
 	const extension = probeWindow.browser ?? probeWindow.chrome
 	if (!extension) throw new Error("Extension storage API is unavailable")
 	const audio = probeWindow.__probeAudio
-	const gainNode = audio.gain
-	if (!gainNode) throw new Error("Playback has no output gain node")
+	// Invoke the callbacks registered with the real browser API. This verifies
+	// routing and playback, rather than pretending DOM key events are OS keys.
+	const play = document.querySelector<HTMLButtonElement>("#play")!
+	for (const action of ["pause", "pause"] as const) audio.mediaActions.get(action)?.({ action })
+	await settle(() => play.getAttribute("aria-label") === "Play" && !play.disabled)
+	if (navigator.mediaSession.playbackState !== "paused" || play.disabled)
+		throw new Error("Media pause did not pause playback")
+	const initialStops = audio.stops
+	for (const action of ["play", "play"] as const) audio.mediaActions.get(action)?.({ action })
+	await settle(() => navigator.mediaSession.playbackState === "playing" && !play.disabled)
+	// Read-ahead may schedule the next buffer while paused; it must never stop
+	// and replace existing audio just because play/pause was delivered twice.
+	if (play.getAttribute("aria-label") !== "Pause" || audio.stops !== initialStops)
+		throw new Error("Media play did not resume existing audio idempotently")
+	for (const action of ["previoustrack", "nexttrack", "stop"] as const)
+		if (!audio.mediaActions.get(action)) throw new Error(`Missing media action: ${action}`)
+	const currentVolume = () => audio.elements.find((element) => !element.paused)?.volume ?? NaN
+	if (!Number.isFinite(currentVolume())) throw new Error("Playback has no active output element")
 	const bar = document.querySelector<HTMLElement>("#bar")
 	const volume = document.querySelector<HTMLInputElement>("#volume")
 	const sound = document.querySelector<HTMLButtonElement>("#sound")
@@ -115,8 +145,8 @@ async function verifyVolume() {
 	volume.value = "50"
 	volume.dispatchEvent(new Event("input"))
 	volume.dispatchEvent(new Event("change"))
-	await settle(() => Math.abs(gainNode.gain.value - 0.25) <= 0.01)
-	const gain = gainNode.gain.value
+	await settle(() => Math.abs(currentVolume() - 0.25) <= 0.01)
+	const gain = currentVolume()
 	if (Math.abs(gain - 0.25) > 0.01) throw new Error(`Output gain did not follow volume: ${gain}`)
 	const stored: unknown = await extension.storage.local.get(["volume", "lastSpeechPerformance"])
 	if (
@@ -130,15 +160,16 @@ async function verifyVolume() {
 		throw new Error("Volume restarted synthesis/audio or did not persist")
 	volume.value = "0"
 	volume.dispatchEvent(new Event("input"))
-	await settle(() => gainNode.gain.value <= 0.001)
-	if (gainNode.gain.value > 0.001)
+	await settle(() => currentVolume() <= 0.001)
+	if (currentVolume() > 0.001)
 		throw new Error(
-			`Zero volume did not mute output: ${JSON.stringify({ gain: gainNode.gain.value, state: gainNode.context.state, time: gainNode.context.currentTime })}`,
+			`Zero volume did not mute output: ${JSON.stringify({ gain: currentVolume(), playing: audio.elements.filter((element) => !element.paused).length })}`,
 		)
 	volume.value = "75"
 	volume.dispatchEvent(new Event("input"))
 	volume.dispatchEvent(new Event("change"))
 	return {
+		mediaPlayPause: true,
 		perceptualGain: gain,
 		muted: true,
 		persisted: true,

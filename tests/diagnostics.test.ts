@@ -94,4 +94,5 @@ test("performance persistence constructs a fresh allowlisted record without arbi
 	expect(JSON.stringify(result)).not.toContain("private")
 	expect(firstBufferPerformance({}, Infinity, "running")).toBeUndefined()
 	expect(firstBufferPerformance({}, 10, "Private article text")).toBeUndefined()
+	expect(firstBufferPerformance({ audioContextState: "running" }, 10)).not.toHaveProperty("audioContextState")
 })

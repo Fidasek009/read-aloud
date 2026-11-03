@@ -469,6 +469,7 @@ async function fetchPdf(url: URL, signal: AbortSignal): Promise<Response> {
 			const response = await read()
 			if (response.ok) return response
 		} catch {
+			if (signal.aborted) throw signal.reason
 			/* A browser file-access grant may be required. */
 		}
 		status.textContent = "Allow local file access to open this PDF directly."
@@ -477,47 +478,53 @@ async function fetchPdf(url: URL, signal: AbortSignal): Promise<Response> {
 		const fallback = document.createElement("button")
 		fallback.textContent = "Choose file instead"
 		status.append(" ", allow, " ", fallback)
-		const direct = await new Promise<Response | undefined>((resolve, reject) => {
-			const abort = () => reject(signal.reason)
-			signal.addEventListener("abort", abort, { once: true })
-			const done = (response: Response | undefined) => {
-				signal.removeEventListener("abort", abort)
-				resolve(response)
-			}
-			fallback.onclick = () => done(undefined)
-			allow.onclick = () => {
-				void browser.permissions
-					.request({ origins: ["file:///*"] })
-					.then(async (granted) => {
-						if (!granted) return
-						try {
-							const response = await read()
-							if (response.ok) {
-								done(response)
-								return
-							}
-						} catch {
-							/* Explain the actual browser boundary below. */
+		const direct =
+			import.meta.env.BROWSER === "firefox"
+				? undefined
+				: await new Promise<Response | undefined>((resolve, reject) => {
+						const abort = () => reject(signal.reason)
+						signal.addEventListener("abort", abort, { once: true })
+						const done = (response: Response | undefined) => {
+							signal.removeEventListener("abort", abort)
+							resolve(response)
 						}
-						const allowed = await browser.extension.isAllowedFileSchemeAccess()
-						status.firstChild!.textContent =
-							allowed || import.meta.env.BROWSER === "firefox"
-								? "The browser blocked reading this local file directly."
-								: "Enable local file access for Read Aloud in your browser’s extension settings, then try again."
-						allow.textContent = "Try again"
+						fallback.onclick = () => done(undefined)
+						allow.onclick = () => {
+							void browser.permissions
+								.request({ origins: ["file:///*"] })
+								.then(async (granted) => {
+									if (!granted) return
+									try {
+										const response = await read()
+										if (response.ok) {
+											done(response)
+											return
+										}
+									} catch {
+										/* Explain the actual browser boundary below. */
+									}
+									const allowed = await browser.extension.isAllowedFileSchemeAccess()
+									status.firstChild!.textContent =
+										allowed || import.meta.env.BROWSER === "firefox"
+											? "The browser blocked reading this local file directly."
+											: "Enable local file access for Read Aloud in your browser’s extension settings, then try again."
+									allow.textContent = "Try again"
+								})
+								.catch(() => {
+									status.firstChild!.textContent =
+										"Local file access could not be granted. Check your browser’s extension settings."
+								})
+						}
 					})
-					.catch(() => {
-						status.firstChild!.textContent =
-							"Local file access could not be granted. Check your browser’s extension settings."
-					})
-			}
-		})
 		if (direct) {
 			status.textContent = "Opening PDF…"
 			return direct
 		}
 		// A user-selected File works in both browsers without filesystem-wide access.
-		status.textContent = "Choose this PDF to open it locally."
+		status.textContent =
+			import.meta.env.BROWSER === "firefox"
+				? "Firefox blocks direct access to local PDF files. Choose this PDF to read it on your device."
+				: "Choose this PDF to open it locally."
 		const input = document.createElement("input")
 		input.type = "file"
 		input.accept = "application/pdf,.pdf"

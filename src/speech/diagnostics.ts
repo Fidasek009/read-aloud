@@ -24,7 +24,7 @@ export interface SpeechDiagnostics extends WorkerTimings {
 
 export interface SpeechPerformance extends SpeechDiagnostics {
 	timeToFirstBufferMs: number
-	audioContextState: "running" | "suspended" | "closed" | "interrupted"
+	audioContextState?: "running" | "suspended" | "closed" | "interrupted"
 	recordedAt: string
 }
 
@@ -82,11 +82,12 @@ export function speechDiagnostics(value: unknown): SpeechDiagnostics {
 export function firstBufferPerformance(
 	diagnostics: unknown,
 	timeToFirstBufferMs: number,
-	audioContextState: string,
+	audioContextState?: string,
 ): SpeechPerformance | undefined {
 	if (
 		!elapsed(timeToFirstBufferMs) ||
 		!(
+			audioContextState === undefined ||
 			audioContextState === "running" ||
 			audioContextState === "suspended" ||
 			audioContextState === "closed" ||
@@ -97,7 +98,7 @@ export function firstBufferPerformance(
 	return {
 		...speechDiagnostics(diagnostics),
 		timeToFirstBufferMs,
-		audioContextState,
+		...(audioContextState === undefined ? {} : { audioContextState }),
 		recordedAt: new Date().toISOString(),
 	}
 }

@@ -1,5 +1,7 @@
 import { browser } from "wxt/browser"
 
+import { bindMediaSession } from "../../playback/media-session.ts"
+import { speechWav } from "../../playback/wav.ts"
 import { readingChunks, sentenceTarget } from "../../reading/document.ts"
 import {
 	isReaderChange,
@@ -56,9 +58,6 @@ const playback = document.querySelector<HTMLDivElement>("#playback")!
 const message = document.querySelector<HTMLDivElement>("#message")!
 const setup = document.querySelector<HTMLAnchorElement>("#setup")!
 const engine = new SpeechClient()
-const context = new AudioContext()
-const output = context.createGain()
-output.connect(context.destination)
 class PlayerMessage extends Error {}
 const volume = document.querySelector<HTMLInputElement>("#volume")!
 const volumePanel = document.querySelector<HTMLDivElement>("#volume-panel")!
@@ -66,9 +65,8 @@ const panels = [document.querySelector<HTMLDivElement>("#speed-panel")!, volumeP
 const volumeLevel = document.querySelector<HTMLOutputElement>("#volume-level")!
 function updateVolume() {
 	const level = Number(volume.value)
-	// A perceptual taper makes the quiet half of the slider useful. Smooth gain
-	// changes at the output, so volume never restarts synthesis or alters pitch.
-	output.gain.setTargetAtTime((level / 100) ** 2, context.currentTime, 0.015)
+	// Keep the quiet half of the slider useful without restarting speech.
+	for (const clip of [active, scheduled]) if (clip) clip.source.volume = (level / 100) ** 2
 	volumeLevel.value = `${level}%`
 	volume.setAttribute("aria-valuetext", `${level} percent`)
 	button("sound").title = `Volume · ${level}%`
@@ -115,7 +113,7 @@ function setState(next: PlaybackState) {
 	if (state.kind !== "closed") state = next
 }
 type QueuedClip = { clip: SpeechClip; offset: number; index: number }
-type PlayingClip = QueuedClip & { source: AudioBufferSourceNode; started: number }
+type PlayingClip = QueuedClip & { source: HTMLAudioElement; url: string }
 let active: PlayingClip | undefined
 let scheduled: PlayingClip | undefined
 let queue: QueuedClip[] = []
@@ -127,13 +125,35 @@ let checkingVoices = true,
 	hasVoices = false,
 	voiceRevision = 0
 let highlightFrame = 0
+const mediaControls = bindMediaSession(navigator.mediaSession, {
+	play: () => {
+		if (state.kind === "preparing") {
+			setState({ kind: "preparing", intent: "play" })
+			void resumeAudio(epoch)
+			updateControls()
+		} else if (!(state.kind === "ready" && state.intent === "play")) {
+			play.click()
+		}
+	},
+	pause: () => void pausePlayback(),
+	previoustrack: () => previous.click(),
+	nexttrack: () => next.click(),
+	stop: () => button("close").click(),
+})
 
 function updateControls() {
-	const playing = !!active && state.kind === "ready" && state.intent === "play" && context.state === "running"
+	const playing = !!active && state.kind === "ready" && state.intent === "play" && !active.source.paused
 	const busy = state.kind === "preparing" || state.kind === "selecting" || state.kind === "pausing"
 	const ended = state.kind === "ended"
 	const failed = state.kind === "failed"
 	const awaitingGesture = state.kind === "ready" && state.intent === "gesture"
+	mediaControls.update(
+		state.kind === "closed" || state.kind === "no-voices" || failed
+			? "none"
+			: playing || (state.kind === "preparing" && state.intent === "play")
+				? "playing"
+				: "paused",
+	)
 	if (playing && !highlightFrame) highlightFrame = requestAnimationFrame(highlight)
 	else if (!playing && highlightFrame) {
 		cancelAnimationFrame(highlightFrame)
@@ -184,17 +204,16 @@ function resizeBar() {
 
 function halt() {
 	epoch++
+	active?.source.pause()
 	if (highlightFrame) cancelAnimationFrame(highlightFrame)
 	highlightFrame = 0
 	engine.cancelQueued()
 	if (active) {
-		active.source.onended = null
-		active.source.stop()
+		disposeClip(active)
 		active = undefined
 	}
 	if (scheduled) {
-		scheduled.source.onended = null
-		scheduled.source.stop()
+		disposeClip(scheduled)
 		scheduled = undefined
 	}
 	queue = []
@@ -251,9 +270,22 @@ function fail(error: unknown) {
 
 async function resumeAudio(current: number) {
 	try {
-		await context.resume()
+		await active?.source.play()
+		if (current !== epoch || currentState().kind === "closed") return
+		updateControls()
 	} catch (error) {
-		if (state.kind !== "closed" && current === epoch) fail(error)
+		if (state.kind === "closed" || current !== epoch) return
+		if (
+			state.kind === "pausing" ||
+			((state.kind === "preparing" || state.kind === "ready") && state.intent === "pause")
+		)
+			return
+		if (error instanceof DOMException && error.name === "NotAllowedError") {
+			setState({ kind: "ready", intent: "gesture" })
+			if (currentState().kind === "closed" || current !== epoch) return
+			status.textContent = "Press Play to start listening."
+			updateControls()
+		} else fail(error)
 	}
 }
 
@@ -286,20 +318,32 @@ function startNext(current: number) {
 	if (current !== epoch || active) return
 	const item = queue.shift()
 	if (!item) return
-	active = makeSource(item, context.currentTime, current)
+	active = makeSource(item, current)
 	activate(active, current)
 	scheduleNext(current)
 }
 
-function makeSource(item: QueuedClip, started: number, current: number): PlayingClip {
-	const buffer = context.createBuffer(1, item.clip.pcm.length, item.clip.sampleRate)
-	buffer.copyToChannel(item.clip.pcm, 0)
-	const source = context.createBufferSource()
-	source.buffer = buffer
-	source.connect(output)
-	const playing: PlayingClip = { ...item, source, started }
+function disposeClip(clip: PlayingClip) {
+	clip.source.onended = null
+	clip.source.onerror = null
+	clip.source.pause()
+	clip.source.removeAttribute("src")
+	clip.source.load()
+	URL.revokeObjectURL(clip.url)
+}
+
+function makeSource(item: QueuedClip, current: number): PlayingClip {
+	const url = URL.createObjectURL(speechWav(item.clip.pcm, item.clip.sampleRate))
+	const source = new Audio(url)
+	source.preload = "auto"
+	source.volume = (Number(volume.value) / 100) ** 2
+	const playing: PlayingClip = { ...item, source, url }
+	source.onerror = () => {
+		if (current === epoch) fail(new PlayerMessage("Audio could not play. Press Play to try again."))
+	}
 	source.onended = () => {
 		if (current !== epoch || active !== playing) return
+		disposeClip(playing)
 		active = scheduled
 		scheduled = undefined
 		cursor = playing.index + 1
@@ -314,15 +358,14 @@ function makeSource(item: QueuedClip, started: number, current: number): Playing
 		} else startNext(current)
 		void fill(current)
 	}
-	source.start(started)
+	source.load()
 	return playing
 }
 
 function scheduleNext(current: number) {
 	if (current !== epoch || !active || scheduled || !queue.length) return
 	const item = queue.shift()!
-	const end = active.started + active.clip.pcm.length / active.clip.sampleRate
-	scheduled = makeSource(item, Math.max(context.currentTime, end), current)
+	scheduled = makeSource(item, current)
 }
 
 function activate(item: PlayingClip, current: number) {
@@ -330,7 +373,7 @@ function activate(item: PlayingClip, current: number) {
 	skippedText ||= item.clip.skippedText === true
 	if (firstBuffer) {
 		firstBuffer = false
-		const measurement = firstBufferPerformance(engine.diagnostics, performance.now() - began, context.state)
+		const measurement = firstBufferPerformance(engine.diagnostics, performance.now() - began)
 		if (measurement) void browser.storage.local.set({ lastSpeechPerformance: measurement })
 	}
 	// A pause or selection already in progress owns the state transition.
@@ -338,11 +381,8 @@ function activate(item: PlayingClip, current: number) {
 		updateControls()
 		return
 	}
-	let intent: PlaybackIntent = state.kind === "preparing" || state.kind === "ready" ? state.intent : "play"
-	if (intent === "play" && context.state !== "running") {
-		if (navigator.userActivation.hasBeenActive) void resumeAudio(current)
-		else intent = "gesture"
-	}
+	const intent: PlaybackIntent = state.kind === "preparing" || state.kind === "ready" ? state.intent : "play"
+	if (intent === "play" && item.source.paused) void resumeAudio(current)
 	setState({ kind: "ready", intent })
 	status.textContent =
 		intent === "gesture"
@@ -357,14 +397,32 @@ function activate(item: PlayingClip, current: number) {
 
 function highlight() {
 	highlightFrame = 0
-	if (active && state.kind === "ready" && state.intent === "play" && context.state === "running") {
-		const seconds = context.currentTime - active.started
+	if (active && state.kind === "ready" && state.intent === "play") {
+		const seconds = active.source.currentTime
 		const word = active.clip.words.find((word) => seconds >= word.from && seconds < word.to)
 		if (word && active.offset + word.start !== lastWord) {
 			lastWord = active.offset + word.start
 			void send({ command: "highlight", start: lastWord, end: active.offset + word.end }).catch(() => {})
 		}
 		highlightFrame = requestAnimationFrame(highlight)
+	}
+}
+
+async function pausePlayback() {
+	if (state.kind !== "preparing" && !(state.kind === "ready" && state.intent === "play")) return
+	const current = epoch
+	// Preserve a pending pause even when the first audio buffer is still being prepared.
+	if (state.kind === "preparing") setState({ kind: "preparing", intent: "pause" })
+	else setState({ kind: "pausing" })
+	status.textContent = "Paused"
+	active?.source.pause()
+	updateControls()
+	try {
+		if (current !== epoch || currentState().kind === "closed") return
+		if (currentState().kind === "pausing") setState({ kind: "ready", intent: "pause" })
+		updateControls()
+	} catch (error) {
+		if (current === epoch) fail(error)
 	}
 }
 
@@ -380,14 +438,8 @@ play.onclick = async () => {
 	let attempt = epoch
 	let selectionState: Extract<PlaybackState, { kind: "selecting" }> | undefined
 	try {
-		if (active && state.kind === "ready" && state.intent === "play" && context.state === "running") {
-			setState({ kind: "pausing" })
-			updateControls()
-			await context.suspend()
-			if (currentState().kind !== "pausing" || attempt !== epoch) return
-			setState({ kind: "ready", intent: "pause" })
-			status.textContent = "Paused"
-			updateControls()
+		if (active && state.kind === "ready" && state.intent === "play") {
+			await pausePlayback()
 			return
 		}
 		const previous: ResumableState =
@@ -445,9 +497,9 @@ next.onclick = () => {
 }
 button("close").onclick = () => {
 	setState({ kind: "closed" })
+	mediaControls.dispose()
 	halt()
 	engine.dispose()
-	void context.close()
 	void send({ command: "close" })
 }
 function updateSpeed() {
@@ -555,9 +607,9 @@ browser.storage.onChanged.addListener((changes, area) => {
 })
 window.addEventListener("pagehide", () => {
 	setState({ kind: "closed" })
+	mediaControls.dispose()
 	halt()
 	engine.dispose()
-	void context.close()
 })
 new ResizeObserver(resizeBar).observe(bar)
 window.addEventListener("keydown", (event) => {
@@ -616,7 +668,6 @@ async function initialize() {
 		if (currentState().kind !== "closed" && generation === epoch) fail(error)
 	}
 }
-context.onstatechange = updateControls
 void initialize()
 window.addEventListener("read-aloud-source-changed", () => {
 	halt()

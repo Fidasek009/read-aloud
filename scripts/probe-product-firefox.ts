@@ -68,7 +68,7 @@ const server = Bun.serve({
 				headers: { "Access-Control-Allow-Origin": "*", "Cross-Origin-Resource-Policy": "cross-origin" },
 			})
 		return new Response(
-			'<!doctype html><main><h1>Čtení na vašem zařízení</h1><p id="selection">Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.</p><p id="warm-selection">Jenom tento výběr.</p><p>Další věta pro ověření přehrávání.</p></main>',
+			'<!doctype html><main><h1>Čtení na vašem zařízení</h1><p id="selection">Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí, zatímco přirozený hlas pokračuje ve čtení této delší věty, abychom mohli ověřit ovládání přehrávání.</p><p id="warm-selection">Jenom tento výběr.</p><p>Další věta pro ověření přehrávání.</p></main>',
 			{ headers: { "Content-Type": "text/html;charset=utf-8" } },
 		)
 	},
@@ -130,6 +130,8 @@ try {
 					binary: Bun.env.FIREFOX_BINARY ?? "/snap/firefox/current/usr/lib/firefox/firefox",
 					args: ["-headless"],
 					prefs: {
+						// Enables Firefox's test-only OS-key injection API, not media eligibility.
+						"media.mediacontrol.testingevents.enabled": true,
 						"extensions.webextensions.uuids": JSON.stringify({ "read-aloud@local.invalid": uuid }),
 					},
 				},
@@ -197,14 +199,14 @@ try {
 	await run("/frame", { id: frame })
 	try {
 		await waitFor(
-			() => script("document.querySelector('#bar').dataset.view"),
+			() => script("document.querySelector('#bar')?.dataset.view"),
 			(value) => value === "setup",
 		)
 	} catch (error) {
 		console.error(
 			"Firefox player initialization:",
 			await script(
-				"({view:document.querySelector('#bar').dataset.view,status:document.querySelector('#status').textContent,error:document.documentElement.dataset.probeError,rejection:document.documentElement.dataset.probeRejection,hasTabs:!!browser.tabs})",
+				"({view:document.querySelector('#bar')?.dataset.view,status:document.querySelector('#status').textContent,error:document.documentElement.dataset.probeError,rejection:document.documentElement.dataset.probeRejection,hasTabs:!!browser.tabs})",
 			),
 		)
 		throw error
@@ -278,7 +280,7 @@ try {
 	await run("/window", { handle: sourceHandle })
 	await run("/frame", { id: frame })
 	await waitFor(
-		() => script("document.querySelector('#bar').dataset.view"),
+		() => script("document.querySelector('#bar')?.dataset.view"),
 		(value) => value === "playback",
 	)
 	assert(
@@ -377,9 +379,45 @@ try {
 	)
 	const cold = (await script<any>("browser.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
 	console.log("Firefox cold first-buffer timings:", JSON.stringify(cold))
+	// Drive Firefox's media-control service, which routes OS keys to the active
+	// controller. Calling our JS handlers directly cannot test that activation.
+	console.log(
+		"Firefox media elements:",
+		await script(
+			"window.__probeAudio.elements.map(e=>({duration:e.duration,time:e.currentTime,paused:e.paused,volume:e.volume,ready:e.readyState}))",
+		),
+	)
+	await run("/moz/context", { context: "chrome" })
+	console.log(
+		"Firefox controller:",
+		await script(
+			"({enabled:Services.prefs.getBoolPref('media.hardwaremediakeys.enabled'),active:gBrowser.selectedBrowser.browsingContext.mediaController.isActive,audible:gBrowser.selectedBrowser.browsingContext.mediaController.isAudible,keys:gBrowser.selectedBrowser.browsingContext.mediaController.supportedKeys})",
+		),
+	)
+	const mediaState = await waitFor(
+		() => script("MediaControlService.getCurrentMediaSessionPlaybackState()"),
+		(value) => value === "playing",
+		15,
+	)
+	assert(mediaState === "playing", "Firefox has no active playing media controller")
+	await script("MediaControlService.generateMediaControlKey('pause')")
+	await run("/moz/context", { context: "content" })
+	await waitFor(
+		() => script("document.querySelector('#play')?.getAttribute('aria-label')"),
+		(value) => value === "Play",
+	)
+	await run("/moz/context", { context: "chrome" })
+	await script("MediaControlService.generateMediaControlKey('play')")
+	await run("/moz/context", { context: "content" })
+	await waitFor(
+		() => script("document.querySelector('#play')?.getAttribute('aria-label')"),
+		(value) => value === "Pause",
+	)
+	console.log("Firefox media-control service routed pause/play through the active controller.")
 	const volume = await script<any>(checkVolume)
 	assert(volume?.muted, "Firefox volume failed: " + JSON.stringify(volume))
 	console.log("Firefox volume controls:", JSON.stringify(volume))
+
 	await run("/actions", {
 		actions: [
 			{
@@ -487,7 +525,7 @@ try {
 	await run("/window", { handle: sourceHandle })
 	await run("/frame", { id: frame })
 	await waitFor(
-		() => script("document.querySelector('#bar').dataset.view"),
+		() => script("document.querySelector('#bar')?.dataset.view"),
 		(value) => value === "setup",
 	)
 	assert(
@@ -641,16 +679,6 @@ try {
 		await run("/url", {
 			url: `moz-extension://${uuid}/pdf.html?src=${encodeURIComponent(Bun.pathToFileURL(`${root}/.cache/benchmarks/muni-thesis.pdf`).href)}`,
 		})
-		await waitFor(
-			() =>
-				script<boolean>(
-					"Array.from(document.querySelectorAll('#status button')).some(button=>button.textContent==='Choose file instead')",
-				),
-			Boolean,
-		)
-		await script(
-			"Array.from(document.querySelectorAll('#status button')).find(button=>button.textContent==='Choose file instead').click()",
-		)
 		await waitFor(() => script<boolean>("!!document.querySelector('#status input[type=file]')"), Boolean)
 		const input = await run<Record<string, string>>("/element", { using: "css selector", value: "input[type=file]" })
 		const element = input["element-6066-11e4-a52e-4f735466cecf"]

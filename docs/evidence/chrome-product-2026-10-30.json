@@ -1,5 +1,5 @@
 {
-	"recordedAt": "2026-11-03T05:00:16.090Z",
+	"recordedAt": "2026-11-03T21:30:50.740Z",
 	"browser": {
 		"protocolVersion": "1.3",
 		"product": "Chrome/155.0.8059.12",
@@ -10,33 +10,31 @@
 	"voice": "en_US-ljspeech-medium",
 	"performance": {
 		"cold": {
-			"audioContextState": "running",
 			"backend": "cpu",
 			"crossOriginIsolated": true,
 			"gpuFallbackReason": "gpu-initialization-failed",
-			"loadMs": 6899.399999976158,
-			"modelReadMs": 817.875,
+			"loadMs": 7929.764999985695,
+			"modelReadMs": 1001.4549999833107,
 			"modelReusedOnFallback": true,
-			"phonemizerMs": 5975.555000007153,
-			"recordedAt": "2026-11-03T04:59:47.929Z",
-			"sessionMs": 5937.170000016689,
-			"synthesisMs": 754.4800000190735,
+			"phonemizerMs": 268.6100000143051,
+			"recordedAt": "2026-11-03T21:30:24.216Z",
+			"sessionMs": 6715.895000040531,
+			"synthesisMs": 747.6849999427795,
 			"threads": 4,
-			"timeToFirstBufferMs": 7819.699999988079,
+			"timeToFirstBufferMs": 8938.599999964237,
 			"voice": "en_US-ljspeech-medium",
-			"workerLoadMs": 5975.599999964237
+			"workerLoadMs": 6741.930000007153
 		},
 		"warm": {
-			"audioContextState": "running",
 			"backend": "cpu",
-			"recordedAt": "2026-11-03T04:59:51.734Z",
+			"recordedAt": "2026-11-03T21:30:27.022Z",
 			"reusedSession": true,
-			"synthesisMs": 296.3649999499321,
-			"timeToFirstBufferMs": 321.69999998807907,
+			"synthesisMs": 295.7199999690056,
+			"timeToFirstBufferMs": 357.0999999642372,
 			"voice": "en_US-ljspeech-medium"
 		},
-		"mdCaptureMs": 41.43333300000086,
-		"speedRestartGapMs": 321.69999998807907,
+		"mdCaptureMs": 89.9116109999959,
+		"speedRestartGapMs": 398.60000002384186,
 		"caveat": "Development VM first-buffer readiness, not target-hardware audible latency; warm uses a different opening sentence in the same live engine."
 	},
 	"passed": [
