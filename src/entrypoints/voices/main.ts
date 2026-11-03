@@ -1,6 +1,6 @@
 import { browser } from "wxt/browser"
 
-import { languageLabel, voices } from "../../speech/catalog.ts"
+import { languageLabel, qualityLabel, voices } from "../../speech/catalog.ts"
 import { deleteVoice, downloadVoice, installedVoices, onVoicesChanged } from "../../speech/vault.ts"
 import "./style.css"
 
@@ -16,6 +16,11 @@ audio.crossOrigin = "anonymous"
 let preview: HTMLButtonElement | undefined
 let previewRequest = 0
 let renderRevision = 0
+const installed = new Set<string>()
+const rows = new Map<string, HTMLElement>()
+const orphanRows = new Map<string, HTMLElement>()
+const knownIds = new Set(voices.map((voice) => voice.id))
+const deleting = new Set<string>()
 const downloads = new Map<string, { controller: AbortController; fraction: number }>()
 const notices = new Map<string, { message: string; error: boolean }>()
 
@@ -55,16 +60,46 @@ for (const [locale, name] of [...new Map(voices.map((voice) => [voice.locale, la
 )) {
 	language.add(new Option(name, locale))
 }
-async function render() {
+async function refreshInstalled() {
 	const current = ++renderRevision
-	const installed = new Set(await installedVoices())
+	const latest = await installedVoices()
 	if (current !== renderRevision) return
-	const focused = document.activeElement instanceof HTMLElement ? document.activeElement : null
-	const focusVoice = focused?.closest<HTMLElement>("[data-voice]")?.dataset.voice
-	const focusAction = focused?.dataset.action
-	stopPreview()
-	list.replaceChildren()
+	installed.clear()
+	for (const id of latest) installed.add(id)
+	render()
+}
+function updateRow(row: HTMLElement, voice: (typeof voices)[number]) {
+	const action = row.querySelector<HTMLButtonElement>('[data-action="download"]')!
+	const progress = row.querySelector<HTMLProgressElement>("progress")!
+	const notice = row.querySelector<HTMLParagraphElement>(".download-status")!
+	const downloading = downloads.get(voice.id)
+	const outcome = notices.get(voice.id)
+	const quality = qualityLabel(voice.quality)
+	action.className = installed.has(voice.id) ? "danger" : "primary"
+	action.textContent = downloading
+		? "Cancel"
+		: installed.has(voice.id)
+			? "Delete"
+			: voice.unsupported
+				? "Unavailable"
+				: outcome?.error
+					? "Retry"
+					: "Download"
+	action.disabled = deleting.has(voice.id) || (!!voice.unsupported && !installed.has(voice.id))
+	action.setAttribute("aria-label", `${action.textContent} ${voice.name} ${quality}`)
+	progress.hidden = !downloading
+	if (downloading?.fraction) progress.value = downloading.fraction
+	else progress.removeAttribute("value")
+	notice.classList.toggle("error", outcome?.error ?? false)
+	notice.textContent = outcome?.message ?? ""
+	notice.hidden = !outcome
+}
+function render() {
 	const query = search.value.toLocaleLowerCase().trim()
+	const orphans = [...installed].filter((id) => !knownIds.has(id))
+	const shownOrphans = orphans.filter(
+		(id) => !language.value && !qualityFilter.value && id.toLocaleLowerCase().includes(query),
+	)
 	const shown = sorted.filter(
 		(voice) =>
 			(!language.value || voice.locale === language.value) &&
@@ -73,26 +108,76 @@ async function render() {
 				.toLocaleLowerCase()
 				.includes(query),
 	)
-	count.textContent = shown.length
-		? `${shown.length} of ${voices.length} models · ${installed.size} downloaded`
-		: "No models match these filters."
+	count.textContent =
+		shown.length + shownOrphans.length
+			? `${shown.length + shownOrphans.length} of ${voices.length + orphans.length} models · ${installed.size} downloaded`
+			: "No models match these filters."
+	for (const [id, row] of orphanRows) {
+		if (!installed.has(id)) {
+			row.remove()
+			orphanRows.delete(id)
+		} else row.hidden = !shownOrphans.includes(id)
+	}
+	for (const id of shownOrphans) {
+		if (orphanRows.has(id)) continue
+		const row = document.createElement("section")
+		row.dataset.voice = id
+		const description = document.createElement("div")
+		const title = document.createElement("h2")
+		title.textContent = "Unavailable voice"
+		const detail = document.createElement("p")
+		detail.textContent = id
+		description.append(title, detail)
+		const action = document.createElement("button")
+		action.className = "danger"
+		action.dataset.action = "delete-unavailable"
+		action.textContent = "Delete"
+		action.setAttribute("aria-label", `Delete unavailable voice ${id}`)
+		const notice = document.createElement("p")
+		notice.className = "download-status error"
+		notice.setAttribute("role", "status")
+		notice.hidden = true
+		action.onclick = async () => {
+			deleting.add(id)
+			action.disabled = true
+			notice.hidden = true
+			try {
+				await deleteVoice(id, () =>
+					browser.storage.local.set({ voiceChange: { id, deleted: true, revision: crypto.randomUUID() } }),
+				)
+			} catch {
+				notice.textContent = "The voice could not be deleted. Please try again."
+				notice.hidden = false
+				action.disabled = false
+			} finally {
+				deleting.delete(id)
+			}
+			await refreshInstalled()
+		}
+		row.append(description, action, notice)
+		orphanRows.set(id, row)
+		list.prepend(row)
+	}
+	const shownIds = new Set(shown.map((voice) => voice.id))
+	for (const [id, row] of rows) row.hidden = !shownIds.has(id)
 	for (const voice of shown) {
+		const existing = rows.get(voice.id)
+		if (existing) {
+			updateRow(existing, voice)
+			continue
+		}
 		const row = document.createElement("section")
 		row.dataset.voice = voice.id
 		const description = document.createElement("div")
 		const title = document.createElement("h2")
 		title.textContent = voice.name
 		const detail = document.createElement("p")
-		const quality = voice.quality === "x_low" ? "Extra low" : voice.quality[0]!.toUpperCase() + voice.quality.slice(1)
+		const quality = qualityLabel(voice.quality)
 		detail.textContent = `${languageLabel(voice)} · ${quality} · ${Math.round(voice.bytes / 1e6)} MB${voice.speakers > 1 ? ` · ${voice.speakers} speakers` : ""}`
 		const terms = document.createElement("a")
 		terms.className = "terms"
 		terms.textContent = "License"
-		terms.setAttribute(
-			"aria-label",
-			`License and training terms for ${voice.name}, ${voice.language}, ${quality} quality (opens in a new tab)`,
-		)
-		terms.title = "View license and training terms"
+		terms.setAttribute("aria-label", `${voice.name}, ${languageLabel(voice)}, ${quality}: license (opens in a new tab)`)
 		terms.href = voice.termsUrl
 		terms.target = "_blank"
 		terms.rel = "noopener noreferrer"
@@ -137,32 +222,12 @@ async function render() {
 		}
 		const action = document.createElement("button")
 		action.dataset.action = "download"
-		const downloading = downloads.get(voice.id)
-		const outcome = notices.get(voice.id)
-		action.className = installed.has(voice.id) ? "danger" : "primary"
-		action.textContent = downloading
-			? "Cancel"
-			: installed.has(voice.id)
-				? "Delete"
-				: voice.unsupported
-					? "Unavailable"
-					: outcome?.error
-						? "Retry"
-						: "Download"
-		action.disabled = !!voice.unsupported && !installed.has(voice.id)
-		action.setAttribute("aria-label", `${action.textContent} ${voice.name} ${quality}`)
 		const progress = document.createElement("progress")
 		progress.max = 1
-		progress.hidden = !downloading
-		if (downloading?.fraction) progress.value = downloading.fraction
-		else progress.removeAttribute("value")
 		progress.setAttribute("aria-label", `Downloading ${voice.name}`)
 		const notice = document.createElement("p")
 		notice.id = `download-status-${voice.id}`
 		notice.className = "download-status"
-		notice.classList.toggle("error", outcome?.error ?? false)
-		notice.textContent = outcome?.message ?? ""
-		notice.hidden = !outcome
 		action.setAttribute("aria-describedby", notice.id)
 		action.onclick = async () => {
 			const running = downloads.get(voice.id)
@@ -173,16 +238,20 @@ async function render() {
 			status.textContent = ""
 			downloadNotice(voice.id)
 			if (installed.has(voice.id)) {
+				deleting.add(voice.id)
 				action.disabled = true
 				try {
-					await deleteVoice(voice.id)
-					await browser.storage.local.set({
-						voiceChange: { id: voice.id, deleted: true, revision: crypto.randomUUID() },
-					})
+					await deleteVoice(voice.id, () =>
+						browser.storage.local.set({
+							voiceChange: { id: voice.id, deleted: true, revision: crypto.randomUUID() },
+						}),
+					)
 				} catch {
 					downloadNotice(voice.id, "The voice could not be deleted. Please try again.", true)
+				} finally {
+					deleting.delete(voice.id)
 				}
-				await render()
+				await refreshInstalled()
 				return
 			}
 			const task = { controller: new AbortController(), fraction: 0 }
@@ -192,19 +261,23 @@ async function render() {
 			progress.hidden = false
 			progress.removeAttribute("value")
 			try {
-				await downloadVoice(voice.id, task.controller.signal, (value) => {
-					task.fraction = value
-					const visible = list.querySelector<HTMLProgressElement>(`[data-voice="${voice.id}"] progress`)
-					if (visible) visible.value = value
-					if (value === 1) {
-						downloadNotice(voice.id, "Finishing download…")
-					}
-				})
-				const preferences = await browser.storage.local.get("voice")
-				await browser.storage.local.set({
-					...(!preferences.voice ? { voice: voice.id } : {}),
-					voiceChange: { id: voice.id, deleted: false, revision: crypto.randomUUID() },
-				})
+				await downloadVoice(
+					voice.id,
+					task.controller.signal,
+					(value) => {
+						task.fraction = value
+						const visible = list.querySelector<HTMLProgressElement>(`[data-voice="${voice.id}"] progress`)
+						if (visible) visible.value = value
+						if (value === 1) downloadNotice(voice.id, "Finishing download…")
+					},
+					async () => {
+						const preferences = await browser.storage.local.get("voice")
+						await browser.storage.local.set({
+							...(!preferences.voice ? { voice: voice.id } : {}),
+							voiceChange: { id: voice.id, deleted: false, revision: crypto.randomUUID() },
+						})
+					},
+				)
 				downloadNotice(voice.id)
 			} catch (error) {
 				const cancelled =
@@ -221,19 +294,16 @@ async function render() {
 				downloadNotice(voice.id, message, !cancelled)
 			} finally {
 				downloads.delete(voice.id)
-				await render()
+				await refreshInstalled()
 			}
 		}
 		row.append(description, sample, action, progress, notice)
+		updateRow(row, voice)
+		rows.set(voice.id, row)
 		list.append(row)
 	}
-	if (focusVoice && focusAction && focused && !focused.isConnected && document.hasFocus()) {
-		list
-			.querySelector<HTMLButtonElement>(`[data-voice="${focusVoice}"] [data-action="${focusAction}"]`)
-			?.focus({ preventScroll: true })
-	}
 }
-search.oninput = () => void render()
+search.oninput = render
 language.onchange = () => {
 	language.title = language.selectedOptions[0]?.textContent ?? "All languages"
 	void render()
@@ -246,9 +316,13 @@ audio.onerror = () => {
 		status.textContent = "Preview unavailable. Check your connection and try again."
 	}
 }
-onVoicesChanged(() => void render())
+const stopWatchingVoices = onVoicesChanged((id) => {
+	// This page refreshes its own operation once its final button state is ready.
+	if (!downloads.has(id) && !deleting.has(id)) void refreshInstalled()
+})
 window.addEventListener("pagehide", () => {
+	stopWatchingVoices()
 	for (const task of downloads.values()) task.controller.abort()
 	stopPreview()
 })
-void render()
+void refreshInstalled()

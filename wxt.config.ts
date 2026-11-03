@@ -11,17 +11,22 @@ export default defineConfig({
 	},
 	manifest: ({ browser }) => ({
 		name: "Read Aloud",
-		description: "Natural speech on your device. Firefox and Chrome.",
+		description: "Read pages and selected text aloud on your device.",
 		version: "0.0.0",
 		permissions: [
 			"activeTab",
 			"scripting",
 			"contextMenus",
 			"storage",
+			// Voice models can be large and must remain available offline.
+			"unlimitedStorage",
 			...(browser === "chrome" ? ["offscreen" as const] : []),
 		],
 		...(browser === "chrome"
 			? {
+					// Voice downloads and PCM transport use the typed-array encoding APIs
+					// introduced in Chrome 140.
+					minimum_chrome_version: "140",
 					cross_origin_embedder_policy: { value: "require-corp" as const },
 					cross_origin_opener_policy: { value: "same-origin" as const },
 				}

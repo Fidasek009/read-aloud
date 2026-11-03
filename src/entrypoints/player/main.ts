@@ -1,18 +1,47 @@
 import { browser } from "wxt/browser"
 
 import { readingChunks, sentenceTarget } from "../../reading/document.ts"
-import { isReaderChange, parentReaderHost, type ReaderRequest } from "../../reading/host.ts"
-import { languageLabel, voiceChoice, voices } from "../../speech/catalog.ts"
+import {
+	isReaderChange,
+	isReaderResponse,
+	parentReaderHost,
+	type ReaderCommand,
+	type ReaderResponse,
+} from "../../reading/host.ts"
+import { languageLabel, qualityLabel, voiceChoice, voices } from "../../speech/catalog.ts"
 import { SpeechClient } from "../../speech/client.ts"
-import { isVoiceChange, type SpeechClip } from "../../speech/protocol.ts"
+import { firstBufferPerformance } from "../../speech/diagnostics.ts"
+import {
+	SpeechTextError,
+	SpeechTimeoutError,
+	SpeechTransportError,
+	SpeechUnavailableError,
+	SpeechVoiceError,
+} from "../../speech/errors.ts"
+import { isVoiceChange, type SpeechClip, voiceModelId } from "../../speech/protocol.ts"
 import "./style.css"
 
 const session = location.hash.slice(1)
 const host = parentReaderHost()
-const send = (command: ReaderRequest["command"], payload: object = {}) =>
-	host
-		? host({ session, command, ...payload })
-		: browser.runtime.sendMessage({ type: "reader", session, command, ...payload })
+// Firefox exposes runtime messaging, but not the tabs API, to this embedded extension frame.
+const currentTab =
+	host || import.meta.env.BROWSER === "firefox"
+		? undefined
+		: Promise.resolve()
+				.then(() => browser.tabs.getCurrent())
+				.catch(() => undefined)
+const send = async (command: ReaderCommand): Promise<ReaderResponse> => {
+	const request = { ...command, session }
+	const tab = host ? undefined : await currentTab
+	const response: unknown = host
+		? await host(request)
+		: tab?.id === undefined
+			? await browser.runtime.sendMessage({ type: "reader", ...request })
+			: await browser.tabs.sendMessage(tab.id, { type: "reader", ...request }, { frameId: 0 })
+	if (!isReaderResponse(command, response))
+		throw new SpeechTransportError("The page did not respond. Press Play to try again.")
+	return response
+}
 const button = (id: string) => document.querySelector<HTMLButtonElement>(`#${id}`)!
 const play = button("play"),
 	previous = button("previous"),
@@ -30,6 +59,7 @@ const engine = new SpeechClient()
 const context = new AudioContext()
 const output = context.createGain()
 output.connect(context.destination)
+class PlayerMessage extends Error {}
 const volume = document.querySelector<HTMLInputElement>("#volume")!
 const volumePanel = document.querySelector<HTMLDivElement>("#volume-panel")!
 const panels = [document.querySelector<HTMLDivElement>("#speed-panel")!, volumePanel]
@@ -65,42 +95,68 @@ let skippedText = false,
 let text = "",
 	chunks = readingChunks(""),
 	cursor = 0,
-	epoch = 0,
-	paused = false,
-	awaitingGesture = false
-let active: { source: AudioBufferSourceNode; started: number; clip: SpeechClip; offset: number } | undefined
-let queue: { clip: SpeechClip; offset: number; index: number }[] = []
+	epoch = 0
+type PlaybackIntent = "play" | "pause" | "gesture"
+type ResumableState =
+	{ kind: "ready"; intent: "pause" | "gesture" } | { kind: "ended" } | { kind: "failed"; message: string }
+type PlaybackState =
+	| { kind: "preparing"; intent: PlaybackIntent }
+	| { kind: "ready"; intent: "play" }
+	| { kind: "pausing" }
+	| { kind: "selecting"; previous: ResumableState }
+	| { kind: "no-voices" }
+	| ResumableState
+	| { kind: "closed" }
+let state: PlaybackState = { kind: "preparing", intent: "play" }
+function currentState(): PlaybackState {
+	return state
+}
+function setState(next: PlaybackState) {
+	if (state.kind !== "closed") state = next
+}
+type QueuedClip = { clip: SpeechClip; offset: number; index: number }
+type PlayingClip = QueuedClip & { source: AudioBufferSourceNode; started: number }
+let active: PlayingClip | undefined
+let scheduled: PlayingClip | undefined
+let queue: QueuedClip[] = []
 let generating = false,
-	ended = false,
 	lastWord = -1
 let began = performance.now(),
 	firstBuffer = true
 let checkingVoices = true,
 	hasVoices = false,
-	preparing = false,
-	selecting = false,
-	failed = false,
 	voiceRevision = 0
-let closed = false,
-	initializationRevision = 0
+let highlightFrame = 0
 
 function updateControls() {
-	const playing = !!active && !paused && !ended && context.state === "running"
+	const playing = !!active && state.kind === "ready" && state.intent === "play" && context.state === "running"
+	const busy = state.kind === "preparing" || state.kind === "selecting" || state.kind === "pausing"
+	const ended = state.kind === "ended"
+	const failed = state.kind === "failed"
+	const awaitingGesture = state.kind === "ready" && state.intent === "gesture"
+	if (playing && !highlightFrame) highlightFrame = requestAnimationFrame(highlight)
+	else if (!playing && highlightFrame) {
+		cancelAnimationFrame(highlightFrame)
+		highlightFrame = 0
+	}
 	document.querySelector("#play-icon")!.setAttribute("d", playing ? "M8 5v14M16 5v14" : "m8 5 11 7-11 7z")
-	play.setAttribute("aria-label", playing ? "Pause" : "Play")
+	play.setAttribute("aria-label", ended ? "Read again" : playing ? "Pause" : "Play")
 	play.title = ended ? "Read again" : playing ? "Pause" : "Play"
-	play.setAttribute("aria-pressed", String(playing))
-	play.disabled = !hasVoices || preparing || selecting
-	previous.disabled = !hasVoices || preparing || selecting || cursor <= 0
-	next.disabled = !hasVoices || preparing || selecting || sentenceTarget(chunks, cursor, 1) < 0
-	speed.disabled = !hasVoices
-	voiceSelect.disabled = !hasVoices
+	play.disabled = !hasVoices || busy
+	previous.disabled = !hasVoices || busy || cursor <= 0
+	next.disabled = !hasVoices || busy || sentenceTarget(chunks, cursor, 1) < 0
+	speed.disabled = !hasVoices || busy
+	rate.disabled = !hasVoices || busy
+	voiceSelect.disabled = !hasVoices || busy
 	playback.hidden = !hasVoices
 	button("close").title = hasVoices ? "Stop reading" : "Close"
 	button("close").setAttribute("aria-label", hasVoices ? "Stop reading" : "Close")
 	setup.hidden = hasVoices || (checkingVoices && !failed)
 	bar.dataset.view = hasVoices ? "playback" : setup.hidden ? "loading" : "setup"
-	message.classList.toggle("quiet", hasVoices && !preparing && !awaitingGesture && !failed && !skippedText)
+	message.classList.toggle(
+		"quiet",
+		hasVoices && state.kind !== "preparing" && !awaitingGesture && !failed && !skippedText,
+	)
 	voiceSelect.title =
 		voiceSelect.selectedOptions[0]?.parentElement instanceof HTMLOptGroupElement
 			? voiceSelect.selectedOptions[0].parentElement.label
@@ -109,7 +165,7 @@ function updateControls() {
 }
 
 function resizeBar() {
-	if (closed) return
+	if (state.kind === "closed") return
 	let height = bar.getBoundingClientRect().bottom
 	for (const panel of panels) {
 		if (!panel.matches(":popover-open")) continue
@@ -119,7 +175,8 @@ function resizeBar() {
 		panel.style.top = `${height + 8}px`
 		height = panel.getBoundingClientRect().bottom + 12
 	}
-	void send("resize", {
+	void send({
+		command: "resize",
 		height: Math.ceil(height),
 		width: hasVoices ? 460 : checkingVoices ? 320 : 400,
 	}).catch(() => {})
@@ -127,24 +184,28 @@ function resizeBar() {
 
 function halt() {
 	epoch++
+	if (highlightFrame) cancelAnimationFrame(highlightFrame)
+	highlightFrame = 0
 	engine.cancelQueued()
 	if (active) {
 		active.source.onended = null
 		active.source.stop()
 		active = undefined
 	}
+	if (scheduled) {
+		scheduled.source.onended = null
+		scheduled.source.stop()
+		scheduled = undefined
+	}
 	queue = []
 	generating = false
 	lastWord = -1
-	void send("highlight", { start: 0, end: 0 }).catch(() => {})
+	void send({ command: "highlight", start: 0, end: 0 }).catch(() => {})
 }
 
 async function begin(index: number, offset?: number) {
-	if (closed || !hasVoices) return
-	if (failed) {
-		paused = false
-		awaitingGesture = false
-	}
+	if (state.kind === "closed" || !hasVoices) return
+	const intent: PlaybackIntent = state.kind === "ready" || state.kind === "preparing" ? state.intent : "play"
 	halt()
 	began = performance.now()
 	firstBuffer = true
@@ -157,9 +218,7 @@ async function begin(index: number, offset?: number) {
 		selectedChunk && offset !== undefined && offset >= selectedChunk.start && offset < selectedChunk.end
 			? offset
 			: undefined
-	ended = false
-	preparing = true
-	failed = false
+	setState({ kind: "preparing", intent })
 	status.textContent = "Preparing voice…"
 	updateControls()
 	try {
@@ -173,13 +232,20 @@ async function begin(index: number, offset?: number) {
 }
 
 function fail(error: unknown) {
-	if (closed) return
+	if (state.kind === "closed") return
 	halt()
 	engine.dispose()
-	status.textContent = error instanceof Error ? error.message : "Reading could not continue."
-	paused = true
-	preparing = false
-	failed = true
+	const message =
+		error instanceof PlayerMessage ||
+		error instanceof SpeechTextError ||
+		error instanceof SpeechTimeoutError ||
+		error instanceof SpeechTransportError ||
+		error instanceof SpeechUnavailableError ||
+		error instanceof SpeechVoiceError
+			? error.message
+			: "Reading could not continue. Press Play to try again."
+	setState({ kind: "failed", message })
+	status.textContent = message
 	updateControls()
 }
 
@@ -187,7 +253,7 @@ async function resumeAudio(current: number) {
 	try {
 		await context.resume()
 	} catch (error) {
-		if (!closed && current === epoch) fail(error)
+		if (state.kind !== "closed" && current === epoch) fail(error)
 	}
 }
 
@@ -195,8 +261,8 @@ async function fill(current: number, firstOffset?: number) {
 	if (generating || current !== epoch) return
 	generating = true
 	try {
-		while (current === epoch && queue.length < 2) {
-			const index = active ? cursor + queue.length + 1 : cursor + queue.length
+		while (current === epoch && queue.length + Number(!!scheduled) < 2) {
+			const index = active ? cursor + queue.length + Number(!!scheduled) + 1 : cursor + queue.length
 			const chunk = chunks[index]
 			if (!chunk) break
 			const offset = index === cursor && firstOffset !== undefined ? firstOffset : chunk.start
@@ -204,9 +270,10 @@ async function fill(current: number, firstOffset?: number) {
 			if (current !== epoch) return
 			consecutiveSkipped = clip.skippedText && !clip.words.length ? consecutiveSkipped + 1 : 0
 			if (consecutiveSkipped >= 3)
-				throw new Error("This voice cannot read this passage. Choose another voice or select different text.")
+				throw new PlayerMessage("This voice cannot read this passage. Choose another voice or select different text.")
 			queue.push({ clip, offset, index })
 			if (!active) startNext(current)
+			else scheduleNext(current)
 		}
 	} catch (error) {
 		if (current === epoch) fail(error)
@@ -219,112 +286,144 @@ function startNext(current: number) {
 	if (current !== epoch || active) return
 	const item = queue.shift()
 	if (!item) return
-	cursor = item.index
-	skippedText ||= item.clip.skippedText === true
+	active = makeSource(item, context.currentTime, current)
+	activate(active, current)
+	scheduleNext(current)
+}
+
+function makeSource(item: QueuedClip, started: number, current: number): PlayingClip {
 	const buffer = context.createBuffer(1, item.clip.pcm.length, item.clip.sampleRate)
 	buffer.copyToChannel(item.clip.pcm, 0)
 	const source = context.createBufferSource()
 	source.buffer = buffer
 	source.connect(output)
-	active = { source, started: context.currentTime, clip: item.clip, offset: item.offset }
-	preparing = false
-	if (firstBuffer) {
-		firstBuffer = false
-		void browser.storage.local.set({
-			lastSpeechPerformance: {
-				...engine.diagnostics,
-				timeToFirstBufferMs: performance.now() - began,
-				audioContextState: context.state,
-				recordedAt: new Date().toISOString(),
-			},
-		})
-	}
+	const playing: PlayingClip = { ...item, source, started }
 	source.onended = () => {
-		if (current !== epoch) return
-		active = undefined
-		cursor++
-		if (cursor >= chunks.length) {
-			ended = true
+		if (current !== epoch || active !== playing) return
+		active = scheduled
+		scheduled = undefined
+		cursor = playing.index + 1
+		if (active) {
+			activate(active, current)
+			scheduleNext(current)
+		} else if (cursor >= chunks.length) {
+			setState({ kind: "ended" })
 			status.textContent = skippedText ? "Finished · Some text could not be read." : "Finished"
 			updateControls()
-			void send("highlight", { start: 0, end: 0 })
-			return
-		}
-		startNext(current)
+			void send({ command: "highlight", start: 0, end: 0 })
+		} else startNext(current)
 		void fill(current)
 	}
-	source.start()
-	if (!paused && context.state !== "running") {
-		if (navigator.userActivation.hasBeenActive) void resumeAudio(current)
-		else {
-			paused = true
-			awaitingGesture = true
-		}
+	source.start(started)
+	return playing
+}
+
+function scheduleNext(current: number) {
+	if (current !== epoch || !active || scheduled || !queue.length) return
+	const item = queue.shift()!
+	const end = active.started + active.clip.pcm.length / active.clip.sampleRate
+	scheduled = makeSource(item, Math.max(context.currentTime, end), current)
+}
+
+function activate(item: PlayingClip, current: number) {
+	cursor = item.index
+	skippedText ||= item.clip.skippedText === true
+	if (firstBuffer) {
+		firstBuffer = false
+		const measurement = firstBufferPerformance(engine.diagnostics, performance.now() - began, context.state)
+		if (measurement) void browser.storage.local.set({ lastSpeechPerformance: measurement })
 	}
-	status.textContent = awaitingGesture
-		? "Press Play to start listening."
-		: paused
-			? "Paused"
-			: skippedText
-				? "Skipped text this voice could not read."
-				: "Reading"
+	// A pause or selection already in progress owns the state transition.
+	if (state.kind === "pausing" || state.kind === "selecting") {
+		updateControls()
+		return
+	}
+	let intent: PlaybackIntent = state.kind === "preparing" || state.kind === "ready" ? state.intent : "play"
+	if (intent === "play" && context.state !== "running") {
+		if (navigator.userActivation.hasBeenActive) void resumeAudio(current)
+		else intent = "gesture"
+	}
+	setState({ kind: "ready", intent })
+	status.textContent =
+		intent === "gesture"
+			? "Press Play to start listening."
+			: intent === "pause"
+				? "Paused"
+				: skippedText
+					? "Skipped text this voice could not read."
+					: "Reading"
 	updateControls()
 }
 
 function highlight() {
-	if (active && !paused && context.state === "running") {
+	highlightFrame = 0
+	if (active && state.kind === "ready" && state.intent === "play" && context.state === "running") {
 		const seconds = context.currentTime - active.started
 		const word = active.clip.words.find((word) => seconds >= word.from && seconds < word.to)
 		if (word && active.offset + word.start !== lastWord) {
 			lastWord = active.offset + word.start
-			void send("highlight", { start: lastWord, end: active.offset + word.end }).catch(() => {})
+			void send({ command: "highlight", start: lastWord, end: active.offset + word.end }).catch(() => {})
 		}
+		highlightFrame = requestAnimationFrame(highlight)
 	}
-	requestAnimationFrame(highlight)
 }
 
 play.onclick = async () => {
-	if (selecting || closed) return
+	if (
+		state.kind === "closed" ||
+		state.kind === "preparing" ||
+		state.kind === "selecting" ||
+		state.kind === "pausing" ||
+		state.kind === "no-voices"
+	)
+		return
 	let attempt = epoch
-	awaitingGesture = false
+	let selectionState: Extract<PlaybackState, { kind: "selecting" }> | undefined
 	try {
-		if (active && !paused && !ended && context.state === "running") {
-			paused = true
+		if (active && state.kind === "ready" && state.intent === "play" && context.state === "running") {
+			setState({ kind: "pausing" })
+			updateControls()
 			await context.suspend()
+			if (currentState().kind !== "pausing" || attempt !== epoch) return
+			setState({ kind: "ready", intent: "pause" })
 			status.textContent = "Paused"
 			updateControls()
 			return
 		}
-		selecting = true
+		const previous: ResumableState =
+			state.kind === "ready" ? { kind: "ready", intent: state.intent === "gesture" ? "gesture" : "pause" } : state
+		selectionState = { kind: "selecting", previous }
+		setState(selectionState)
 		updateControls()
 		const current = epoch
-		const selection: unknown = await send("selection")
-		if (closed || current !== epoch) return
+		const selection: unknown = await send({ command: "selection" })
+		if (currentState() !== selectionState || current !== epoch) return
 		if (selection && typeof selection === "object" && "error" in selection && typeof selection.error === "string")
-			throw new Error(selection.error)
+			throw new PlayerMessage("This selection could not be read. Select it again and press Play.")
 		if (
 			!selection ||
 			typeof selection !== "object" ||
 			!("text" in selection) ||
 			(selection.text !== null && (typeof selection.text !== "string" || !selection.text.trim()))
 		)
-			throw new Error("This selection could not be read. Please try again.")
-		if (selection.text !== null || ended || failed) {
-			const restartIndex = selection.text !== null || ended ? 0 : Math.min(cursor, chunks.length - 1)
+			throw new PlayerMessage("This selection could not be read. Please try again.")
+		if (selection.text !== null || previous.kind === "ended" || previous.kind === "failed") {
+			const restartIndex =
+				selection.text !== null || previous.kind === "ended" ? 0 : Math.min(cursor, chunks.length - 1)
 			if (typeof selection.text === "string") {
 				text = selection.text
 				chunks = readingChunks(text, voiceChoice(voiceSelect.value).voice.locale)
 			}
-			paused = false
+			setState({ kind: "ready", intent: "play" })
 			// begin stops the previous buffer before the audio context can resume it.
 			void begin(restartIndex)
 			attempt = epoch
 			await resumeAudio(attempt)
 			return
 		}
-		paused = false
+		setState({ kind: "ready", intent: "play" })
 		await resumeAudio(current)
-		if (closed || current !== epoch) return
+		if (currentState().kind === "closed" || current !== epoch) return
 		if (!active && !generating) void begin(Math.min(cursor, chunks.length - 1))
 		status.textContent = active
 			? skippedText
@@ -333,10 +432,10 @@ play.onclick = async () => {
 			: "Preparing voice…"
 		updateControls()
 	} catch (error) {
-		if (!closed && attempt === epoch) fail(error)
+		if (currentState().kind !== "closed" && attempt === epoch) fail(error)
 	} finally {
-		selecting = false
-		if (!closed) updateControls()
+		if (selectionState && currentState() === selectionState) setState(selectionState.previous)
+		if (currentState().kind !== "closed") updateControls()
 	}
 }
 previous.onclick = () => void begin(Math.max(0, sentenceTarget(chunks, cursor, -1)))
@@ -345,18 +444,18 @@ next.onclick = () => {
 	if (index >= 0) void begin(index)
 }
 button("close").onclick = () => {
-	closed = true
+	setState({ kind: "closed" })
 	halt()
 	engine.dispose()
 	void context.close()
-	void send("close")
+	void send({ command: "close" })
 }
 function updateSpeed() {
 	rate.textContent = `${Number(speed.value)}×`
 	rate.title = `Reading speed · ${rate.textContent}`
-	rate.setAttribute("aria-label", `Reading speed, ${Number(speed.value)} times normal`)
+	rate.setAttribute("aria-label", `Reading speed, ${Number(speed.value)}×`)
 	speedLevel.value = rate.textContent
-	speed.setAttribute("aria-valuetext", `${Number(speed.value)} times normal speed`)
+	speed.setAttribute("aria-valuetext", `${Number(speed.value)}× normal speed`)
 }
 speed.oninput = updateSpeed
 speed.onchange = () => {
@@ -378,15 +477,15 @@ async function refreshVoices() {
 	const current = ++voiceRevision
 	const response: unknown = await browser.runtime.sendMessage({ type: "installed-voices" })
 	if (!Array.isArray(response) || !response.every((id) => typeof id === "string"))
-		throw new Error("Your voices could not be loaded. Open Voices and try again.")
+		throw new PlayerMessage("Your voices could not be loaded. Open Voices and try again.")
 	const installed = new Set<string>(response)
 	const preferences = await browser.storage.local.get(["voice", "speed"])
-	if (closed || current !== voiceRevision) return hasVoices
+	if (state.kind === "closed" || current !== voiceRevision) return hasVoices
 	const previousChoice = voiceSelect.value
 	voiceSelect.replaceChildren()
 	for (const voice of voices.filter((voice) => installed.has(voice.id))) {
 		const group = document.createElement("optgroup")
-		group.label = `${voice.name} · ${voice.quality.replace("x_low", "extra low")} · ${languageLabel(voice)}`
+		group.label = `${voice.name} · ${qualityLabel(voice.quality)} · ${languageLabel(voice)}`
 		const names = new Map(Object.entries(voice.speakerNames ?? {}).map(([name, id]) => [id, name]))
 		for (let speaker = 0; speaker < voice.speakers; speaker++) {
 			const option = document.createElement("option")
@@ -394,7 +493,7 @@ async function refreshVoices() {
 			option.textContent =
 				voice.speakers > 1
 					? `${voice.name} · ${names.get(speaker) ?? `Speaker ${speaker + 1}`}`
-					: `${voice.name} · ${voice.quality.replace("x_low", "extra low")}`
+					: `${voice.name} · ${qualityLabel(voice.quality)}`
 			group.append(option)
 		}
 		voiceSelect.append(group)
@@ -412,26 +511,34 @@ async function refreshVoices() {
 }
 
 async function voicesChanged(id: string, deleted: boolean) {
-	if (closed) return
+	if (state.kind === "closed") return
 	const wasWaiting = !hasVoices
-	if (deleted && id === voiceSelect.value.split("#")[0]) {
+	const previousChoice = voiceSelect.value
+	const pending = refreshVoices()
+	const revision = voiceRevision
+	const available = await pending
+	if (currentState().kind === "closed" || revision !== voiceRevision) return
+	const stillInstalled = Array.from(voiceSelect.options).some((option) => voiceModelId(option.value) === id)
+	if (
+		deleted &&
+		id === voiceModelId(previousChoice) &&
+		id === voiceModelId(engine.voice) &&
+		!stillInstalled &&
+		available
+	) {
 		halt()
 		engine.dispose()
-		paused = true
-		preparing = false
-		failed = true
-		status.textContent = "Voice removed. Press Play to use another downloaded voice."
+		const message = "Voice removed. Press Play to use another downloaded voice."
+		setState({ kind: "failed", message })
+		status.textContent = message
 	}
-	if (!(await refreshVoices())) {
+	if (!available) {
 		halt()
 		engine.dispose()
-		paused = true
-		preparing = false
-		failed = false
-		awaitingGesture = false
+		setState({ kind: "no-voices" })
 		status.textContent = "No voice downloaded."
 	} else if (wasWaiting && !deleted && text.trim()) {
-		paused = false
+		setState({ kind: "ready", intent: "play" })
 		chunks = readingChunks(text, voiceChoice(voiceSelect.value).voice.locale)
 		await begin(0)
 	}
@@ -441,13 +548,13 @@ browser.storage.onChanged.addListener((changes, area) => {
 	const change: unknown = changes.voiceChange?.newValue
 	if (area === "local" && isVoiceChange(change)) void voicesChanged(change.id, change.deleted).catch(fail)
 	const reset: unknown = changes.readerChange?.newValue
-	if (!closed && area === "local" && isReaderChange(reset) && reset.session === session) {
+	if (state.kind !== "closed" && area === "local" && isReaderChange(reset) && reset.session === session) {
 		halt()
 		void initialize()
 	}
 })
 window.addEventListener("pagehide", () => {
-	closed = true
+	setState({ kind: "closed" })
 	halt()
 	engine.dispose()
 	void context.close()
@@ -458,14 +565,14 @@ window.addEventListener("keydown", (event) => {
 })
 
 async function initialize() {
-	const current = ++initializationRevision
+	if (currentState().kind === "closed") return
 	const generation = epoch
-	preparing = true
+	setState({ kind: "preparing", intent: "play" })
 	status.textContent = "Getting ready…"
 	updateControls()
 	try {
-		const source: unknown = await send("document")
-		if (closed || current !== initializationRevision || generation !== epoch) return
+		const source: unknown = await send({ command: "document" })
+		if (currentState().kind === "closed" || generation !== epoch) return
 		if (
 			!source ||
 			typeof source !== "object" ||
@@ -473,11 +580,18 @@ async function initialize() {
 			typeof source.text !== "string" ||
 			!source.text.trim()
 		)
-			throw new Error("Start reading from a page or a text selection.")
+			throw new PlayerMessage("Start reading from a page or a text selection.")
 		text = source.text
-		const available = await refreshVoices()
-		const preferences = await browser.storage.local.get(["speed", "volume"])
-		if (closed || current !== initializationRevision || generation !== epoch) return
+		let available: boolean
+		let preferences: Record<string, unknown>
+		for (;;) {
+			const pending = refreshVoices()
+			const revision = voiceRevision
+			available = await pending
+			preferences = await browser.storage.local.get(["speed", "volume"])
+			if (currentState().kind === "closed" || generation !== epoch) return
+			if (revision === voiceRevision) break
+		}
 		if (typeof preferences.speed === "number" && preferences.speed >= 0.5 && preferences.speed <= 2)
 			speed.value = String(preferences.speed)
 		updateSpeed()
@@ -491,22 +605,17 @@ async function initialize() {
 		updateVolume()
 		chunks = readingChunks(text, available ? voiceChoice(voiceSelect.value).voice.locale : "en")
 		if (!available) {
-			paused = true
-			preparing = false
-			failed = false
-			awaitingGesture = false
+			setState({ kind: "no-voices" })
 			status.textContent = "No voice downloaded."
 			updateControls()
 			return
 		}
-		paused = false
-		awaitingGesture = false
+		setState({ kind: "ready", intent: "play" })
 		await begin(0)
 	} catch (error) {
-		if (!closed && current === initializationRevision && generation === epoch) fail(error)
+		if (currentState().kind !== "closed" && generation === epoch) fail(error)
 	}
 }
-requestAnimationFrame(highlight)
 context.onstatechange = updateControls
 void initialize()
 window.addEventListener("read-aloud-source-changed", () => {

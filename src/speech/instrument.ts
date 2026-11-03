@@ -117,10 +117,16 @@ export function instrumentModel(source: ArrayBuffer): Uint8Array<ArrayBuffer> {
 	const shape = join(message(1, scalar(1, 1)), message(1, scalar(1, 1)), message(1, string(2, "tokens")))
 	const tensor = join(scalar(1, 1), message(2, shape))
 	const info = join(string(1, name), message(2, message(1, tensor)))
-	const modified = join(bytes.subarray(graph.payload, graph.end), message(1, node), message(12, info))
+	const extraNode = message(1, node)
+	const extraOutput = message(12, info)
+	const graphLength = graph.end - graph.payload + extraNode.length + extraOutput.length
 	return join(
 		bytes.subarray(0, graph.start),
-		message(7, modified),
+		integer(7 * 8 + 2),
+		integer(graphLength),
+		bytes.subarray(graph.payload, graph.end),
+		extraNode,
+		extraOutput,
 		bytes.subarray(graph.end),
 		string(6, "Modified by Read Aloud: exposed predicted token durations. Original speech graph and weights retained."),
 	)

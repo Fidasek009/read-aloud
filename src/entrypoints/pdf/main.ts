@@ -3,13 +3,20 @@ import type { PDFPageProxy, RenderTask } from "pdfjs-dist"
 import { getDocument, GlobalWorkerOptions, TextLayer } from "pdfjs-dist"
 import { browser } from "wxt/browser"
 
-import type { ReaderRequest } from "../../reading/host.ts"
-
-import { type ReadingDocument, sourceRange, type TextRun } from "../../reading/document.ts"
+import { overlappingRuns, type ReadingDocument, sourceRange, type TextRun } from "../../reading/document.ts"
+import { isReaderRequest, readerSize, shouldScrollToWord } from "../../reading/host.ts"
 import { normalizeDocument } from "../../reading/normalize.ts"
-import { isPdfCommand } from "../../reading/pdf-control.ts"
-import { locateSelection, selectRange } from "../../reading/selection.ts"
+import {
+	isPdfCommand,
+	isPdfSelectionToken,
+	type PdfCommand,
+	pdfCommandKey,
+	pdfSelectionKey,
+} from "../../reading/pdf-control.ts"
+import { invalidateSelectionIndex, locateSelection, selectRange } from "../../reading/selection.ts"
+import { parsePdfReaders, readingKeys } from "../../reading/state.ts"
 import "pdfjs-dist/web/pdf_viewer.css"
+import "../../reading/current-word.css"
 import "./style.css"
 
 const pages = document.querySelector<HTMLDivElement>("#pages")!
@@ -26,6 +33,7 @@ let alive = true
 let revision = 0
 let allowStart = true
 let pendingSelection: ReadingDocument | undefined
+let pendingSelectionKey: string | undefined
 function captureSelection() {
 	const selection = getSelection()
 	if (selection?.toString().trim() && selection.rangeCount) {
@@ -73,6 +81,7 @@ const owners = new WeakMap<Text, PageState>()
 
 function ensureText(state: PageState): Promise<void> {
 	return (state.textReady ??= (async () => {
+		state.container.replaceChildren()
 		const layer = new TextLayer({
 			textContentSource: state.content,
 			container: state.container,
@@ -88,7 +97,12 @@ function ensureText(state: PageState): Promise<void> {
 			run.node = node
 			owners.set(node, state)
 		}
-	})())
+		invalidateSelectionIndex(complete)
+	})().catch((error) => {
+		delete state.textReady
+		invalidateSelectionIndex(complete)
+		throw error
+	}))
 }
 
 function stop() {
@@ -102,7 +116,7 @@ function stop() {
 
 async function start(mode: "article" | "selection", initial?: ReadingDocument) {
 	revision++
-	if (!complete.text.trim()) throw new Error("This PDF has no readable text layer.")
+	if (!initial && !complete.text.trim()) throw new Error("This PDF has no readable text layer yet.")
 	const selected = initial ?? (mode === "selection" ? takeSelection() : complete)
 	if (!selected) throw new Error("Select some PDF text first.")
 	source = selected
@@ -119,9 +133,7 @@ async function start(mode: "article" | "selection", initial?: ReadingDocument) {
 	controls.append(frame)
 }
 
-browser.storage.onChanged.addListener((changes, area) => {
-	const command: unknown = changes.pdfCommand?.newValue
-	if (area !== "local" || !isPdfCommand(command) || command.tabId !== tabId || !alive) return
+async function handleCommand(command: PdfCommand) {
 	if (command.action === "stop") {
 		allowStart = false
 		stop()
@@ -132,21 +144,58 @@ browser.storage.onChanged.addListener((changes, area) => {
 		return
 	}
 	allowStart = true
-	void start(command.mode).then(
-		() => {
-			status.textContent = ""
-		},
-		(error) => {
-			status.textContent =
-				error instanceof Error
-					? error.message
-					: "This PDF could not be read. Select the text again and try Read selection."
-		},
+	await start(command.mode)
+	status.textContent = ""
+}
+
+let commands = Promise.resolve()
+const receiving = new Set<string>()
+function receiveCommand(key: string, value: unknown) {
+	if (
+		!isPdfCommand(value) ||
+		value.tabId !== tabId ||
+		!alive ||
+		key !== pdfCommandKey(value.tabId, value.revision) ||
+		"result" in value ||
+		receiving.has(key)
 	)
+		return
+	receiving.add(key)
+	commands = commands
+		.then(async () => {
+			try {
+				// A sender can time out or the source tab can close while this is queued.
+				const pending = await browser.storage.session.get(key)
+				if (!alive || !(key in pending)) return
+				let result: { ok: true } | { ok: false; error: string }
+				try {
+					await handleCommand(value)
+					result = { ok: true }
+				} catch (error) {
+					const message =
+						error instanceof Error
+							? error.message
+							: "This PDF could not be read. Select the text again and try Read selection."
+					status.textContent = message
+					result = { ok: false, error: message }
+				}
+				if (alive) await browser.storage.session.set({ [key]: { ...value, result } })
+			} finally {
+				receiving.delete(key)
+			}
+		})
+		.catch(() => {
+			if (alive) status.textContent = "The PDF command could not be delivered. Try Read selection again."
+		})
+}
+browser.storage.onChanged.addListener((changes, area) => {
+	if (area !== "session") return
+	for (const [key, change] of Object.entries(changes)) receiveCommand(key, change.newValue)
 })
 
-window.readAloudHost = async (message: ReaderRequest) => {
-	if (message.session !== session) throw new Error("This reading session has ended")
+window.readAloudHost = async (message) => {
+	if (!isReaderRequest(message)) return { error: "Invalid reading request." }
+	if (!session || message.session !== session) return { error: "This reading session has ended." }
 	if (message.command === "document") return { text: source.text }
 	if (message.command === "selection") {
 		try {
@@ -166,63 +215,33 @@ window.readAloudHost = async (message: ReaderRequest) => {
 		stop()
 		return { ok: true }
 	}
-	if (message.command === "resize" && typeof message.height === "number" && frame) {
-		frame.style.height = `${Math.min(240, Math.max(44, message.height))}px`
-		if (typeof message.width === "number" && Number.isFinite(message.width))
-			controls.style.maxWidth = `${Math.min(640, Math.max(240, message.width))}px`
+	if (message.command === "resize" && frame) {
+		const size = readerSize(message.height, message.width)
+		frame.style.height = `${size.height}px`
+		if (size.width !== undefined) controls.style.maxWidth = `${size.width}px`
 	}
-	if (message.command === "highlight" && typeof message.start === "number" && typeof message.end === "number") {
+	if (message.command === "highlight") {
 		const current = revision
-		for (const run of source.runs.filter((run) => run.from < message.end! && run.to > message.start!)) {
-			const page = owners.get(run.node)
-			if (page) await ensureText(page)
+		try {
+			for (const run of overlappingRuns(source, message.start, message.end)) {
+				const page = owners.get(run.node)
+				if (page) await ensureText(page)
+			}
+		} catch {
+			if (alive) status.textContent = "Could not highlight this page. Playback continues."
+			return { ok: false }
 		}
 		if (current !== revision || !alive || !frame) return { ok: false }
 		const range = sourceRange(source, message.start, message.end)
 		if (range && CSS.highlights) {
 			CSS.highlights.set(key, new Highlight(range))
 			const rect = range.getBoundingClientRect()
-			if (rect.top < 150 || rect.bottom > innerHeight - 50)
+			if (shouldScrollToWord(rect.top, rect.bottom, innerHeight))
 				window.scrollBy({ top: rect.top - innerHeight * 0.4, behavior: "instant" })
 		} else CSS.highlights?.delete(key)
 	}
 	return { ok: true }
 }
-
-browser.runtime.onMessage.addListener((message: unknown, sender) => {
-	if (
-		sender.id !== browser.runtime.id ||
-		!message ||
-		typeof message !== "object" ||
-		!("tabId" in message) ||
-		message.tabId !== tabId ||
-		!("type" in message)
-	)
-		return
-	if (message.type === "pdf-stop") {
-		allowStart = false
-		stop()
-		return Promise.resolve({ ok: true })
-	}
-	if (
-		message.type === "pdf-read" &&
-		"mode" in message &&
-		(message.mode === "selection" || message.mode === "article")
-	) {
-		if ("reveal" in message && message.reveal === true && frame?.isConnected) {
-			frame.focus()
-			return Promise.resolve({ ok: true })
-		}
-		const mode = message.mode
-		return (async () => {
-			allowStart = true
-			await start(mode)
-		})().then(
-			() => ({ ok: true }),
-			(error) => ({ error: error instanceof Error ? error.message : "This PDF could not be read." }),
-		)
-	}
-})
 
 const renderers = new Map<Element, PageState>()
 const observer = new IntersectionObserver(
@@ -265,6 +284,21 @@ const observer = new IntersectionObserver(
 	},
 	{ rootMargin: "100% 0px" },
 )
+let pdfTask: ReturnType<typeof getDocument> | undefined
+const lifecycle = new AbortController()
+window.addEventListener(
+	"pagehide",
+	() => {
+		alive = false
+		lifecycle.abort()
+		stop()
+		observer.disconnect()
+		for (const renderer of renderers.values()) renderer.task?.cancel()
+		if (pendingSelectionKey) void browser.storage.session.remove(pendingSelectionKey)
+		void pdfTask?.destroy()
+	},
+	{ once: true },
+)
 
 async function load() {
 	const raw = params.get("src")
@@ -272,10 +306,32 @@ async function load() {
 	const url = new URL(raw)
 	if (!["https:", "http:"].includes(url.protocol)) throw new Error("This PDF address is not supported.")
 	tabId = (await browser.tabs.getCurrent())?.id
+	for (const [key, value] of Object.entries(await browser.storage.session.get(null))) receiveCommand(key, value)
+	let initial: ReadingDocument | undefined
+	if (params.has("source") && tabId !== undefined) {
+		const stored = await browser.storage.session.get(readingKeys.pdfReaders)
+		if (parsePdfReaders(stored[readingKeys.pdfReaders])[tabId] !== Number(params.get("source"))) {
+			allowStart = false
+			status.textContent = "Reading stopped because the original PDF changed or closed."
+		}
+	}
+	if (params.get("mode") === "selection" && tabId !== undefined) {
+		const token = params.get("selection")
+		if (token !== null && !isPdfSelectionToken(token)) throw new Error("This PDF selection could not be opened.")
+		const name = pdfSelectionKey(tabId, token ?? undefined)
+		pendingSelectionKey = name
+		const stored = await browser.storage.session.get(name)
+		await browser.storage.session.remove(name)
+		pendingSelectionKey = undefined
+		if (typeof stored[name] !== "string" || !stored[name].trim())
+			throw new Error("The PDF selection is no longer available. Select it in this reader and try again.")
+		initial = normalizeDocument({ text: stored[name], runs: [] }, true)
+		if (allowStart && alive) await start("selection", initial)
+	}
 	GlobalWorkerOptions.workerSrc = browser.runtime.getURL("/pdf-runtime/pdf.worker.mjs")
 	let bytes: Uint8Array<ArrayBuffer> | undefined
 	for (let attempt = 0; attempt < 2; attempt++) {
-		const response = await fetchPdf(url)
+		const response = await fetchPdf(url, lifecycle.signal)
 		if (!response.ok) throw new Error("The PDF could not be downloaded. Open it on its original site and try again.")
 		const candidate = new Uint8Array(await response.arrayBuffer())
 		if (new TextDecoder().decode(candidate.subarray(0, 5)) === "%PDF-") {
@@ -291,6 +347,7 @@ async function load() {
 	}
 	if (!bytes)
 		throw new Error("The site returned a web page instead of a PDF. Open the original PDF on its site, then try again.")
+	lifecycle.signal.throwIfAborted()
 	const base = new URL("pdf-runtime/", location.href)
 	const task = getDocument({
 		data: bytes,
@@ -301,17 +358,7 @@ async function load() {
 		iccUrl: new URL("iccs/", base).href,
 		verbosity: 0,
 	})
-	window.addEventListener(
-		"pagehide",
-		() => {
-			alive = false
-			stop()
-			observer.disconnect()
-			for (const renderer of renderers.values()) renderer.task?.cancel()
-			void task.destroy()
-		},
-		{ once: true },
-	)
+	pdfTask = task
 	const pdf = await task.promise
 	const result: ReadingDocument = { text: "", runs: [] }
 	for (let n = 1; n <= pdf.numPages && alive; n++) {
@@ -362,40 +409,30 @@ async function load() {
 		observer.observe(section)
 	}
 	complete = normalizeDocument(result, true)
-	let requested: ReadingDocument | undefined
 	status.textContent = ""
-	if (params.get("mode") === "selection" && tabId !== undefined) {
-		const name = `pdfSelection:${tabId}`
-		const stored = await browser.storage.session.get(name)
-		await browser.storage.session.remove(name)
-		if (typeof stored[name] !== "string")
-			throw new Error("The PDF selection is no longer available. Select it in this reader and try again.")
-		requested = locateSelection(complete, stored[name])
-	}
-	if (params.has("source") && tabId !== undefined) {
-		const { pdfReaders } = await browser.storage.session.get("pdfReaders")
-		if (
-			!pdfReaders ||
-			typeof pdfReaders !== "object" ||
-			(pdfReaders as Record<string, unknown>)[tabId] !== Number(params.get("source"))
-		) {
-			allowStart = false
-			status.textContent = "Reading stopped because the original PDF changed or closed."
+	if (initial && source === initial && frame && alive) {
+		try {
+			const mapped = locateSelection(complete, initial.text)
+			if (mapped.text === initial.text) source = mapped
+			else status.textContent = "Highlighting is unavailable for this selection."
+		} catch {
+			status.textContent = "Highlighting is unavailable for this selection."
 		}
 	}
-	if (allowStart && alive) await start("article", requested)
+	if (!initial && allowStart && alive) await start("article")
 }
 
-async function fetchPdf(url: URL): Promise<Response> {
+async function fetchPdf(url: URL, signal: AbortSignal): Promise<Response> {
 	const request = () =>
 		fetch(url, {
 			credentials: "include",
 			referrerPolicy: "no-referrer",
-			signal: AbortSignal.timeout(60_000),
+			signal: AbortSignal.any([signal, AbortSignal.timeout(60_000)]),
 		})
 	try {
 		return await request()
 	} catch (error) {
+		if (signal.aborted) throw error
 		const origins = [`${url.protocol}//${url.hostname}/*`]
 		if (await browser.permissions.contains({ origins }))
 			throw new Error("The PDF could not be reached. Check your connection and the original PDF tab, then try again.", {
@@ -430,5 +467,7 @@ async function fetchPdf(url: URL): Promise<Response> {
 	}
 }
 void load().catch((error) => {
+	if (pendingSelectionKey) void browser.storage.session.remove(pendingSelectionKey)
+	if (!alive) return
 	status.textContent = error instanceof Error ? error.message : "This PDF could not be opened."
 })

@@ -1,6 +1,6 @@
 # Implementation and acceptance status
 
-Updated: **2026-10-30**. A working development prototype now exists; the requested release is **not complete**.
+Updated: **2026-11-03**. A working development prototype exists; the requested release is **not complete**.
 
 ## Implemented
 
@@ -18,7 +18,7 @@ The Chrome product probe exercised explicit download, storage, local synthesis, 
 
 Product probes use isolated profiles and narrow test-only origin grants (localhost plus MD Dash or MUNI as appropriate). They **do not prove native context-menu/action activation or activeTab behavior**. Reports are saved in `docs/evidence/`; no product reading text is logged.
 
-The supplied thesis has now also fetched directly from the live MUNI URL in browser tests with an explicit test-origin grant: **60 pages**, SHA-256 `30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32`. The PDF browser probe separately verifies missing-site-access recovery and privileged fetching without CORS, then checks rendered text, exact DOM highlighting, and movement to an offscreen page. Its remote mode uses the actual MUNI server; the default uses cached original bytes without CORS. This is a rendering/mapping check, not end-to-end PDF speech or native-viewer entry acceptance. It does not prove every paragraph's reading order, tables, hyphenation, citations, or accessibility.
+The supplied thesis has now also fetched directly from the live MUNI URL in browser tests with an explicit test-origin grant: **60 pages**, SHA-256 `30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32`. The PDF probes verify missing-site-access recovery, fetching without CORS, mapping, highlighting, and cross-page local synthesis; product probes also exercise playback from a simulated native-viewer selection. The dedicated PDF probe serves cached original bytes by default; the Firefox product probe can use those pinned bytes with `PDF_CACHED=1` to isolate selection regressions from live-site failures. They do not prove native menu activation, every paragraph's reading order, tables, citations, or accessibility.
 
 ## Acceptance still open
 
@@ -35,6 +35,8 @@ Keep these gates open until evidence covers the actual requirement. Do not equat
 
 ## Feedback regression evidence
 
-The Chrome probe checks repeated activation without root-padding changes or duplicate controls, then deliberately reinjects the WXT content script to verify old message listeners are removed on invalidation. The actual MD Dash page passes five Next steps and Previous back to the correct preceding sentence. Playback uses compact SVG icons with labels/tooltips, a 76-pixel speed slider, and a direct Voices/settings link. Voice-management actions remain text; Delete is red. Preview checks still prove no audio is bundled or prefetched.
+The Chrome probe checks repeated activation without root-padding changes or duplicate controls, then deliberately reinjects the WXT content script to verify old message listeners are removed on invalidation. The actual MD Dash page passes five Next steps and Previous back to the correct preceding sentence. Playback uses compact labeled icons and floating speed and volume controls. Voice-management actions remain text; Delete is red. Preview checks cover that audio is neither bundled nor prefetched.
 
-Session-loading experiments are recorded separately in `docs/evidence/session-loading-2026-10-30.json`. An isolated-context prototype configured four CPU threads but still missed the cold target. Further private experiments isolated WASM boot at roughly half a second and model initialization near five seconds; neither removing duplicate shape nodes nor changing optimization flags established a cold-budget pass, so graph simplification was not adopted. VM load varies and some browser probes ran concurrently; do not treat individual timings as controlled hardware comparisons. Current production diagnostics distinguish first-buffer readiness from audible playback and contain no source text.
+The [latest session-loading experiment](evidence/session-loading-2026-11-02.json) rotates four options and measures multiple sentences for one voice in Chrome on this VM. Mean load ranged from 5.0 to 7.1 seconds; it does not establish an optimum across models or browsers. The product records show cold first-buffer readiness well above two seconds, with a subsecond warm Chrome result. Warm records now identify session reuse without copying cold initialization timings. These VM measurements do not establish target-device audible latency. Diagnostics contain no source text.
+
+The [cold-start phase investigation](cold-start-investigation-2026-11-03.md) separates runtime initialization from real-model loading. A prepared ORT asset improved cold first-buffer readiness to about five seconds in a Chrome CPU experiment, with deterministic audio/alignment parity; it still misses the target and has not been adopted in production. A separate PDF phase investigation is distinguishing fetch latency from extraction, so the roughly 26-second full-reader readiness figure must not be attributed to text extraction alone.

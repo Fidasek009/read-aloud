@@ -1,16 +1,48 @@
 import { defineBackground } from "#imports"
-import { browser } from "wxt/browser"
+import { type Browser, browser } from "wxt/browser"
 
-import type { ReaderChange } from "../reading/host.ts"
-import type { PdfAction, PdfCommand } from "../reading/pdf-control.ts"
-
+import { isExtensionPageSender } from "../extension/sender.ts"
+import { isReaderRequest, type ReaderChange } from "../reading/host.ts"
+import { pdfSelectionKey } from "../reading/pdf-control.ts"
+import { isPdfReaderContext, isPdfReaderUrl } from "../reading/pdf-reader.ts"
+import { commandPdf } from "../reading/pdf-transport.ts"
+import { parsePdfReaders, parseReadingState, readingKeys, readingLocks } from "../reading/state.ts"
 import { installSpeechBroker } from "../speech/broker.ts"
 
 export default defineBackground(() => {
-	const commandPdf = (tabId: number, action: PdfAction) =>
-		browser.storage.local.set({
-			pdfCommand: { ...action, tabId, revision: crypto.randomUUID() } satisfies PdfCommand,
-		})
+	const extensionRoot = browser.runtime.getURL("/")
+	const pdfContext = async (tabId: number, sourceUrl?: string, sourceTab?: number) => {
+		const contexts = await browser.runtime.getContexts({ contextTypes: ["TAB"], tabIds: [tabId], frameIds: [0] })
+		return contexts.find((context) => isPdfReaderContext(context, tabId, extensionRoot, sourceUrl, sourceTab))
+	}
+	const pdfReader = async (tabId: number, sourceUrl: string, sourceTab: number, expectedUrl?: string) => {
+		const deadline = performance.now() + 3_000
+		do {
+			const tab = await browser.tabs.get(tabId).catch(() => undefined)
+			if (!tab) return undefined
+			// A loading tab can still expose its old committed URL/context. Wait before
+			// deciding whether it is our pending reader or a page the user navigated to.
+			if (tab.status !== "loading") {
+				const advertised = tab.pendingUrl ?? tab.url
+				if (advertised && !isPdfReaderUrl(advertised, extensionRoot, sourceUrl, sourceTab)) {
+					if (!expectedUrl) return undefined
+				} else {
+					const context = await pdfContext(tabId, sourceUrl, sourceTab)
+					if (context && (!expectedUrl || context.documentUrl === expectedUrl)) return tab
+					if (!expectedUrl) return undefined
+				}
+			}
+			await new Promise<void>((resolve) => setTimeout(resolve, 25))
+		} while (performance.now() < deadline)
+		throw new Error("The PDF reader is still opening. Try Read selection again when it finishes.")
+	}
+	const clearPdfSelections = async (tabId: number) => {
+		const area = browser.storage.session
+		const keys = typeof area.getKeys === "function" ? await area.getKeys() : Object.keys(await area.get(null))
+		const prefix = pdfSelectionKey(tabId)
+		const pending = keys.filter((key) => key === prefix || key.startsWith(`${prefix}:`))
+		if (pending.length) await area.remove(pending)
+	}
 	installSpeechBroker()
 	browser.runtime.onInstalled.addListener(async (details) => {
 		await browser.contextMenus.removeAll()
@@ -24,80 +56,116 @@ export default defineBackground(() => {
 		selection?: string,
 		reveal = false,
 		pageUrl?: string,
-	) => {
-		try {
-			const tab = await browser.tabs.get(tabId)
-			// Own extension tabs can omit Tab.url without the broad tabs permission.
-			// The native context-menu event supplies the invoking document URL.
-			const documentUrl = pageUrl?.startsWith(browser.runtime.getURL("/pdf.html")) ? pageUrl : (tab.url ?? pageUrl)
-			await browser.action.setBadgeText({ tabId, text: "" })
-			const previous = await browser.storage.session.get("readingTab")
-			const existingPdf = reveal ? await browser.storage.session.get("pdfReaders") : {}
-			const revealsPreviousPdf =
-				reveal &&
-				existingPdf.pdfReaders &&
-				typeof existingPdf.pdfReaders === "object" &&
-				(existingPdf.pdfReaders as Record<string, unknown>)[String(previous.readingTab)] === tabId
-			if (typeof previous.readingTab === "number" && previous.readingTab !== tabId && !revealsPreviousPdf) {
-				await browser.tabs.sendMessage(previous.readingTab, { type: "stop-reading" }, { frameId: 0 }).catch(() => {})
-				await commandPdf(previous.readingTab, { action: "stop" })
-			}
-			if (documentUrl?.startsWith(browser.runtime.getURL("/pdf.html"))) {
-				await commandPdf(tabId, { action: "read", mode, reveal })
-				await browser.storage.session.set({ readingTab: tabId })
-				return
-			}
-			if (documentUrl && /^https?:/u.test(documentUrl) && /\.pdf(?:$|[?#])/iu.test(documentUrl)) {
-				if (reveal) {
-					const { pdfReaders } = await browser.storage.session.get("pdfReaders")
-					if (pdfReaders && typeof pdfReaders === "object") {
-						for (const [reader, source] of Object.entries(pdfReaders)) {
-							if (source === tabId && (await browser.tabs.get(Number(reader)).catch(() => undefined))) {
-								await browser.tabs.update(Number(reader), { active: true })
-								return
-							}
-						}
-					}
-				}
-				if (mode === "selection" && !selection?.trim()) throw new Error("Select some PDF text first.")
-				if (selection && selection.length > 500_000) throw new Error("Select a smaller part of the PDF to read.")
-				const url = new URL(browser.runtime.getURL("/pdf.html"))
-				url.searchParams.set("src", documentUrl)
-				url.searchParams.set("mode", mode)
-				url.searchParams.set("source", String(tabId))
-				const reader = await browser.tabs.create({ url: "about:blank", active: false })
-				if (reader.id !== undefined) {
-					if (selection) await browser.storage.session.set({ [`pdfSelection:${reader.id}`]: selection })
-					const stored = await browser.storage.session.get("pdfReaders")
-					const readers = stored.pdfReaders && typeof stored.pdfReaders === "object" ? stored.pdfReaders : {}
-					await browser.storage.session.set({ pdfReaders: { ...readers, [reader.id]: tabId } })
-					await browser.storage.session.set({ readingTab: reader.id })
-					await browser.tabs.update(reader.id, { url: url.href, active: true })
-				}
-				return
-			}
-			const message = { type: "start-reading", mode, reveal }
-			let result
+	) =>
+		navigator.locks.request(readingLocks.session, async () => {
 			try {
-				result = await browser.tabs.sendMessage(tabId, message, { frameId: 0 })
-			} catch {
-				await browser.scripting.executeScript({ target: { tabId }, files: ["/content-scripts/reader.js"] })
-				result = await browser.tabs.sendMessage(tabId, message, { frameId: 0 })
-			}
-			if (result?.error) throw new Error(String(result.error))
-			await browser.storage.session.set({ readingTab: tabId })
-			if (result?.reuse)
-				await browser.storage.local.set({
-					readerChange: { session: result.session, revision: crypto.randomUUID() } satisfies ReaderChange,
+				const tab = await browser.tabs.get(tabId)
+				// Own extension tabs can omit Tab.url without the broad tabs permission.
+				// The native context-menu event supplies the invoking document URL.
+				const documentUrl = isPdfReaderUrl(pageUrl, extensionRoot)
+					? pageUrl
+					: (tab.url ?? pageUrl ?? (await pdfContext(tabId))?.documentUrl)
+				await browser.action.setBadgeText({ tabId, text: "" })
+				await browser.action.setTitle({ tabId, title: "Read this page" })
+				const previous = parseReadingState(
+					await browser.storage.session.get([readingKeys.currentTab, readingKeys.pdfReaders]),
+				)
+				const revealsPreviousPdf =
+					reveal && previous.currentTab !== undefined && previous.pdfReaders[previous.currentTab] === tabId
+				if (previous.currentTab !== undefined && previous.currentTab !== tabId && !revealsPreviousPdf) {
+					if (previous.pdfReaders[previous.currentTab] !== undefined) {
+						if (await pdfContext(previous.currentTab))
+							await commandPdf(previous.currentTab, { action: "stop" }).catch(() => {})
+					} else
+						await browser.tabs
+							.sendMessage(previous.currentTab, { type: "stop-reading" }, { frameId: 0 })
+							.catch(() => {})
+					await browser.storage.session.remove(readingKeys.currentTab)
+				}
+				if (isPdfReaderUrl(documentUrl, extensionRoot)) {
+					await commandPdf(tabId, { action: "read", mode, reveal })
+					await browser.storage.session.set({ [readingKeys.currentTab]: tabId })
+					return
+				}
+				if (documentUrl && /^https?:/u.test(documentUrl) && /\.pdf(?:$|[?#])/iu.test(documentUrl)) {
+					if (mode === "selection" && !selection?.trim()) throw new Error("Select some PDF text first.")
+					if (selection && selection.length > 500_000) throw new Error("Select a smaller part of the PDF to read.")
+					const url = new URL(browser.runtime.getURL("/pdf.html"))
+					url.searchParams.set("src", documentUrl)
+					url.searchParams.set("mode", mode)
+					url.searchParams.set("source", String(tabId))
+					await navigator.locks.request(readingLocks.pdfReaders, async () => {
+						const stored = await browser.storage.session.get(readingKeys.pdfReaders)
+						const readers = parsePdfReaders(stored[readingKeys.pdfReaders])
+						let reader: Browser.tabs.Tab | undefined
+						for (const [id, source] of Object.entries(readers)) {
+							if (source !== tabId) continue
+							const candidate = await pdfReader(Number(id), documentUrl, tabId)
+							if (candidate) {
+								reader = candidate
+								break
+							}
+							delete readers[id]
+						}
+						if (reader?.id !== undefined && reveal) {
+							await commandPdf(reader.id, { action: "read", mode: "article", reveal: true })
+							await browser.storage.session.set({
+								[readingKeys.currentTab]: reader.id,
+								[readingKeys.pdfReaders]: readers,
+							})
+							await browser.tabs.update(reader.id, { active: true })
+							return
+						}
+						reader ??= await browser.tabs.create({ url: "about:blank", active: false })
+						if (reader.id !== undefined) {
+							await clearPdfSelections(reader.id)
+							let selectionKey: string | undefined
+							try {
+								if (selection) {
+									const token = crypto.randomUUID()
+									url.searchParams.set("selection", token)
+									selectionKey = pdfSelectionKey(reader.id, token)
+									await browser.storage.session.set({ [selectionKey]: selection })
+								}
+								await browser.storage.session.set({
+									[readingKeys.pdfReaders]: { ...readers, [reader.id]: tabId },
+									[readingKeys.currentTab]: reader.id,
+								})
+								await browser.tabs.update(reader.id, { url: url.href, active: true })
+							} catch (error) {
+								if (selectionKey) await browser.storage.session.remove(selectionKey)
+								throw error
+							}
+							// tabs.update resolves before the new document necessarily commits.
+							// Keep the registry lock until discovery can identify our actual page.
+							if (!(await pdfReader(reader.id, documentUrl, tabId, url.href)))
+								throw new Error("The PDF reader changed or closed before it could open. Try Read selection again.")
+						}
+					})
+					return
+				}
+				const message = { type: "start-reading", mode, reveal }
+				let result
+				try {
+					result = await browser.tabs.sendMessage(tabId, message, { frameId: 0 })
+				} catch {
+					await browser.scripting.executeScript({ target: { tabId }, files: ["/content-scripts/reader.js"] })
+					result = await browser.tabs.sendMessage(tabId, message, { frameId: 0 })
+				}
+				if (result?.error) throw new Error(String(result.error))
+				await browser.storage.session.set({ [readingKeys.currentTab]: tabId })
+				if (result?.reuse)
+					await browser.storage.local.set({
+						readerChange: { session: result.session, revision: crypto.randomUUID() } satisfies ReaderChange,
+					})
+			} catch (error) {
+				await browser.action.setBadgeText({ tabId, text: "!" })
+				await browser.action.setTitle({
+					tabId,
+					title: error instanceof Error ? error.message : "This page cannot be read here.",
 				})
-		} catch (error) {
-			await browser.action.setBadgeText({ tabId, text: "!" })
-			await browser.action.setTitle({
-				tabId,
-				title: error instanceof Error ? error.message : "This page cannot be read here.",
-			})
-		}
-	}
+			}
+		})
 	browser.contextMenus.onClicked.addListener((info, tab) => {
 		if (tab?.id !== undefined)
 			return start(
@@ -109,45 +177,67 @@ export default defineBackground(() => {
 			)
 	})
 	browser.action.onClicked.addListener((tab) => {
-		if (tab.id !== undefined) void start(tab.id, "article", undefined, true)
+		if (tab.id !== undefined) void start(tab.id, "article", undefined, true, tab.url)
 	})
-	const stopPdfReaders = async (sourceTab: number, removed = false) => {
-		const stored = await browser.storage.session.get("pdfReaders")
-		if (!stored.pdfReaders || typeof stored.pdfReaders !== "object") return
-		const readers = stored.pdfReaders as Record<string, number>
-		for (const [reader, source] of Object.entries(readers)) {
-			if (source === sourceTab) {
-				await commandPdf(Number(reader), { action: "stop" })
-				delete readers[reader]
-			}
-			if (removed && Number(reader) === sourceTab) {
-				delete readers[reader]
-				await browser.storage.session.remove(`pdfSelection:${reader}`)
-			}
-		}
-		await browser.storage.session.set({ pdfReaders: readers })
-	}
+	// Lock order is always reading session -> PDF registry -> individual PDF command.
+	// Starts and cleanup share the outer lock, so cleanup cannot erase a newer start.
+	const cleanReadingTab = (tabId: number, reason: "removed" | "loading" | "complete") =>
+		navigator.locks.request(readingLocks.session, () =>
+			navigator.locks.request(readingLocks.pdfReaders, async () => {
+				const state = parseReadingState(
+					await browser.storage.session.get([readingKeys.currentTab, readingKeys.pdfReaders]),
+				)
+				const readers = state.pdfReaders
+				const wasReader = readers[tabId] !== undefined
+				const stopped = new Set<number>()
+				let changed = false
+				for (const [reader, source] of Object.entries(readers)) {
+					const readerId = Number(reader)
+					if ((reason === "removed" || reason === "loading") && source === tabId) {
+						if (await pdfContext(readerId)) await commandPdf(readerId, { action: "stop" }).catch(() => {})
+						await clearPdfSelections(readerId)
+						delete readers[reader]
+						stopped.add(readerId)
+						changed = true
+					} else if (
+						readerId === tabId &&
+						(reason === "removed" || (reason === "complete" && !(await pdfContext(tabId, undefined, source))))
+					) {
+						// A controlled PDF reload retains its mapping. A committed web
+						// navigation has no matching extension context and gives the tab up.
+						await clearPdfSelections(readerId)
+						delete readers[reader]
+						stopped.add(readerId)
+						changed = true
+					}
+				}
+				if (reason === "removed") await clearPdfSelections(tabId)
+				if (changed) await browser.storage.session.set({ [readingKeys.pdfReaders]: readers })
+				if (
+					state.currentTab !== undefined &&
+					(stopped.has(state.currentTab) ||
+						(state.currentTab === tabId && (reason === "removed" || (reason === "loading" && !wasReader))))
+				)
+					await browser.storage.session.remove(readingKeys.currentTab)
+			}),
+		)
 	browser.tabs.onRemoved.addListener((tabId) => {
-		void stopPdfReaders(tabId, true)
+		void cleanReadingTab(tabId, "removed")
 	})
 	browser.tabs.onUpdated.addListener((tabId, change) => {
-		if (change.status === "loading") void stopPdfReaders(tabId)
+		if (change.status === "loading" || change.status === "complete") void cleanReadingTab(tabId, change.status)
 	})
 	browser.runtime.onMessage.addListener((message: unknown, sender) => {
 		if (
-			sender.id !== browser.runtime.id ||
+			!isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/"), ["/player.html"]) ||
 			!message ||
 			typeof message !== "object" ||
 			!("type" in message) ||
 			message.type !== "reader" ||
-			!("session" in message) ||
-			typeof message.session !== "string" ||
-			sender.tab?.id === undefined ||
-			!sender.url
+			!isReaderRequest(message) ||
+			sender.tab?.id === undefined
 		)
 			return
-		const url = new URL(sender.url)
-		if (url.host !== new URL(browser.runtime.getURL("/")).host || url.pathname !== "/player.html") return
 		return browser.tabs.sendMessage(sender.tab.id, message, { frameId: 0 })
 	})
 })

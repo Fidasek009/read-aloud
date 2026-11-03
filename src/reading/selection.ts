@@ -1,21 +1,44 @@
-import type { ReadingDocument } from "./document.ts"
-
+import { overlappingRuns, type ReadingDocument } from "./document.ts"
 import { layoutHyphenation, normalizeDocument } from "./normalize.ts"
 import { projectRun } from "./runs.ts"
+
+const nodeIndexes = new WeakMap<ReadingDocument, WeakMap<Text, { first: number; last: number }>>()
+
+/** Invalidate after a lazily rendered PDF page rebinds its text nodes. */
+export function invalidateSelectionIndex(source: ReadingDocument) {
+	nodeIndexes.delete(source)
+}
+
+function selectionRuns(source: ReadingDocument, range: Range) {
+	if (typeof Text === "undefined" || !(range.startContainer instanceof Text) || !(range.endContainer instanceof Text))
+		return source.runs
+	let index = nodeIndexes.get(source)
+	if (!index) {
+		index = new WeakMap()
+		for (let i = 0; i < source.runs.length; i++) {
+			const node = source.runs[i]!.node
+			const entry = index.get(node)
+			if (entry) entry.last = i
+			else index.set(node, { first: i, last: i })
+		}
+		nodeIndexes.set(source, index)
+	}
+	const first = index.get(range.startContainer)
+	const last = index.get(range.endContainer)
+	return first && last && first.first <= last.last ? source.runs.slice(first.first, last.last + 1) : source.runs
+}
 
 function sliceDocument(source: ReadingDocument, start: number, end: number): ReadingDocument {
 	return {
 		text: source.text.slice(start, end),
-		runs: source.runs
-			.filter((run) => run.to > start && run.from < end)
-			.map((run) =>
-				projectRun(
-					run,
-					Math.max(run.from, start) - start,
-					Math.min(run.to, end) - start,
-					run.offset + Math.max(0, start - run.from),
-				),
+		runs: overlappingRuns(source, start, end).map((run) =>
+			projectRun(
+				run,
+				Math.max(run.from, start) - start,
+				Math.min(run.to, end) - start,
+				run.offset + Math.max(0, start - run.from),
 			),
+		),
 	}
 }
 
@@ -24,7 +47,7 @@ export function selectRange(source: ReadingDocument, range: Range | null): Readi
 	if (!range || range.collapsed) throw new Error("Select some PDF text first.")
 	let start: number | undefined
 	let end: number | undefined
-	for (const run of source.runs) {
+	for (const run of selectionRuns(source, range)) {
 		if (!run.node.isConnected || !range.intersectsNode(run.node)) continue
 		const from = Math.max(run.offset, range.startContainer === run.node ? range.startOffset : run.offset)
 		const to = Math.min(

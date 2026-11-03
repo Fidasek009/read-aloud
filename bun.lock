@@ -12,21 +12,9 @@
       "devDependencies": {
         "@types/bun": "1.4.4",
         "@webgpu/types": "0.1.74",
+        "protobufjs": "7.6.6",
         "typescript": "7.0.2",
         "wxt": "0.21.5",
-      },
-    },
-    "lab/local-speech": {
-      "name": "read-aloud-local-inference-lab",
-      "version": "0.0.0",
-      "dependencies": {
-        "@spelling-creator/spellophone": "0.2.1",
-        "onnxruntime-web": "1.31.1",
-        "protobufjs": "7.6.6",
-      },
-      "devDependencies": {
-        "@types/bun": "1.4.4",
-        "@webgpu/types": "0.1.74",
       },
     },
   },
@@ -370,8 +358,6 @@
     "quansync": ["quansync@0.2.11", "", {}, "sha512-AifT7QEbW9Nri4tAwR5M/uzpBuqfZf+zwaEM/QkzEjj7NBuFD2rBuy0K3dE+8wltbezDV7JMA0WfnCPYRSYbXA=="],
 
     "rc9": ["rc9@3.1.0", "", { "dependencies": { "defu": "^6.1.7", "destr": "^2.0.5" } }, "sha512-ufjkNVzbRHKcCOmTahZkmVsyc3W+MSk3jY03m+a7tGHkIsdVMG9l10/3HvFbWkkKzY5VFp3pkRsIo/UYgmFL7Q=="],
-
-    "read-aloud-local-inference-lab": ["read-aloud-local-inference-lab@workspace:lab/local-speech"],
 
     "readdirp": ["readdirp@5.1.1", "", {}, "sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA=="],
 

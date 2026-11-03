@@ -1,9 +1,33 @@
 import { SpeechTextError } from "./errors.ts"
 
+const wordSegmenters = new Map<string, Intl.Segmenter>()
+function wordSegmenter(locale?: string): Intl.Segmenter {
+	const key = locale ?? ""
+	let segmenter = wordSegmenters.get(key)
+	if (!segmenter) {
+		segmenter = new Intl.Segmenter(locale, { granularity: "word" })
+		wordSegmenters.set(key, segmenter)
+	}
+	return segmenter
+}
+
 /** eSpeak positions count Unicode code points, not JavaScript UTF-16 units. */
 export interface SourceWord {
 	start: number
 	end: number
+}
+
+/** Source spans are ordered; phonemizer events may revisit earlier positions. */
+function containingWord<T extends SourceWord>(words: readonly T[], offset: number): T | undefined {
+	let low = 0
+	let high = words.length
+	while (low < high) {
+		const middle = (low + high) >>> 1
+		if (words[middle]!.end <= offset) low = middle + 1
+		else high = middle
+	}
+	const word = words[low]
+	return word && word.start <= offset ? word : undefined
 }
 
 export interface PhonemeEvent {
@@ -31,7 +55,7 @@ export function tokenizeEvents(
 	// Use ICU word boundaries for scripts without spaces as well as English/Czech.
 	// Adjacent hyphenated parts form one written compound; inline dots do not.
 	const lexical: (SourceWord & { compound: boolean })[] = []
-	for (const part of new Intl.Segmenter(undefined, { granularity: "word" }).segment(text)) {
+	for (const part of wordSegmenter().segment(text)) {
 		if (!part.isWordLike) continue
 		const last = lexical.at(-1)
 		if (last && /^[-‐‑]$/u.test(text.slice(last.end, part.index))) {
@@ -43,7 +67,7 @@ export function tokenizeEvents(
 		const start = offsets[event.textPosition - 1]
 		if (start === undefined || !Number.isSafeInteger(event.length) || event.length < 0) return null
 		const end = offsets[event.textPosition - 1 + event.length]
-		const word = lexical.find((word) => start >= word.start && start < word.end)
+		const word = containingWord(lexical, start)
 		// eSpeak can report only a compound's prefix, or repeat a number's original
 		// length at interior positions while expanding it (including Roman numerals).
 		if (
@@ -105,7 +129,7 @@ export interface WordTiming extends SourceWord {
 }
 
 /** Timings come from predicted acoustic frames, never text-length estimates. */
-export function alignWords(tokens: SpeechTokens, durations: readonly number[], sampleRate: number, hopLength = 256) {
+export function alignWords(tokens: SpeechTokens, durations: ArrayLike<number>, sampleRate: number, hopLength = 256) {
 	if (tokens.ids.length !== durations.length || !(sampleRate > 0) || !(hopLength > 0))
 		throw new Error("Invalid alignment dimensions")
 	const timings: WordTiming[] = []
@@ -132,7 +156,7 @@ export function tokenizeText(
 	locale: string,
 ): SpeechTokens {
 	const tokens: SpeechTokens = { ids: [], words: [], symbols: [] }
-	const spans = [...new Intl.Segmenter(locale, { granularity: "word" }).segment(text)]
+	const spans = [...wordSegmenter(locale).segment(text)]
 		.filter((part) => part.isWordLike)
 		.map((part) => ({ start: part.index, end: part.index + part.segment.length }))
 	const append = (symbol: string, word: SourceWord | null) => {
@@ -148,7 +172,7 @@ export function tokenizeText(
 	append("_", null)
 	let offset = 0
 	for (const character of text) {
-		const word = spans.find((word) => offset >= word.start && offset < word.end) ?? null
+		const word = containingWord(spans, offset) ?? null
 		for (let symbol of character.toLocaleLowerCase(locale).normalize("NFC")) {
 			if (/\s/u.test(symbol)) symbol = " "
 			append(symbol, word)

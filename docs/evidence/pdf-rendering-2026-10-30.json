@@ -1,5 +1,5 @@
 {
-	"recordedAt": "2026-11-01T19:02:21.380Z",
+	"recordedAt": "2026-11-02T14:56:59.832Z",
 	"browser": {
 		"protocolVersion": "1.3",
 		"product": "Chrome/155.0.8059.12",
@@ -20,7 +20,10 @@
 		"textPages": 2
 	},
 	"selection": {
+		"toolbarReopensClosedControls": true,
 		"contextMenuRestart": true,
+		"repeatedNativeSelectionReusesReader": true,
+		"concurrentNativeSelectionReusesReader": true,
 		"closedSessionRejected": true,
 		"floatingControlsDoNotShiftPages": true,
 		"crossPageCharacters": 532,
@@ -34,8 +37,9 @@
 		"playSelection": true,
 		"domainPreserved": "Consensus.app"
 	},
-	"navigationMs": 370.3888850000003,
-	"textReadyMs": 26067.001471,
-	"readyMs": 26922.702290000005,
+	"selectionReadyMs": 215.73202400000082,
+	"navigationMs": 235.621447,
+	"textReadyMs": 26059.608446,
+	"readyMs": 30722.030273,
 	"limits": "Checks missing-permission recovery, privileged fetch without CORS, rendering, text mapping, and the installed context-menu handler's close/reopen path with Tab.url omitted. Uses a test-only origin grant; native menu UI, activeTab grant, permission dialog, and speech are not covered."
 }

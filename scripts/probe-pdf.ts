@@ -3,10 +3,18 @@ import { $ } from "bun"
 import { getVoice } from "../src/speech/catalog.ts"
 import { checkPdfSelection } from "./check-pdf-selection.ts"
 import { pdfSpeechCheck } from "./check-pdf-speech.ts"
+import { observePlayerAudio } from "./check-player-controls.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
+import {
+	chromeExecutable,
+	chromeExtensionId,
+	chromeTestProfileArguments,
+	projectRoot,
+	waitFor,
+} from "./probe-helpers.ts"
 
 const accessOnly = Bun.env.PDF_CHECK_ACCESS_ONLY === "1"
-if (!accessOnly) {
+if (!accessOnly && Bun.env.PDF_SKIP_ACCESS_CHECK !== "1") {
 	const child = Bun.spawn(["bun", import.meta.path], {
 		env: { ...Bun.env, PDF_CHECK_ACCESS_ONLY: "1" },
 		stdout: "inherit",
@@ -15,13 +23,14 @@ if (!accessOnly) {
 	if ((await child.exited) !== 0) throw new Error("PDF permission recovery check failed")
 }
 const speechCheck = Bun.env.PDF_CHECK_SPEECH === "1" && !accessOnly
-const root = import.meta.dir.replace(/\/scripts$/, "")
+const root = projectRoot
 const extension = `${root}/.cache/pdf-probe`
 await $`rm -rf ${extension}`.quiet()
 await $`mkdir -p ${extension}`.quiet()
 await $`cp -R ${root + "/.output/chrome-mv3/."} ${extension}`.quiet()
 await observeContextMenu(extension)
 if (speechCheck) {
+	await observePlayerAudio(extension)
 	const built = await Bun.build({
 		entrypoints: [`${root}/scripts/check-pdf-speech.ts`],
 		outdir: extension,
@@ -59,41 +68,31 @@ if (!accessOnly) {
 	manifest.host_permissions = [`${pdfUrl.protocol}//${pdfUrl.hostname}/*`]
 	await Bun.write(`${extension}/manifest.json`, JSON.stringify(manifest))
 }
-const candidates = await Array.fromAsync(
-	new Bun.Glob("chromium-*/chrome-linux*/chrome").scan({ cwd: `${Bun.env.HOME}/.cache/ms-playwright`, absolute: true }),
-)
-const executable = Bun.env.BUN_CHROME_PATH ?? candidates.sort().at(-1)
+const executable = await chromeExecutable()
 const createView = () =>
 	new Bun.WebView({
 		backend: {
 			type: "chrome",
 			url: false,
 			...(executable ? { path: executable } : {}),
-			argv: [`--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
+			argv: [
+				...chromeTestProfileArguments,
+				`--disable-extensions-except=${extension}`,
+				`--load-extension=${extension}`,
+			],
 		},
 		dataStore: "ephemeral",
 	})
 const view = createView()
-const waitFor = async <T>(read: () => Promise<T>, accept: (value: T) => boolean): Promise<T> => {
-	const until = performance.now() + 90_000
-	let value: T
-	do {
-		value = await read()
-		if (accept(value)) return value
-		await Bun.sleep(100)
-	} while (performance.now() < until)
-	throw new Error(`PDF benchmark timed out: ${JSON.stringify(value)}`)
-}
+const waitForPdf = <T>(read: () => Promise<T>, accept: (value: T) => boolean) => waitFor(read, accept, 90)
 async function probe() {
 	try {
 		await view.navigate("about:blank")
-		const id = [...new Bun.CryptoHasher("sha256").update(extension).digest("hex").slice(0, 32)]
-			.map((digit) => String.fromCharCode(97 + parseInt(digit, 16)))
-			.join("")
+		const id = chromeExtensionId(extension)
 		const started = performance.now()
 		await view.navigate(`chrome-extension://${id}/pdf.html?src=${encodeURIComponent(source)}`)
 		if (accessOnly) {
-			await waitFor(
+			await waitForPdf(
 				() => view.evaluate<string>("document.querySelector('#status').textContent"),
 				(value) => value.startsWith("Allow access"),
 			)
@@ -106,7 +105,7 @@ async function probe() {
 		console.log("PDF test grant:", JSON.stringify(await view.evaluate("chrome.permissions.getAll()")))
 		const navigationMs = performance.now() - started
 		await view.cdp("Page.bringToFront")
-		await waitFor(
+		await waitForPdf(
 			() => view.evaluate<string>("document.querySelector('#status').textContent"),
 			(value) => value === "" || !value.startsWith("Opening PDF"),
 		)
@@ -132,7 +131,7 @@ async function probe() {
 			result.highlighted !== "Virtual Research Environment"
 		)
 			throw new Error(`PDF benchmark failed: ${JSON.stringify(result)}`)
-		await waitFor(
+		await waitForPdf(
 			() => view.evaluate<number>("document.querySelectorAll('.pdf-page[data-painted]').length"),
 			(value) => value > 0,
 		)
@@ -147,8 +146,63 @@ async function probe() {
 		if (distant.highlighted !== "Bibliography" || distant.scroll < 1000 || distant.textPages >= 60)
 			throw new Error(`Lazy PDF mapping failed: ${JSON.stringify(distant)}`)
 		const selection = await view.evaluate(checkPdfSelection)
+		const crossPage = speechCheck
+			? await view.evaluate<string>(`(async()=>{
+				const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
+				const {text}=await window.readAloudHost({session,command:'document'});
+				const start=text.indexOf('This work was supported',text.indexOf('Acknowledgements'));
+				const end=text.slice(0,text.indexOf('This thesis',start)).trimEnd().length;
+				if(start<0||end<=start)throw Error('Cross-page fixture missing');
+				return text.slice(start,end);
+			})()`)
+			: undefined
 		const speech = speechCheck ? await view.evaluate(pdfSpeechCheck(server.url.href)) : undefined
 		if (speechCheck) console.log("Cross-page neural speech:", JSON.stringify(speech))
+		if (speechCheck)
+			await view.evaluate(
+				`import(chrome.runtime.getURL('check-pdf-speech.js')).then(async m=>{await m.provisionVoice(${JSON.stringify(server.url.href)});await m.checkVoiceFormat()})`,
+			)
+		const finishedReadyMs = performance.now() - started
+		const initialText = crossPage ?? "Their day-to-day use is nev-\nertheless constrained by four limitations"
+		await view.evaluate(`(async()=>{
+			const tab=await chrome.tabs.getCurrent();
+			await chrome.storage.session.set({['pdfSelection:'+tab.id]:${JSON.stringify(initialText)}});
+		})()`)
+		const selectionStarted = performance.now()
+		await view.navigate(`chrome-extension://${id}/pdf.html?src=${encodeURIComponent(source)}&mode=selection`)
+		const earlySelection = await waitFor(
+			() =>
+				view.evaluate<string>(`(async()=>{
+				const frame=document.querySelector('iframe');
+				if(!frame)return '';
+				return (await window.readAloudHost({session:new URL(frame.src).hash.slice(1),command:'document'})).text;
+			})()`),
+			(value) => value.length > 0,
+		)
+		const selectionReadyMs = performance.now() - selectionStarted
+		if (earlySelection !== (crossPage ?? "Their day-to-day use is nevertheless constrained by four limitations"))
+			throw new Error(`Early PDF selection changed its scope: ${JSON.stringify(earlySelection)}`)
+		let firstBufferMs: number | undefined
+		if (speechCheck) {
+			await waitFor(
+				() => view.evaluate<number>("document.querySelector('iframe')?.contentWindow?.__probeAudio?.sources ?? 0"),
+				(value) => value > 0,
+			)
+			firstBufferMs = performance.now() - selectionStarted
+		}
+		await waitFor(
+			() => view.evaluate<string>("document.querySelector('#status').textContent"),
+			(value) => value === "" || !value.startsWith("Opening PDF"),
+		)
+		const mapped = await view.evaluate<string>(`(async()=>{
+			const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
+			const text=(await window.readAloudHost({session,command:'document'})).text;
+			const from=text.indexOf(${JSON.stringify(speechCheck ? "This work was supported" : "nevertheless")});
+			await window.readAloudHost({session,command:'highlight',start:from,end:from+${speechCheck ? 4 : 12}});
+			return [...(CSS.highlights.get('read-aloud-current-word')??[])].map(range=>range.toString()).join('');
+		})()`)
+		if (mapped.replace(/[-\s]/gu, "") !== (speechCheck ? "This" : "nevertheless"))
+			throw new Error(`Early selection did not acquire an exact highlight mapping: ${JSON.stringify(mapped)}`)
 		const record = {
 			recordedAt: new Date().toISOString(),
 			browser: await view.cdp("Browser.getVersion"),
@@ -158,10 +212,12 @@ async function probe() {
 			source: Bun.env.PDF_SOURCE_URL ? "remote MUNI source" : "cached MUNI bytes served without CORS",
 			distant,
 			selection,
+			selectionReadyMs,
+			firstBufferMs,
 			speech,
 			navigationMs,
 			textReadyMs,
-			readyMs: performance.now() - started,
+			readyMs: finishedReadyMs,
 			limits: speechCheck
 				? "Test-only host grant, cached MUNI PDF and pinned cached English model; actual CPU worker PCM and word timing validation across the acknowledgement/abstract page boundary. Does not validate physical audio quality, hardware GPU behavior, or target-device latency."
 				: "Checks missing-permission recovery, privileged fetch without CORS, rendering, text mapping, and the installed context-menu handler's close/reopen path with Tab.url omitted. Uses a test-only origin grant; native menu UI, activeTab grant, permission dialog, and speech are not covered.",

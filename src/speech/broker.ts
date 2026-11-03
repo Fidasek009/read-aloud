@@ -1,83 +1,129 @@
 import { type Browser, browser } from "wxt/browser"
 
+import { isExtensionPageSender } from "../extension/sender.ts"
 import { SpeechEngine } from "./engine.ts"
+import { SPEECH_HOST_LOCK } from "./host-lifetime.ts"
 import { isVoiceChange, speechRequest } from "./protocol.ts"
 import { SpeechService } from "./service.ts"
 import { installedVoices } from "./vault.ts"
 
 export function installSpeechBroker() {
+	const isPage = (sender: Browser.runtime.MessageSender | undefined, path: string) =>
+		isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/"), [path])
 	// Read from extension-owned storage, never the embedded frame's partition.
 	browser.runtime.onMessage.addListener((message: unknown, sender) => {
 		if (
-			sender.id !== browser.runtime.id ||
-			!sender.url ||
+			!isPage(sender, "/player.html") ||
 			!message ||
 			typeof message !== "object" ||
 			!("type" in message) ||
 			message.type !== "installed-voices"
 		)
 			return
-		const url = new URL(sender.url),
-			own = new URL(browser.runtime.getURL("/"))
-		if (url.protocol !== own.protocol || url.host !== own.host || url.pathname !== "/player.html") return
 		return installedVoices()
 	})
-	const local = import.meta.env.BROWSER === "firefox" ? new SpeechService(new SpeechEngine()) : undefined
+	const local = import.meta.env.BROWSER === "firefox" ? new SpeechService(new SpeechEngine(), "structured") : undefined
 	const clients = new Map<string, Browser.runtime.Port>()
 	let host: Browser.runtime.Port | undefined
-	let opening: Promise<void> | undefined
 	let connected: (() => void) | undefined
 	browser.storage.onChanged.addListener((changes, area) => {
 		const change: unknown = changes.voiceChange?.newValue
 		if (area !== "local" || !isVoiceChange(change) || !change.deleted) return
-		local?.voiceDeleted(change.id)
-		host?.postMessage({ deletedVoice: change.id })
+		void navigator.locks.request(`voice:${change.id}`, async () => {
+			// A later download may have committed before this event was handled.
+			if ((await installedVoices()).includes(change.id)) return
+			local?.voiceDeleted(change.id)
+			// The offscreen document may outlive this service worker and have no
+			// port yet. Runtime messaging can reach it without creating it.
+			if (!local) await browser.runtime.sendMessage({ type: "speech-voice-deleted", id: change.id }).catch(() => {})
+		})
 	})
-	const ready = () =>
-		(opening ??= (async () => {
-			if (host) return
-			const waiting = new Promise<void>((resolve, reject) => {
-				const timer = setTimeout(() => reject(new Error("The speech host could not start")), 10_000)
-				connected = () => {
-					clearTimeout(timer)
-					resolve()
-				}
-			})
-			// The offscreen document owns DOM workers; Chrome service workers cannot create them.
-			if (!(await browser.offscreen.hasDocument()))
+	const connectHost = async () => {
+		if (host) return
+		let timer: ReturnType<typeof setTimeout> | undefined
+		const waiting = new Promise<void>((resolve, reject) => {
+			timer = setTimeout(() => reject(new Error("The speech host could not start")), 10_000)
+			connected = () => {
+				clearTimeout(timer)
+				resolve()
+			}
+		})
+		// Chrome service workers cannot create DOM workers. The client list
+		// supports all declared Chrome versions, unlike offscreen.hasDocument().
+		try {
+			const scope = globalThis as unknown as { clients: { matchAll(): Promise<{ url: string }[]> } }
+			const existing = (await scope.clients.matchAll()).some(
+				(client) => client.url === browser.runtime.getURL("/inference.html"),
+			)
+			if (!existing)
 				await browser.offscreen.createDocument({
 					url: "inference.html",
 					reasons: ["WORKERS"],
 					justification:
 						"Run local speech inference with isolated WebAssembly workers, independently of page controls.",
 				})
+			else await browser.runtime.sendMessage({ type: "connect-speech-host" })
 			await waiting
-		})().finally(() => {
-			opening = undefined
-		}))
+		} finally {
+			clearTimeout(timer)
+			connected = undefined
+		}
+	}
+	const ready = () =>
+		navigator.locks.request(SPEECH_HOST_LOCK, async () => {
+			await connectHost()
+			// Reserve before replying: the player opens its port asynchronously.
+			const lease: unknown = await browser.runtime.sendMessage({ type: "reserve-speech-host" })
+			if (!lease || typeof lease !== "object" || !("ok" in lease) || lease.ok !== true)
+				throw new Error("The speech host is closing")
+		})
+	browser.runtime.onMessage.addListener((message: unknown, sender) => {
+		if (
+			local ||
+			!isPage(sender, "/inference.html") ||
+			!message ||
+			typeof message !== "object" ||
+			!("type" in message) ||
+			message.type !== "close-idle-speech-host"
+		)
+			return
+		return navigator.locks.request(SPEECH_HOST_LOCK, async () => {
+			const claim: unknown = await browser.runtime.sendMessage({ type: "claim-speech-host-close" })
+			if (!claim || typeof claim !== "object" || !("ok" in claim) || claim.ok !== true) return { ok: false }
+			try {
+				await browser.offscreen.closeDocument()
+				host = undefined
+				return { ok: true }
+			} catch (error) {
+				// Keep preparations usable if the browser rejects document closure.
+				await browser.runtime.sendMessage({ type: "release-speech-host-close" }).catch(() => {})
+				throw error
+			}
+		})
+	})
+	browser.runtime.onMessage.addListener((message: unknown, sender) => {
+		if (
+			local ||
+			!isPage(sender, "/player.html") ||
+			!message ||
+			typeof message !== "object" ||
+			!("type" in message) ||
+			message.type !== "prepare-speech-host"
+		)
+			return
+		return ready().then(() => ({ ok: true }))
+	})
 	browser.runtime.onConnect.addListener((port) => {
-		if (port.sender?.id !== browser.runtime.id || !port.sender.url) return
-		const url = new URL(port.sender.url),
-			own = new URL(browser.runtime.getURL("/"))
-		if (url.protocol !== own.protocol || url.host !== own.host) return
-		if (port.name === "speech-server" && url.pathname === "/inference.html") {
+		if (port.name === "speech-server" && isPage(port.sender, "/inference.html")) {
 			host = port
 			connected?.()
 			connected = undefined
-			port.onMessage.addListener((message) => {
-				if (message && typeof message.client === "string" && message.response)
-					clients.get(message.client)?.postMessage(message.response)
-			})
 			port.onDisconnect.addListener(() => {
-				if (host === port) {
-					host = undefined
-					for (const client of clients.values()) client.disconnect()
-					clients.clear()
-				}
+				if (host === port) host = undefined
 			})
 			return
 		}
-		if (port.name !== "speech-client" || url.pathname !== "/player.html") return
+		if (!local || port.name !== "speech-client" || !isPage(port.sender, "/player.html")) return
 		const id = crypto.randomUUID()
 		clients.set(id, port)
 		port.onMessage.addListener((request: unknown) => {
@@ -86,22 +132,18 @@ export function installSpeechBroker() {
 				return
 			}
 			const reply = (response: unknown) => {
-				if (clients.get(id) === port) port.postMessage(response)
+				if (clients.get(id) !== port) return
+				try {
+					port.postMessage(response)
+				} catch {
+					port.disconnect()
+				}
 			}
-			if (local) void local.request(id, request).then(reply)
-			else
-				void ready()
-					.then(() => {
-						if (clients.get(id) === port) host?.postMessage({ client: id, request })
-					})
-					.catch((error) =>
-						reply({ id: request.id, ok: false, error: error instanceof Error ? error.message : "Speech host failed" }),
-					)
+			void local.request(id, request).then(reply, () => port.disconnect())
 		})
 		port.onDisconnect.addListener(() => {
 			clients.delete(id)
-			if (local) local.release(id)
-			else host?.postMessage({ client: id, release: true })
+			local.release(id)
 		})
 	})
 }

@@ -1,0 +1,77 @@
+{
+	"recordedAt": "2026-11-03T00:08:35.204Z",
+	"browser": {
+		"protocolVersion": "1.3",
+		"product": "Chrome/155.0.8059.12",
+		"revision": "@384c82079f60e0b79cdca6e49efd5cfceefa5b74",
+		"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+		"jsVersion": "15.5.35.7"
+	},
+	"voice": "en_US-ljspeech-medium",
+	"modelSha256": "6f52a751e2349abe7a76735eb09dc1875298c77ea2342ffd2fef79ff81b87f22",
+	"results": [
+		{
+			"variant": "baseline",
+			"round": 0,
+			"threads": 4,
+			"crossOriginIsolated": true,
+			"phonemizerMs": 195.34499996900558,
+			"sessionMs": 6047.875,
+			"workerLoadMs": 6057.25,
+			"loadMs": 6103.310000002384,
+			"firstBufferMs": 6670.52999997139,
+			"synthesisMs": 567.0999999642372,
+			"pcmHash": "b2bfbb9014a3eb57e0323a301392b90018b8d3898010891cad9e163abd7eee83",
+			"samples": 50176,
+			"words": 6
+		},
+		{
+			"variant": "split",
+			"round": 0,
+			"threads": 4,
+			"crossOriginIsolated": true,
+			"phonemizerMs": 125.48000001907349,
+			"runtimeAndTinySessionMs": 268.05000001192093,
+			"sessionMs": 5428.375,
+			"workerLoadMs": 5704.65499997139,
+			"loadMs": 5760.149999976158,
+			"firstBufferMs": 6295.865000009537,
+			"synthesisMs": 535.7150000333786,
+			"pcmHash": "b2bfbb9014a3eb57e0323a301392b90018b8d3898010891cad9e163abd7eee83",
+			"samples": 50176,
+			"words": 6
+		},
+		{
+			"variant": "split",
+			"round": 1,
+			"threads": 4,
+			"crossOriginIsolated": true,
+			"phonemizerMs": 123.78500002622604,
+			"runtimeAndTinySessionMs": 348.58999997377396,
+			"sessionMs": 5516.449999988079,
+			"workerLoadMs": 5876.189999997616,
+			"loadMs": 5934.295000016689,
+			"firstBufferMs": 6421.339999973774,
+			"synthesisMs": 487.04499995708466,
+			"pcmHash": "b2bfbb9014a3eb57e0323a301392b90018b8d3898010891cad9e163abd7eee83",
+			"samples": 50176,
+			"words": 6
+		},
+		{
+			"variant": "baseline",
+			"round": 1,
+			"threads": 4,
+			"crossOriginIsolated": true,
+			"phonemizerMs": 98.11000001430511,
+			"sessionMs": 5390.884999990463,
+			"workerLoadMs": 5401.840000033379,
+			"loadMs": 5444.915000021458,
+			"firstBufferMs": 5903.569999992847,
+			"synthesisMs": 458.64999997615814,
+			"pcmHash": "b2bfbb9014a3eb57e0323a301392b90018b8d3898010891cad9e163abd7eee83",
+			"samples": 50176,
+			"words": 6
+		}
+	],
+	"limits": "Development VM, fresh CPU worker per sample, two rotated rounds. Existing production extension manifest; no experimental isolation or hardware changes. Fixture fetch and model instrumentation occur before worker load timing, while worker construction, all tiny-session initialization, phonemizer initialization, real model session creation and first synthesis remain in firstBufferMs. runtimeAndTinySessionMs includes ORT/WASM initialization plus creation/release of a tiny Identity session; it is an upper bound on runtime-only initialization, not a pure WASM-compilation measure. sessionMs in split samples measures the real model session after runtime initialization; baseline sessionMs includes both. Noise disabled to check exact CPU output equivalence. No audible quality, physical GPU, Firefox, Windows or target-device acceptance established."
+}

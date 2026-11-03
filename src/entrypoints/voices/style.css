@@ -26,7 +26,7 @@ p {
 	line-height: 1.65;
 }
 #voices {
-	margin-top: 32px;
+	margin-top: 12px;
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
 	gap: 12px;
@@ -108,7 +108,9 @@ button.danger:hover {
 	background: transparent;
 }
 input:focus-visible,
-select:focus-visible {
+select:focus-visible,
+button:focus-visible,
+a:focus-visible {
 	outline: 3px solid #568bea;
 	outline-offset: 3px;
 }
@@ -127,17 +129,12 @@ select:focus-visible {
 #status:empty {
 	display: none;
 }
-#voices {
-	margin-top: 12px;
-}
-button:focus-visible,
-a:focus-visible {
-	outline: 3px solid #568bea;
-	outline-offset: 3px;
+section[hidden] {
+	display: none;
 }
 button:disabled {
 	opacity: 0.6;
-	cursor: wait;
+	cursor: default;
 }
 progress {
 	width: 100%;

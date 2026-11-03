@@ -8,15 +8,12 @@
 	"engines": {
 		"bun": ">=1.4.4"
 	},
-	"workspaces": [
-		"lab/local-speech"
-	],
 	"scripts": {
 		"dev": "bun --bun run wxt --mv3",
 		"dev:firefox": "bun --bun run wxt --browser firefox --mv3",
 		"prepare": "bun --bun run wxt prepare",
-		"typecheck": "bun run prepare && bun check && bun check -p tsconfig.speech.json && bun check -p tsconfig.tools.json && bun run --filter read-aloud-local-inference-lab typecheck",
-		"test": "bun test lab/local-speech/test",
+		"typecheck": "bun run prepare && bun check && bun check -p tsconfig.speech.json && bun check -p tsconfig.tools.json",
+		"test": "bun test tests",
 		"format": "bun fmt",
 		"format:check": "bun fmt --check",
 		"build": "bun --bun run wxt build --mv3",
@@ -24,13 +21,17 @@
 		"zip": "bun --bun run wxt zip --mv3",
 		"zip:firefox": "bun --bun run wxt zip --browser firefox --mv3",
 		"probe:chrome": "bun scripts/probe-product.ts",
+		"probe:host": "bun scripts/probe-host-lifecycle.ts",
 		"probe:firefox": "bun scripts/probe-product-firefox.ts",
+		"probe:speakers": "bun scripts/probe-speakers.ts",
 		"probe:pdf": "bun scripts/probe-pdf.ts",
+		"probe:previews": "bun scripts/probe-previews.ts",
 		"probe:pdf:speech": "PDF_CHECK_SPEECH=1 bun scripts/probe-pdf.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "1.4.4",
 		"@webgpu/types": "0.1.74",
+		"protobufjs": "7.6.6",
 		"typescript": "7.0.2",
 		"wxt": "0.21.5"
 	},

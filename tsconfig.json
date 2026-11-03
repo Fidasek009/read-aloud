@@ -8,5 +8,5 @@
 		"noUnusedParameters": true
 	},
 	"include": ["src/**/*.ts", "wxt.config.ts", ".wxt/wxt.d.ts"],
-	"exclude": ["node_modules", "lab", ".output", "src/speech/worker.ts"]
+	"exclude": ["node_modules", "lab", ".output", "src/speech/worker.ts", "src/speech/instrument-worker.ts"]
 }

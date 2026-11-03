@@ -3,8 +3,9 @@ import { $ } from "bun"
 import type { VoiceConfig } from "../src/speech/catalog.ts"
 
 import { instrumentModel } from "../src/speech/instrument.ts"
+import { chromeExecutable, chromeExtensionId, chromeTestProfileArguments, projectRoot } from "./probe-helpers.ts"
 
-const root = import.meta.dir.replace(/\/scripts$/, "")
+const root = projectRoot
 const out = `${root}/.cache/session-probe`
 await $`rm -rf ${out}`.quiet()
 await $`mkdir -p ${out}`.quiet()
@@ -62,53 +63,56 @@ const server = Bun.serve({
 			headers: { "Access-Control-Allow-Origin": "*", "Cross-Origin-Resource-Policy": "cross-origin" },
 		}),
 })
-const candidates = await Array.fromAsync(
-	new Bun.Glob("chromium-*/chrome-linux*/chrome").scan({ cwd: `${Bun.env.HOME}/.cache/ms-playwright`, absolute: true }),
-)
+const executable = await chromeExecutable()
 const view = new Bun.WebView({
 	backend: {
 		type: "chrome",
 		url: false,
-		path: Bun.env.BUN_CHROME_PATH ?? candidates.sort().at(-1)!,
-		argv: [`--disable-extensions-except=${out}`, `--load-extension=${out}`],
+		...(executable ? { path: executable } : {}),
+		argv: [...chromeTestProfileArguments, `--disable-extensions-except=${out}`, `--load-extension=${out}`],
 	},
 	dataStore: "ephemeral",
 })
 try {
 	await view.navigate("about:blank")
-	const id = [...new Bun.CryptoHasher("sha256").update(out).digest("hex").slice(0, 32)]
-		.map((d) => String.fromCharCode(97 + parseInt(d, 16)))
-		.join("")
+	const id = chromeExtensionId(out)
 	await view.navigate(`chrome-extension://${id}/voices.html`)
 	await view.cdp("Runtime.enable")
 	const results = []
-	for (const variant of variants) {
-		const expression = `(async()=>{
+	// Rotate the order across rounds so a single cold WASM compilation cannot
+	// systematically favor one option. Each measurement uses a fresh worker.
+	for (let round = 0; round < variants.length; round++)
+		for (const variant of [...variants.slice(round), ...variants.slice(0, round)]) {
+			const expression = `(async()=>{
    const model=await(await fetch(${JSON.stringify(server.url.href)})).arrayBuffer();
    const worker=new Worker(chrome.runtime.getURL('runtime/cpu/${variant.id}.js'),{type:'module'});
    let sequence=0;const pending=new Map();worker.onmessage=({data})=>{const p=pending.get(data.id);if(!p)return;pending.delete(data.id);data.ok?p.resolve(data):p.reject(Error(data.error))};
    const rpc=(message,transfer=[])=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});worker.postMessage({...message,id},transfer)});
    const started=performance.now();try {
-    const loaded=await rpc({type:'load',voice:'en_US-ljspeech-medium',config:${JSON.stringify(config)},model},[model]);
-    const loadMs=performance.now()-started;const speechStarted=performance.now();const clip=await rpc({type:'synthesize',text:'Fresh words start a new selection.',speed:1});
-    return {id:'${variant.id}',...loaded.timings,loadMs,synthesisMs:performance.now()-speechStarted,firstBufferMs:performance.now()-started,durationSeconds:clip.pcm.length/clip.sampleRate,finite:clip.pcm.every(Number.isFinite)};
+    const loaded=await rpc({type:'load',voice:'en_US-ljspeech-medium',speaker:0,config:${JSON.stringify(config)},model},[model]);
+    const loadMs=performance.now()-started;const synthesisMs=[];let clip;
+    for(const text of ['Fresh words start a new selection.','This sentence measures steady state speech generation.','A different passage keeps the inference work representative.','Another sentence tests reading without a cached clip.']){
+      const speechStarted=performance.now();clip=await rpc({type:'synthesize',text,speed:1,speaker:0});synthesisMs.push(performance.now()-speechStarted);
+      if(!clip.pcm.every(Number.isFinite))throw Error('Non-finite audio');
+    }
+    return {id:'${variant.id}',round:${round},...loaded.timings,loadMs,synthesisMs,firstBufferMs:loadMs+synthesisMs[0],durationSeconds:clip.pcm.length/clip.sampleRate};
    }finally{worker.terminate()}
   })()`
-		const result = await view.cdp<any>("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true })
-		if (result.exceptionDetails)
-			throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text)
-		results.push(result.result.value)
-		console.log(JSON.stringify(result.result.value))
-	}
+			const result = await view.cdp<any>("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true })
+			if (result.exceptionDetails)
+				throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text)
+			results.push(result.result.value)
+			console.log(JSON.stringify(result.result.value))
+		}
 	await Bun.write(
-		`${root}/docs/evidence/session-loading-2026-10-30.json`,
+		`${root}/docs/evidence/session-loading-2026-11-02.json`,
 		JSON.stringify(
 			{
 				recordedAt: new Date().toISOString(),
 				browser: await view.cdp("Browser.getVersion"),
 				results,
 				limits:
-					"Development VM, extension top-level document with experimental COOP/COEP manifest. Does not establish isolation or multicore behavior in embedded production controls or Firefox. Local cached model; first variant includes first ORT WASM compilation.",
+					"Development VM, extension top-level document with experimental COOP/COEP manifest. Does not establish isolation or multicore behavior in embedded production controls or Firefox. Local cached model; variant order rotates and the first measurement still includes initial WASM compilation. Four different sentences are synthesized per worker.",
 			},
 			null,
 			2,

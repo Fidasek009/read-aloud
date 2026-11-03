@@ -1,12 +1,12 @@
 # Read Aloud
 
-A Firefox and Chrome extension in development: natural local speech, mandatory US English and Czech, explicit model ownership, and an intentionally small Edge-like reading interface.
+A Firefox and Chrome extension in development: local speech, mandatory US English and Czech, explicit model ownership, and an intentionally small Edge-like reading interface. Natural voice quality is a release requirement still being evaluated.
 
 The current extension is a **development prototype** with explicit voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. It is not release-ready: native-entry autoplay, cold startup, PDF acceptance, model provenance, and GPU/Windows acceptance remain open. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for the latest confirmed requirements, including all three mandatory reading benchmarks.
 
 ## Development
 
-Use **Bun 1.4.4 or newer**. The runtime, dependency management, tests, type checks, formatter, and standalone lab tooling all use Bun. WXT's framework build runs under Bun.
+Use **Bun 1.4.4 or newer**. The runtime, dependency management, tests, type checks, formatter, and tooling all use Bun. WXT's framework build runs under Bun.
 
 ```sh
 bun install --frozen-lockfile
@@ -17,13 +17,13 @@ bun run build
 bun run build:firefox
 ```
 
-For development, use `bun run dev` or `bun run dev:firefox`. Generated browser packages go in `.output/`. `bun run format` applies the preferences in [bunfig.toml](bunfig.toml), based on the user's Talqo configuration.
+For development, use `bun run dev` or `bun run dev:firefox`. Generated browser packages go in `.output/`. `bun run format` applies the preferences in [bunfig.toml](bunfig.toml).
 
 Bun is development tooling; the finished extension must not require users to install Bun or a companion application. Model downloads must be deliberate user actions, never a side effect of opening or installing the extension.
 
 ## Technical experiments
 
-[The local speech lab](lab/local-speech/README.md) tests inference inside isolated temporary extension packages, independently of product UI. It is not the selected production engine. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) track evidence and outstanding gates.
+[Earlier speech experiments](docs/archive/speech-lab/README.md) are preserved in Git alongside their provenance and historical evidence. The prototype uses a separate Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) track evidence and outstanding gates.
 
 ## License
 

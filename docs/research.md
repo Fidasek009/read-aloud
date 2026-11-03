@@ -1,12 +1,12 @@
 # Local read-aloud implementation research
 
-Researched: **2026-10-29**. Status: discovery, not an architecture decision. Sources below are upstream documentation, source code, model cards, and browser policy. Upstream pages can change; pin exact runtime versions, model revisions, and asset hashes when implementing.
+Researched: **2026-10-29**. This is historical discovery material, not the current architecture record. The prototype now uses Piper voice data, ONNX Runtime Web, and Spellophone/eSpeak NG; consult [engineering](engineering.md), [licensing](licensing.md), and [status](feasibility-status.md) for current implementation and acceptance. Sources below are upstream documentation, source code, model cards, and browser policy; upstream pages can change.
 
-The initial findings below preceded the user's detailed product answers. Those answers now require US English **and Czech**, explicit model downloads/delete/preview, pitch-preserving speed, an Edge-like bar with word highlighting/auto-scroll, continued audio on tab switch, with stop on source navigation/closure, and MIT original-source licensing. The independent browser feasibility lab is in `lab/local-speech`; its results must be distinguished from upstream claims and full-product verification.
+The initial findings below preceded the user's detailed product answers. Those answers now require US English **and Czech**, explicit model downloads/delete/preview, pitch-preserving speed, an Edge-like bar with word highlighting/auto-scroll, continued audio on tab switch, with stop on source navigation/closure, and MIT original-source licensing. The [historical browser experiments](archive/speech-lab/README.md) must be distinguished from upstream claims and full-product verification.
 
-## Recommended first experiment
+## Historical first experiment
 
-With Czech mandatory, Kokoro and the small KittenTTS browser models cannot cover the first release alone. Investigate Piper's full licensing chain and alternatives with Czech support before committing. The current isolated lab tests English/Czech synthesis, local executable packaging, CPU inference, and duration-based speed using Supertonic 3's MIT reference implementation with current ONNX Runtime. Its upstream archival and separately licensed weights are unresolved production tradeoffs. Select a production path only after compatibility, quality, word timing, performance, lifecycle, and licensing gates. Model choice is user-facing; inference-provider choice should remain automatic.
+With Czech mandatory, Kokoro and the small KittenTTS browser models cannot cover the first release alone. The earlier isolated lab tested English/Czech synthesis, local executable packaging, CPU inference, and duration-based speed using Supertonic 3's MIT reference implementation with ONNX Runtime. Supertonic was not selected for the product prototype. Piper licensing, compatibility, quality, word timing, performance, and lifecycle remain release gates. Model choice is user-facing; inference-provider choice should remain automatic.
 
 The critical question is whether acceptable natural speech can start quickly and continue without gaps on the weakest supported CPU. A beautiful control bar cannot compensate for stalls, missing text, or a download/setup experience the user rejects.
 
@@ -34,9 +34,9 @@ Chrome's supported extension document mechanism is its offscreen API. Offscreen 
 
 Firefox Manifest V3 uses background scripts/event pages rather than Chrome's extension service-worker implementation. Those pages are non-persistent. Sources: [MDN background manifest](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/manifest.json/background), [MDN background scripts](https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/Background_scripts).
 
-Proposed architecture: share the reading session, synthesis, and playback logic, with small browser-specific hosting adapters. Chrome: investigate an offscreen document hosting playback and the inference worker, coordinated by the service worker. Firefox: prove an appropriate extension-document host and its lifecycle in a spike. Do not assume a background page stays alive because a promise is pending. Validate startup, long playback, pause, view closure, memory release, suspend/restart, and reconnection before choosing this design. No silent-audio or timer tricks to defeat browser lifecycle.
+The prototype uses Chrome's offscreen document for the inference worker and Firefox's background page for inference; playback remains in the reading tab. Validate startup, long playback, pause, view closure, memory release, suspend/restart, and reconnection. Do not assume a background page stays alive because a promise is pending or use silent-audio or timer tricks to defeat browser lifecycle.
 
-The popup and any in-page controls should display and control a session, not own it. Session IDs and request IDs should reject late synthesis results after stop, skip, or explicit replacement. The latest user clarification requires continued audio on tab switch but stop on source navigation/closure. A session-owned snapshot supports ordered playback, but source-document destruction now explicitly stops that session and invalidates pending inference. Retain only the minimum recovery state required by that behavior.
+Session IDs and request IDs should reject late synthesis results after stop, skip, or explicit replacement. The user requires continued audio on tab switch but stop on source navigation/closure. Retain only the minimum recovery state required by that behavior.
 
 ## Speech engine candidates
 
@@ -107,4 +107,4 @@ These are proposed concrete practices for the user's 2026 requirement, not a cla
 6. **Page fidelity and accessibility:** test representative articles, selections, dynamic pages, extraction failure, keyboard-only controls, and screen-reader feedback. Include live-text mapping if highlighting is chosen.
 7. **Distribution:** audit the actual built Chrome/Firefox archives, manifests, CSP, remote-code paths, dependency/model licenses, data declarations, and review instructions. A local development demo is not a store-ready extension.
 
-The next architecture decision follows the confirmed requirements and remaining questions in [product-brief.md](product-brief.md). A separate companion app is explicitly excluded. The specified thesis PDF is included in the first-release scope. Accounts and additional reading modes are outside that scope.
+Current implementation and outstanding gates are tracked in [engineering](engineering.md) and [status](feasibility-status.md). A separate companion app is explicitly excluded. The specified thesis PDF is included in the first-release scope. Accounts and additional reading modes are outside that scope.

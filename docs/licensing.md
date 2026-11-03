@@ -1,6 +1,6 @@
 # Speech dependency licensing inventory
 
-Updated: **2026-10-29**. Original application code is MIT. The user permits considering other dependency licenses after their obligations are explained; **no release-ready speech stack is cleared**. The development prototype now bundles Spellophone 0.2.1 / eSpeak NG 1.52.0 with ONNX Runtime Web; obligations were explained before testing and adoption in the prototype.
+Updated: **2026-11-02**. Original application code is MIT. **No release-ready speech stack is cleared.** The development prototype bundles Spellophone 0.2.1 / eSpeak NG 1.52.0 with ONNX Runtime Web; their obligations are described below.
 
 ## Piper
 
@@ -12,7 +12,7 @@ Model checkpoints have separate provenance. The Czech Jirka medium card lists CC
 
 ## Current isolated Supertonic experiment
 
-The archived reference implementation is MIT; ONNX Runtime is MIT with third-party notices. The lab preserves their license texts and pins the reference revision. This is an experiment, not adoption of an unsupported upstream package as a product dependency. Sources: [reference license](../lab/local-speech/vendor/LICENSE), [runtime license](../lab/local-speech/vendor/onnxruntime-LICENSE), [runtime notices](../lab/local-speech/vendor/onnxruntime-ThirdPartyNotices.txt).
+The archived reference implementation is MIT; ONNX Runtime is MIT with third-party notices. The [experimental archive](archive/speech-lab/README.md) retains license texts and pinned provenance. This was an experiment, not adoption of an unsupported upstream package as a product dependency. Sources: [reference license](archive/speech-lab/LICENSE), [runtime license](archive/speech-lab/onnxruntime-LICENSE), [runtime notices](archive/speech-lab/onnxruntime-ThirdPartyNotices.txt).
 
 The model weights use BigScience OpenRAIL-M. Redistribution includes license/notices, marked modifications, and downstream use restrictions; these weights cannot be described as MIT. Review how those conditions fit the intended download/distribution flow before choosing this model. Source: [model license](https://huggingface.co/supertone-oss-archive/supertonic-3/blob/main/LICENSE).
 
@@ -22,7 +22,7 @@ Pocket TTS has MIT code, and the Czech checkpoint publishes CC BY 4.0 weights. A
 
 ## Production choice gate
 
-Present the user with the selected code/runtime/model/preview licenses and concrete redistribution obligations **before choosing the production stack**. Preserve original-source MIT licensing and third-party rights accurately. Complete source/build provenance and notices for every bundled executable component, and pin catalog assets to vetted revisions. License review and performance/quality verification are separate gates; passing one does not imply passing the other.
+Explain code/runtime/model/preview licenses and concrete redistribution obligations before introducing or replacing a dependency. Preserve original-source MIT licensing and third-party rights accurately. Complete source/build provenance and notices for every bundled executable component, and pin catalog assets to vetted revisions. License review and performance/quality verification are separate gates; passing one does not imply passing the other.
 
 ## Current prototype distribution
 

@@ -1,9 +1,9 @@
-import { type SpeechClip, speechRequest, type SpeechResponse } from "./protocol.ts"
+import { speechFailureCode } from "./errors.ts"
+import { type SpeechClip, speechRequest, type SpeechResponse, voiceModelId } from "./protocol.ts"
 import { synthesizeWithRecovery } from "./recovery.ts"
-import { onVoicesChanged } from "./vault.ts"
 
 interface SpeechBackend {
-	diagnostics: Record<string, unknown>
+	diagnostics: SpeechDiagnostics
 	load(voice: string): Promise<void>
 	synthesize(text: string, speed: number): Promise<SpeechClip>
 	cancelQueued(): void
@@ -17,14 +17,12 @@ export class SpeechService {
 	private generation = 0
 	private requestedVoice = ""
 	private idle: ReturnType<typeof setTimeout> | undefined
-	private unsubscribe: () => void
-	constructor(private engine: SpeechBackend) {
-		this.unsubscribe = onVoicesChanged((id, deleted) => {
-			if (deleted) this.voiceDeleted(id)
-		})
-	}
+	constructor(
+		private engine: SpeechBackend,
+		private encoding: "base64" | "structured" = "base64",
+	) {}
 	voiceDeleted(id: string) {
-		if (this.requestedVoice.split("#")[0] === id) {
+		if (voiceModelId(this.requestedVoice) === id) {
 			this.generation++
 			this.engine.dispose()
 		}
@@ -34,6 +32,10 @@ export class SpeechService {
 		clearTimeout(this.idle)
 		try {
 			if (value.type === "load") {
+				if (client === this.owner && this.requestedVoice && this.requestedVoice !== value.voice) {
+					this.generation++
+					this.engine.cancelQueued()
+				}
 				this.requestedVoice = value.voice
 				if (client !== this.owner) {
 					this.engine.clearClips()
@@ -42,7 +44,7 @@ export class SpeechService {
 				}
 				await this.engine.load(value.voice)
 				if (client !== this.owner) throw new DOMException("Reading stopped", "AbortError")
-				return { id: value.id, ok: true, diagnostics: this.engine.diagnostics }
+				return { id: value.id, ok: true, diagnostics: speechDiagnostics(this.engine.diagnostics) }
 			}
 			if (client !== this.owner) throw new DOMException("Reading stopped", "AbortError")
 			if (value.type === "cancel") {
@@ -61,16 +63,19 @@ export class SpeechService {
 			return {
 				id: value.id,
 				ok: true,
-				diagnostics: this.engine.diagnostics,
+				diagnostics: speechDiagnostics(this.engine.diagnostics),
 				clip: {
-					pcm: new Uint8Array(clip.pcm.buffer, clip.pcm.byteOffset, clip.pcm.byteLength).toBase64(),
+					pcm:
+						this.encoding === "structured"
+							? clip.pcm
+							: new Uint8Array(clip.pcm.buffer, clip.pcm.byteOffset, clip.pcm.byteLength).toBase64(),
 					sampleRate: clip.sampleRate,
 					words: clip.words,
 					skippedText: clip.skippedText === true,
 				},
 			}
 		} catch (error) {
-			return { id: value.id, ok: false, error: error instanceof Error ? error.message : "Speech could not continue" }
+			return { id: value.id, ok: false, code: speechFailureCode(error) }
 		}
 	}
 	release(client: string) {
@@ -81,14 +86,13 @@ export class SpeechService {
 		// Retain only model/runtime state briefly. Never retain source text after closing.
 		this.idle = setTimeout(() => this.engine.dispose(), 120_000)
 	}
-	releaseCurrent() {
-		this.release(this.owner)
-	}
 	dispose() {
 		clearTimeout(this.idle)
-		this.unsubscribe()
 		this.owner = ""
 		this.requestedVoice = ""
 		this.engine.dispose()
 	}
 }
+import type { SpeechDiagnostics } from "./diagnostics.ts"
+
+import { speechDiagnostics } from "./diagnostics.ts"

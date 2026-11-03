@@ -11,6 +11,20 @@ export interface ReadingDocument {
 	runs: TextRun[]
 }
 
+/** Runs are ordered by source offset, including when normalization splits a run. */
+export function overlappingRuns(source: ReadingDocument, start: number, end: number): TextRun[] {
+	let low = 0
+	let high = source.runs.length
+	while (low < high) {
+		const middle = (low + high) >>> 1
+		if (source.runs[middle]!.to <= start) low = middle + 1
+		else high = middle
+	}
+	const result: TextRun[] = []
+	while (low < source.runs.length && source.runs[low]!.from < end) result.push(source.runs[low++]!)
+	return result
+}
+
 /** Preserve DOM offsets while excluding page chrome from article reading. */
 export function captureDocument(mode: "selection" | "article"): ReadingDocument {
 	const selection = window.getSelection()
@@ -59,8 +73,8 @@ export function captureDocument(mode: "selection" | "article"): ReadingDocument 
 export function sourceRange(source: ReadingDocument, start: number, end: number): Range | null {
 	if (!Number.isInteger(start) || !Number.isInteger(end) || start < 0 || end <= start || end > source.text.length)
 		return null
-	const first = source.runs.find((run) => start >= run.from && start < run.to)
-	const last = source.runs.find((run) => end > run.from && end <= run.to)
+	const first = overlappingRuns(source, start, start + 1)[0]
+	const last = overlappingRuns(source, end - 1, end)[0]
 	if (!first?.node.isConnected || !last?.node.isConnected) return null
 	for (const run of [first, last]) {
 		if (run.node.data.slice(run.offset, run.offset + run.to - run.from) !== source.text.slice(run.from, run.to))

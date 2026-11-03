@@ -1,0 +1,70 @@
+{
+	"recordedAt": "2026-11-03T00:32:51.996Z",
+	"browser": {
+		"protocolVersion": "1.3",
+		"product": "Chrome/155.0.8059.12",
+		"revision": "@384c82079f60e0b79cdca6e49efd5cfceefa5b74",
+		"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+		"jsVersion": "15.5.35.7"
+	},
+	"samples": [
+		{
+			"profile": "desktop-default",
+			"cookieStoreLoadMs": 25457,
+			"requestKeyWaitMs": 24594,
+			"events": [
+				{
+					"event": "COOKIE_PERSISTENT_STORE_LOAD",
+					"phase": 1,
+					"timeMs": 290503510,
+					"sourceId": 9
+				},
+				{
+					"event": "COOKIE_PERSISTENT_STORE_KEY_LOAD_STARTED",
+					"phase": 0,
+					"timeMs": 290503510,
+					"sourceId": 9
+				},
+				{
+					"event": "COOKIE_PERSISTENT_STORE_KEY_LOAD_STARTED",
+					"phase": 0,
+					"timeMs": 290504373,
+					"sourceId": 9
+				},
+				{
+					"event": "COOKIE_PERSISTENT_STORE_LOAD",
+					"phase": 2,
+					"timeMs": 290528967,
+					"sourceId": 9
+				}
+			]
+		},
+		{
+			"profile": "disposable-basic",
+			"cookieStoreLoadMs": 215,
+			"requestKeyWaitMs": 215,
+			"events": [
+				{
+					"event": "COOKIE_PERSISTENT_STORE_LOAD",
+					"phase": 1,
+					"timeMs": 290585890,
+					"sourceId": 9
+				},
+				{
+					"event": "COOKIE_PERSISTENT_STORE_KEY_LOAD_STARTED",
+					"phase": 0,
+					"timeMs": 290585890,
+					"sourceId": 9
+				},
+				{
+					"event": "COOKIE_PERSISTENT_STORE_LOAD",
+					"phase": 2,
+					"timeMs": 290586105,
+					"sourceId": 9
+				}
+			]
+		}
+	],
+	"interpretation": "The first credentialed PDF fetch waited for the persistent cookie store before its HTTP transaction. A separate Bun server process reproduced the delay. Selecting the basic password store only for a disposable headless automation profile removed the stall. This supports an environment-specific desktop-store initialization cause, not a PDF parsing bottleneck. KEY_LOAD here means loading a cookie database key/domain, not direct proof of an encryption-key operation. No product credentials, browser profiles, system keyrings or extension permissions were changed.",
+	"limits": "One fresh headless profile per condition on this Linux VM. Condensed NetLog events only; events retained from complete entries even if browser shutdown left the raw log JSON footer incomplete. No page text or cookies persisted here. Does not establish behavior on normal interactive profiles, Firefox, Windows, target hardware or source network latency."
+}

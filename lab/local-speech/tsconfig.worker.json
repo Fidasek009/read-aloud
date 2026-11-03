@@ -1,8 +1,0 @@
-{
-	"extends": "./tsconfig.json",
-	"compilerOptions": {
-		"lib": ["ES2024", "WebWorker"],
-		"types": ["@webgpu/types"]
-	},
-	"include": ["src/worker.ts", "src/piper/**/*.ts", "src/contracts.ts", "vendor/helper.d.mts", "vendor/piper/*.d.cts"]
-}

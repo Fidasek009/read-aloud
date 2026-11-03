@@ -1,74 +1,70 @@
 {
-	"recordedAt": "2026-11-02T09:25:05.169Z",
-	"browser": {
-		"protocolVersion": "1.3",
-		"product": "Chrome/155.0.8059.12",
-		"revision": "@384c82079f60e0b79cdca6e49efd5cfceefa5b74",
-		"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
-		"jsVersion": "15.5.35.7"
-	},
-	"voice": "en_US-ljspeech-medium",
-	"performance": {
-		"cold": {
-			"audioContextState": "suspended",
-			"backend": "cpu",
-			"crossOriginIsolated": true,
-			"gpuFallbackReason": "Hardware GPU is unavailable",
-			"loadMs": 6415.550000011921,
-			"modelReadMs": 299.2600000202656,
-			"phonemizerMs": 141.1700000166893,
-			"recordedAt": "2026-11-02T09:24:44.040Z",
-			"sessionMs": 6079.329999983311,
-			"synthesisMs": 567.4650000035763,
-			"threads": 4,
-			"timeToFirstBufferMs": 7432.899999976158,
-			"voice": "en_US-ljspeech-medium",
-			"workerLoadMs": 6088.829999983311
-		},
-		"warm": {
-			"audioContextState": "running",
-			"backend": "cpu",
-			"crossOriginIsolated": true,
-			"gpuFallbackReason": "Hardware GPU is unavailable",
-			"loadMs": 6415.550000011921,
-			"modelReadMs": 299.2600000202656,
-			"phonemizerMs": 141.1700000166893,
-			"recordedAt": "2026-11-02T09:24:47.135Z",
-			"sessionMs": 6079.329999983311,
-			"synthesisMs": 325.74000000953674,
-			"threads": 4,
-			"timeToFirstBufferMs": 371.80000001192093,
-			"voice": "en_US-ljspeech-medium",
-			"workerLoadMs": 6088.829999983311
-		},
-		"caveat": "Development VM first-buffer readiness, not target-hardware audible latency; warm uses a different opening sentence in the same live engine."
-	},
-	"passed": [
-		"no-voice state hides unusable controls",
-		"live voice installation and deletion transitions",
-		"stale voice preference recovery",
-		"extension-owned storage despite unavailable iframe storage",
-		"explicit download",
-		"integrity",
-		"model storage",
-		"compact language and voice labels",
-		"volume output gain, mute, persistence, no synthesis restart, and keyboard dismissal",
-		"floating speed and volume panels leave bar height unchanged",
-		"Play and background context-menu commands recover from playback failure",
-		"local speech",
-		"word highlighting",
-		"Play replaces the previous scope with the current selection",
-		"selection completion and replay stay within the selection",
-		"pause",
-		"close",
-		"delete",
-		"repeat activation without padding changes or duplicate controls",
-		"next/previous sentence",
-		"actual MD Dash article sentence navigation"
-	],
-	"limitations": [
-		"Scripted entry with test-only localhost and MD Dash grants; native activeTab/context-menu activation not tested",
-		"Trusted Play gesture supplied if autoplay is blocked",
-		"GPU, Windows, target-device performance, and audio quality not tested"
-	]
+  "recordedAt": "2026-11-03T05:00:16.090Z",
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/155.0.8059.12",
+    "revision": "@384c82079f60e0b79cdca6e49efd5cfceefa5b74",
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+    "jsVersion": "15.5.35.7"
+  },
+  "voice": "en_US-ljspeech-medium",
+  "performance": {
+    "cold": {
+      "audioContextState": "running",
+      "backend": "cpu",
+      "crossOriginIsolated": true,
+      "gpuFallbackReason": "gpu-initialization-failed",
+      "loadMs": 6899.399999976158,
+      "modelReadMs": 817.875,
+      "modelReusedOnFallback": true,
+      "phonemizerMs": 5975.555000007153,
+      "recordedAt": "2026-11-03T04:59:47.929Z",
+      "sessionMs": 5937.170000016689,
+      "synthesisMs": 754.4800000190735,
+      "threads": 4,
+      "timeToFirstBufferMs": 7819.699999988079,
+      "voice": "en_US-ljspeech-medium",
+      "workerLoadMs": 5975.599999964237
+    },
+    "warm": {
+      "audioContextState": "running",
+      "backend": "cpu",
+      "recordedAt": "2026-11-03T04:59:51.734Z",
+      "reusedSession": true,
+      "synthesisMs": 296.3649999499321,
+      "timeToFirstBufferMs": 321.69999998807907,
+      "voice": "en_US-ljspeech-medium"
+    },
+    "mdCaptureMs": 41.43333300000086,
+    "speedRestartGapMs": 321.69999998807907,
+    "caveat": "Development VM first-buffer readiness, not target-hardware audible latency; warm uses a different opening sentence in the same live engine."
+  },
+  "passed": [
+    "no-voice state hides unusable controls",
+    "live voice installation and deletion transitions",
+    "stale voice preference recovery",
+    "extension-owned storage despite unavailable iframe storage",
+    "explicit download",
+    "integrity",
+    "model storage",
+    "compact language and voice labels",
+    "volume output gain, mute, persistence, no synthesis restart, and keyboard dismissal",
+    "floating speed and volume panels leave bar height unchanged",
+    "Play and background context-menu commands recover from playback failure",
+    "local speech",
+    "word highlighting",
+    "Play replaces the previous scope with the current selection",
+    "selection completion and replay stay within the selection",
+    "pause",
+    "close",
+    "delete",
+    "repeat activation without padding changes or duplicate controls",
+    "next/previous sentence",
+    "actual MD Dash article sentence navigation"
+  ],
+  "limitations": [
+    "Scripted entry with test-only localhost and MD Dash grants; native activeTab/context-menu activation not tested",
+    "Trusted Play gesture supplied if autoplay is blocked",
+    "GPU, Windows, target-device performance, and audio quality not tested"
+  ]
 }

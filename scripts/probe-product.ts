@@ -1,12 +1,27 @@
 import { $ } from "bun"
 
 import { readingChunks, sentenceTarget } from "../src/reading/document.ts"
-import { checkSpeedPanel, checkVolume, failNextPlayback, observePlayerAudio } from "./check-player-controls.ts"
+import { checkSpeedPanel, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
+import { checkAbortedVoiceDeletion } from "./check-voice-deletion.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
+import {
+	assert,
+	chromeExecutable,
+	chromeExtensionId,
+	chromeTestProfileArguments,
+	projectRoot,
+	waitFor,
+} from "./probe-helpers.ts"
+import {
+	recoverSelectionAfterFailure,
+	recoverSelectionFromMenu,
+	type RecoveryDriver,
+	verifySelectionReplay,
+} from "./reader-scenarios.ts"
 
 // This copied test manifest grants only the fixture origin. Native action /
 // context-menu activation and the activeTab grant are not covered by this test.
-const root = import.meta.dir.replace(/\/scripts$/, "")
+const root = projectRoot
 const extension = `${root}/.cache/product-probe/chromium`
 await $`rm -rf ${extension}`.quiet()
 await $`mkdir -p ${extension}`.quiet()
@@ -26,16 +41,14 @@ const server = Bun.serve({
 			{ headers: { "Content-Type": "text/html" } },
 		),
 })
-const candidates = await Array.fromAsync(
-	new Bun.Glob("chromium-*/chrome-linux*/chrome").scan({ cwd: `${Bun.env.HOME}/.cache/ms-playwright`, absolute: true }),
-)
-const executable = Bun.env.BUN_CHROME_PATH ?? candidates.sort().at(-1)
+const executable = await chromeExecutable()
 const view = new Bun.WebView({
 	backend: {
 		type: "chrome",
 		url: false,
 		...(executable ? { path: executable } : {}),
 		argv: [
+			...chromeTestProfileArguments,
 			`--disable-extensions-except=${extension}`,
 			`--load-extension=${extension}`,
 			"--enable-unsafe-extension-debugging",
@@ -43,19 +56,6 @@ const view = new Bun.WebView({
 	},
 	dataStore: "ephemeral",
 })
-function assert(condition: unknown, message: string): asserts condition {
-	if (!condition) throw new Error(message)
-}
-const waitFor = async <T>(read: () => Promise<T>, accept: (value: T) => boolean, seconds = 60): Promise<T> => {
-	const until = performance.now() + seconds * 1000
-	let value: T
-	do {
-		value = await read()
-		if (accept(value)) return value
-		await Bun.sleep(100)
-	} while (performance.now() < until)
-	throw new Error(`Condition timed out: ${String(JSON.stringify(value)).slice(0, 600)}`)
-}
 let sequence = 0
 const calls = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>()
 view.addEventListener("Target.receivedMessageFromTarget", (event: any) => {
@@ -92,9 +92,7 @@ const call = async (session: string, method: string, params: object = {}): Promi
 }
 try {
 	await view.navigate("about:blank")
-	const id = [...new Bun.CryptoHasher("sha256").update(extension).digest("hex").slice(0, 32)]
-		.map((digit) => String.fromCharCode(97 + parseInt(digit, 16)))
-		.join("")
+	const id = chromeExtensionId(extension)
 	await view.navigate(`chrome-extension://${id}/voices.html`)
 	await waitFor(
 		() => view.evaluate<number>("document.querySelectorAll('section').length"),
@@ -231,6 +229,13 @@ try {
 		"Download added a page-level success notice",
 	)
 	console.log("Explicit download passed integrity check and persisted.")
+	const installedFormat = await view.evaluate<number>(`new Promise((resolve,reject)=>{
+		const open=indexedDB.open('read-aloud-voices');open.onerror=()=>reject(open.error);open.onsuccess=()=>{
+			const db=open.result,request=db.transaction('voices').objectStore('voices').get('en_US-ljspeech-medium');
+			request.onerror=()=>reject(request.error);request.onsuccess=()=>{resolve(request.result?.formatVersion);db.close()};
+		};
+	})`)
+	assert(installedFormat === 1, "Downloaded voice format version was not stored")
 
 	await waitFor(
 		() => player("document.querySelector('#bar').dataset.view"),
@@ -240,8 +245,21 @@ try {
 		await player("document.querySelector('#voice').value==='en_US-ljspeech-medium'"),
 		"Stale preference left the voice picker empty",
 	)
+	const directReader = await player(`(async()=>{
+		const tab=await chrome.tabs.getCurrent();
+		if(!tab?.id)return {noTab:true};
+		const session=location.hash.slice(1);
+		return {tab:tab.id,document:await chrome.tabs.sendMessage(tab.id,{type:'reader',session,command:'document'},{frameId:0}),invalid:await chrome.tabs.sendMessage(tab.id,{type:'reader',session,command:'highlight',start:2,end:1},{frameId:0}),stale:await chrome.tabs.sendMessage(tab.id,{type:'reader',session:'stale',command:'close'},{frameId:0})};
+	})()`)
+	assert(
+		directReader.tab === tab.id &&
+			typeof directReader.document?.text === "string" &&
+			directReader.invalid?.error &&
+			directReader.stale?.error,
+		`Direct Chrome reader contract failed: ${JSON.stringify(directReader)}`,
+	)
 	await player(
-		"globalThis.probeHighlights=[];const originalSend=chrome.runtime.sendMessage;chrome.runtime.sendMessage=(...args)=>{if(args[0]?.command==='highlight')probeHighlights.push({start:args[0].start,end:args[0].end});return originalSend(...args)}",
+		"globalThis.probeHighlights=[];const originalSend=chrome.tabs.sendMessage;chrome.tabs.sendMessage=(...args)=>{if(args[1]?.command==='highlight')probeHighlights.push({start:args[1].start,end:args[1].end});return originalSend(...args)}",
 	)
 	const status = await waitFor(
 		() => player("document.querySelector('#status')?.textContent"),
@@ -281,10 +299,29 @@ try {
 			} catch {}
 		}
 		const shot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
-		await Bun.write(`${root}/.cache/product-probe/reading.png`, Buffer.from(shot.data, "base64"))
+		await Bun.write(`${root}/.cache/product-probe/reading.png`, Uint8Array.fromBase64(shot.data))
 		throw error
 	})
 	console.log("Highlighted source word:", highlight)
+	await view.evaluate(checkAbortedVoiceDeletion("en_US-ljspeech-medium"))
+	assert(
+		await player(
+			"document.querySelector('#voice').value==='en_US-ljspeech-medium' && document.querySelector('#status').textContent==='Reading'",
+		),
+		"An aborted deletion interrupted the installed voice",
+	)
+	console.log("Aborted voice deletion retained the voice and active reader without a committed notification.")
+	// A delayed delete notification must not stop a voice that is installed again.
+	await view.evaluate(
+		"chrome.storage.local.set({voiceChange:{id:'en_US-ljspeech-medium',deleted:true,revision:crypto.randomUUID()}})",
+	)
+	await new Promise((resolve) => setTimeout(resolve, 500))
+	assert(
+		await player(
+			"document.querySelector('#voice').value==='en_US-ljspeech-medium' && document.querySelector('#status').textContent==='Reading'",
+		),
+		"A stale deletion notification interrupted an installed voice",
+	)
 	const cold = (await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
 	console.log("Cold first-buffer timings:", JSON.stringify(cold))
 	const volume = await player(checkVolume)
@@ -332,6 +369,21 @@ try {
 		"document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))",
 	)
 	console.log("Speed panel:", JSON.stringify(await player(checkSpeedPanel)))
+	const speedStartCount = await player("window.__probeAudio.starts.length")
+	await player(
+		"document.querySelector('#speed').value='1.1';document.querySelector('#speed').dispatchEvent(new Event('input'));document.querySelector('#speed').dispatchEvent(new Event('change'))",
+	)
+	const speedRestart = await waitFor<any>(
+		() =>
+			player(
+				`window.__probeAudio.starts.length>${speedStartCount}?({start:window.__probeAudio.starts[${speedStartCount}].requestedAt,stop:window.__probeAudio.lastStop}):null`,
+			),
+		Boolean,
+		90,
+	)
+	const speedRestartGapMs = speedRestart.start - speedRestart.stop
+	assert(speedRestartGapMs >= 0, "Speed adjustment did not stop the previous audio before restarting")
+	console.log("Speed-adjustment restart interval:", speedRestartGapMs.toFixed(1), "ms")
 	await player("document.querySelector('#play').click()")
 	for (const [name, width] of [
 		["playback-dark", 1000],
@@ -384,6 +436,12 @@ try {
 
 	const paddingBefore = await evaluate("document.documentElement.style.paddingTop")
 	const hostCountBefore = await evaluate("document.querySelectorAll('[data-read-aloud]').length")
+	await evaluate("history.replaceState(null, '', '#section')")
+	await new Promise((resolve) => setTimeout(resolve, 400))
+	assert(
+		(await evaluate("document.querySelectorAll('[data-read-aloud]').length")) === 1,
+		"A hash change closed the reader",
+	)
 	await view.evaluate(
 		`chrome.tabs.sendMessage(${tab.id},{type:'start-reading',mode:'article',reveal:true},{frameId:0})`,
 	)
@@ -402,36 +460,45 @@ try {
 		barSize.width <= 80 && barSize.viewport < 140,
 		`Playback controls grew unexpectedly: ${JSON.stringify(barSize)}`,
 	)
-	if ((await player("document.querySelector('#play').getAttribute('aria-label')")) === "Pause")
+	await waitFor(() => player("!document.querySelector('#play').disabled"), Boolean)
+	if ((await player("document.querySelector('#play').getAttribute('aria-label')")) === "Pause") {
 		await player("document.querySelector('#play').click()")
-	const originalSession = await player("location.hash")
-	await player(failNextPlayback)
-	await waitFor(
-		() => player("document.querySelector('#status').textContent"),
-		(value) => value === "Reading could not continue.",
-	)
-	assert(await player("!document.querySelector('#play').disabled"), "Failure disabled retry")
-	await call(sessionId, "Emulation.setDeviceMetricsOverride", {
-		width: 360,
-		height: 600,
-		deviceScaleFactor: 1,
-		mobile: false,
+		await waitFor(
+			() => player("document.querySelector('#status').textContent"),
+			(status) => status === "Paused",
+		)
+	}
+	const recovery: RecoveryDriver = {
+		player,
+		source: evaluate,
+		pressPlay: async () => {
+			await player("document.querySelector('#play').click()", true)
+		},
+		readSelectionFromMenu: async () => {
+			const result = await view.evaluate<{ ok?: boolean }>(
+				`chrome.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
+			)
+			assert(result?.ok, `Selection menu failed: ${JSON.stringify(result)}`)
+		},
+	}
+	const recoveredScope = await recoverSelectionAfterFailure(recovery, "#warm-selection", async () => {
+		await call(sessionId, "Emulation.setDeviceMetricsOverride", {
+			width: 360,
+			height: 600,
+			deviceScaleFactor: 1,
+			mobile: false,
+		})
+		await waitFor(
+			() =>
+				player(
+					"innerWidth<360 && Math.abs(innerHeight-document.querySelector('#bar').getBoundingClientRect().height)<2",
+				),
+			Boolean,
+		)
+		console.log("Narrow error-state speed panel:", JSON.stringify(await player(checkSpeedPanel)))
+		await call(sessionId, "Emulation.clearDeviceMetricsOverride")
 	})
-	await waitFor(
-		() =>
-			player("innerWidth<360 && Math.abs(innerHeight-document.querySelector('#bar').getBoundingClientRect().height)<2"),
-		Boolean,
-	)
-	console.log("Narrow error-state speed panel:", JSON.stringify(await player(checkSpeedPanel)))
-	await call(sessionId, "Emulation.clearDeviceMetricsOverride")
-	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
-	await player("document.querySelector('#play').click()", true)
-	const selectedText = await evaluate("document.querySelector('#warm-selection').textContent")
-	await waitFor(
-		() => player("chrome.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"),
-		(value) => value?.text === selectedText,
-	)
-	assert((await player("location.hash")) === originalSession, "Play replaced the existing selection reader")
+	const selectedText = recoveredScope.text
 	await waitFor(
 		async () =>
 			(await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance?.recordedAt,
@@ -439,6 +506,31 @@ try {
 	)
 	const warm = (await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
 	console.log("Warm first-buffer timings:", JSON.stringify(warm))
+	// Chrome can suspend the extension service worker while the reader is
+	// paused. Its termination must not evict the offscreen speech session.
+	await player("document.querySelector('#play').click()")
+	await view.cdp("ServiceWorker.enable")
+	const worker = (await view.cdp<any>("Target.getTargets")).targetInfos.find(
+		(target: any) => target.type === "service_worker" && target.url.startsWith(`chrome-extension://${id}/`),
+	)
+	assert(worker, "Extension service worker was not found before the restart check")
+	await view.cdp("ServiceWorker.stopAllWorkers")
+	await waitFor(
+		async () =>
+			(await view.cdp<any>("Target.getTargets")).targetInfos.some((target: any) => target.targetId === worker.targetId),
+		(exists) => !exists,
+	)
+	await player("document.querySelector('#next').click()")
+	await waitFor(
+		async () =>
+			(await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance?.recordedAt,
+		(value) => value !== warm.recordedAt,
+	)
+	const resumed = (await view.evaluate<any>("chrome.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
+	assert(resumed.reusedSession === true, "Worker shutdown evicted the paused reader's speech session")
+	if ((await player("document.querySelector('#play').getAttribute('aria-label')")) === "Play")
+		await player("document.querySelector('#play').click()")
+	console.log("Paused reader retained its speech session after service-worker termination.")
 	assert(
 		(await player("!document.querySelector('#message').classList.contains('quiet')")) === false,
 		"Recovered player retained its error",
@@ -464,6 +556,15 @@ try {
 			throw error
 		}
 	}
+	// The worker-restart check advances playback. Start the selected passage
+	// again so the following navigation assertions have a known scope and cursor.
+	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
+	await player("probeHighlights.length=0")
+	const navigationReset = await view.evaluate<any>(
+		`chrome.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
+	)
+	assert(navigationReset?.ok, `Selection restart failed: ${JSON.stringify(navigationReset)}`)
+	await waitWord("Fresh")
 	await player("probeHighlights.length=0;document.querySelector('#next').click()")
 	await waitWord("A")
 
@@ -472,31 +573,10 @@ try {
 	await player("probeHighlights.length=0;document.querySelector('#previous').click()")
 	await waitWord("A")
 	await player("document.querySelector('#next').click()")
-	await waitFor(
-		() => player("document.querySelector('#status').textContent"),
-		(value) => value === "Finished",
-	)
-	assert(await player("document.querySelector('#next').disabled"), "Selection continued beyond its final sentence")
-	await player("probeHighlights.length=0;document.querySelector('#play').click()", true)
+	await player("probeHighlights.length=0")
+	await verifySelectionReplay(recovery, recoveredScope)
 	await waitWord("Fresh")
-	assert(
-		(await player("chrome.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"))
-			.text === selectedText,
-		"Replay escaped the selected text",
-	)
-	await player(failNextPlayback)
-	await waitFor(
-		() => player("document.querySelector('#status').textContent"),
-		(value) => value === "Reading could not continue.",
-	)
-	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#selection'))")
-	await view.evaluate(
-		`chrome.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
-	)
-	await waitFor(
-		() => player("document.querySelector('#play').getAttribute('aria-label')"),
-		(value) => value === "Pause",
-	)
+	await recoverSelectionFromMenu(recovery, "#selection")
 	console.log("The context-menu command recovered the existing reader from failure.")
 	const shot = await call(sessionId, "Page.captureScreenshot", { format: "png" })
 	await Bun.write(`${root}/.cache/product-probe/reading.png`, Uint8Array.fromBase64(shot.data))
@@ -515,6 +595,13 @@ try {
 		"Reinjection left stale message listeners",
 	)
 	await view.evaluate(`chrome.tabs.sendMessage(${tab.id},{type:'stop-reading'},{frameId:0})`)
+	await waitFor(
+		async () =>
+			(await view.cdp<any>("Target.getTargets")).targetInfos.some((target: any) =>
+				target.url.startsWith(`chrome-extension://${id}/player.html`),
+			),
+		(exists) => !exists,
+	)
 	console.log("Testing sentence navigation on the actual MD Dash benchmark.")
 	const mdTab: any = await view.evaluate(
 		`chrome.tabs.create({url:'https://filipkrasa.salonek.org/projects/md-dash/',active:true})`,
@@ -550,7 +637,13 @@ try {
 	await view.evaluate(
 		`chrome.scripting.executeScript({target:{tabId:${mdTab.id}},files:['content-scripts/reader.js']})`,
 	)
-	await view.evaluate(`chrome.tabs.sendMessage(${mdTab.id},{type:'start-reading',mode:'article'},{frameId:0})`)
+	const captureStarted = performance.now()
+	const mdStarted = await view.evaluate<any>(
+		`chrome.tabs.sendMessage(${mdTab.id},{type:'start-reading',mode:'article'},{frameId:0})`,
+	)
+	const mdCaptureMs = performance.now() - captureStarted
+	assert(mdStarted?.ok, mdStarted?.error ?? "MD Dash article capture failed")
+	console.log("MD Dash article capture and reader creation:", mdCaptureMs.toFixed(1), "ms")
 	const mdPlayer = await waitFor<any>(
 		async () =>
 			(await view.cdp<any>("Target.getTargets")).targetInfos.find((target: any) =>
@@ -564,10 +657,10 @@ try {
 	const mdControl = (expression: string, userGesture = false) => remote(mdPlayerSession, expression, userGesture)
 	await call(mdSession, "Page.bringToFront")
 	await mdControl(
-		"globalThis.probeWords=[];globalThis.freezeOnHighlight=true;const originalSend=chrome.runtime.sendMessage;chrome.runtime.sendMessage=(...args)=>{if(args[0]?.command==='highlight'&&args[0].end>args[0].start){probeWords.push(args[0]);if(freezeOnHighlight){freezeOnHighlight=false;document.querySelector('#play').click()}}return originalSend(...args)}",
+		"globalThis.probeWords=[];globalThis.freezeOnHighlight=true;const originalSend=chrome.tabs.sendMessage;chrome.tabs.sendMessage=(...args)=>{if(args[1]?.command==='highlight'&&args[1].end>args[1].start){probeWords.push(args[1]);if(freezeOnHighlight){freezeOnHighlight=false;document.querySelector('#play').click()}}return originalSend(...args)}",
 	)
 	const mdStatus = await waitFor(
-		() => mdControl("document.querySelector('#status').textContent"),
+		() => mdControl("document.querySelector('#status')?.textContent ?? ''"),
 		(value) => /Reading|Press Play|Paused|failed/i.test(value),
 		90,
 	)
@@ -575,6 +668,15 @@ try {
 	await waitFor(
 		() => mdControl("document.querySelector('#status').textContent"),
 		(value) => value === "Paused",
+	)
+	const scheduledBuffers = await waitFor<any[]>(
+		() => mdControl("window.__probeAudio.starts"),
+		(value) => value.length >= 2,
+		90,
+	)
+	assert(
+		Math.abs(scheduledBuffers[1]!.when - scheduledBuffers[0]!.when - scheduledBuffers[0]!.duration) < 0.001,
+		"The next audio buffer was not scheduled at the end of the current buffer",
 	)
 	const mdSource = await mdControl(
 		"chrome.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})",
@@ -628,6 +730,8 @@ try {
 				performance: {
 					cold,
 					warm,
+					mdCaptureMs,
+					speedRestartGapMs,
 					caveat:
 						"Development VM first-buffer readiness, not target-hardware audible latency; warm uses a different opening sentence in the same live engine.",
 				},

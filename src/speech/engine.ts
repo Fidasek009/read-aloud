@@ -1,13 +1,36 @@
 import { browser } from "wxt/browser"
 
+import type { GpuFallbackReason, SpeechDiagnostics } from "./diagnostics.ts"
 import type { SpeechClip } from "./protocol.ts"
+import type { VoiceConfig } from "./voice-config.ts"
+import type { WorkerCommand, WorkerRequest, WorkerSuccess } from "./worker-protocol.ts"
 
 import { voiceChoice } from "./catalog.ts"
-import { SpeechTextError } from "./errors.ts"
+import { SpeechTextError, SpeechTimeoutError } from "./errors.ts"
 import { readVoice } from "./vault.ts"
+import { isWorkerResponse } from "./worker-protocol.ts"
+
+class WorkerFailure extends Error {
+	constructor(
+		message: string,
+		readonly model: ArrayBuffer | undefined,
+	) {
+		super(message)
+	}
+}
+
+class WorkerLoadFailure extends WorkerFailure {
+	constructor(
+		error: WorkerFailure,
+		readonly config: VoiceConfig,
+		readonly modelReadMs: number,
+	) {
+		super(error.message, error.model)
+	}
+}
 
 export class SpeechEngine {
-	diagnostics: Record<string, unknown> = {}
+	diagnostics: SpeechDiagnostics = {}
 	private worker: Worker | undefined
 	private voice = ""
 	private backend: "cpu" | "gpu" = "cpu"
@@ -20,7 +43,12 @@ export class SpeechEngine {
 	private loading: { voice: string; promise: Promise<void> } | undefined
 	private pending = new Map<
 		number,
-		{ resolve: (value: unknown) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }
+		{
+			type: WorkerRequest["type"]
+			resolve: (value: WorkerSuccess) => void
+			reject: (error: Error) => void
+			timer: ReturnType<typeof setTimeout>
+		}
 	>()
 
 	load(voice: string): Promise<void> {
@@ -36,59 +64,82 @@ export class SpeechEngine {
 	}
 
 	private async loadVoice(voice: string): Promise<void> {
-		if (this.voice === voice && this.worker) return
+		if (this.voice && this.worker && voiceChoice(this.voice).voice.id === voiceChoice(voice).voice.id) {
+			// A reused session did not incur the previous initialization costs.
+			this.voice = voice
+			this.diagnostics = { backend: this.backend, voice, reusedSession: true }
+			return
+		}
 		this.dispose()
+		const loadStarted = performance.now()
 		const epoch = this.epoch
 		const backends: ("gpu" | "cpu")[] = "gpu" in navigator ? ["gpu", "cpu"] : ["cpu"]
-		let fallback: string | undefined
+		let fallback: GpuFallbackReason | undefined
+		let recovered: { model: ArrayBuffer; config: VoiceConfig; modelReadMs: number } | undefined
 		for (const backend of backends) {
 			try {
-				await this.initialize(voice, backend, epoch)
+				await this.initialize(voice, backend, epoch, recovered)
+				this.diagnostics.loadMs = performance.now() - loadStarted
 				if (fallback) this.diagnostics.gpuFallbackReason = fallback
 				return
 			} catch (error) {
 				if (epoch !== this.epoch) throw new DOMException("Reading stopped", "AbortError")
 				this.stopWorker()
 				if (backend === "cpu") throw error
-				fallback = error instanceof Error ? error.message : "GPU initialization failed"
+				fallback = "gpu-initialization-failed"
+				if (error instanceof WorkerLoadFailure && error.model)
+					recovered = { model: error.model, config: error.config, modelReadMs: error.modelReadMs }
 			}
 		}
 	}
 
-	private async initialize(voice: string, backend: "cpu" | "gpu", epoch: number) {
+	private async initialize(
+		voice: string,
+		backend: "cpu" | "gpu",
+		epoch: number,
+		recovered?: { model: ArrayBuffer; config: VoiceConfig; modelReadMs: number },
+	) {
 		const started = performance.now()
 		const selected = voiceChoice(voice)
-		const { model, config } = await readVoice(selected.voice.id)
-		const modelReadMs = performance.now() - started
+		const { model, config } = recovered ?? (await readVoice(selected.voice.id))
+		const modelReadMs = recovered ? recovered.modelReadMs : performance.now() - started
 		if (epoch !== this.epoch) throw new DOMException("Reading stopped", "AbortError")
 		this.backend = backend
 		const workerPath = backend === "cpu" ? "/runtime/cpu/speech.js" : "/runtime/gpu/speech.js"
 		this.worker = new Worker(browser.runtime.getURL(workerPath), { type: "module" })
 		this.worker.onmessage = ({ data }: MessageEvent<unknown>) => {
-			if (!data || typeof data !== "object" || !("id" in data) || typeof data.id !== "number" || !("ok" in data)) return
+			if (!data || typeof data !== "object" || !("id" in data) || typeof data.id !== "number") return
 			const pending = this.pending.get(data.id)
 			if (!pending) return
 			clearTimeout(pending.timer)
 			this.pending.delete(data.id)
-			if (data.ok === true) pending.resolve(data)
-			else {
-				const message = "error" in data && typeof data.error === "string" ? data.error : "Speech failed"
+			if (!isWorkerResponse(data) || (data.ok && data.type !== pending.type))
+				pending.reject(new Error("Invalid speech response"))
+			else if (data.ok) pending.resolve(data)
+			else
 				pending.reject(
-					"code" in data && data.code === "unreadable-text" ? new SpeechTextError(message) : new Error(message),
+					data.code === "unreadable-text" ? new SpeechTextError(data.error) : new WorkerFailure(data.error, data.model),
 				)
-			}
 		}
 		this.worker.onerror = () => this.stopWorker(new Error("The speech worker stopped unexpectedly"))
-		const loaded = await this.request(
-			{ type: "load", voice: selected.voice.id, speaker: selected.speaker, config, model },
-			[model],
-		)
+		let loaded: Extract<WorkerSuccess, { type: "load" }>
+		try {
+			loaded = await this.request(
+				{ type: "load", voice: selected.voice.id, speaker: selected.speaker, config, model },
+				[model],
+			)
+		} catch (error) {
+			if (error instanceof WorkerFailure && error.model) throw new WorkerLoadFailure(error, config, modelReadMs)
+			throw error
+		}
+		if (epoch !== this.epoch) throw new DOMException("Reading stopped", "AbortError")
 		this.diagnostics = {
 			backend,
 			voice,
 			modelReadMs,
 			loadMs: performance.now() - started,
-			...(loaded as { timings?: object }).timings,
+			...(recovered ? { modelReusedOnFallback: true } : {}),
+			...loaded.timings,
 		}
 		this.voice = voice
 	}
@@ -96,6 +147,7 @@ export class SpeechEngine {
 	synthesize(text: string, speed: number): Promise<SpeechClip> {
 		const epoch = this.epoch
 		const generation = this.generation
+		const speaker = voiceChoice(this.voice).speaker
 		const key = `${this.voice}\u0000${speed}\u0000${text}`
 		const job = this.serial
 			.catch(() => {})
@@ -104,7 +156,7 @@ export class SpeechEngine {
 					throw new DOMException("Reading stopped", "AbortError")
 				return (
 					this.clips.get(key) ??
-					this.generate(text, speed).then((clip) => {
+					this.generate(text, speed, generation, speaker).then((clip) => {
 						if (epoch === this.epoch && generation === this.generation && clip.pcm.byteLength <= 4_000_000) {
 							this.clips.set(key, clip)
 							this.clipBytes += clip.pcm.byteLength
@@ -122,33 +174,27 @@ export class SpeechEngine {
 		return job
 	}
 
-	private async generate(text: string, speed: number): Promise<SpeechClip> {
+	private async generate(text: string, speed: number, generation: number, speaker: number): Promise<SpeechClip> {
 		const epoch = this.epoch
 		const started = performance.now()
-		let value: unknown
+		let value: Extract<WorkerSuccess, { type: "synthesize" }>
 		try {
-			value = await this.request({ type: "synthesize", text, speed })
+			value = await this.request({ type: "synthesize", text, speed, speaker })
 		} catch (error) {
-			if (epoch !== this.epoch || this.backend === "cpu" || error instanceof SpeechTextError) throw error
+			if (epoch !== this.epoch || generation !== this.generation)
+				throw new DOMException("Reading stopped", "AbortError")
+			if (this.backend === "cpu" || error instanceof SpeechTextError) throw error
 			const voice = this.voice
 			this.stopWorker()
 			await this.initialize(voice, "cpu", epoch)
-			value = await this.request({ type: "synthesize", text, speed })
+			if (epoch !== this.epoch || generation !== this.generation)
+				throw new DOMException("Reading stopped", "AbortError")
+			this.diagnostics.gpuFallbackReason = "gpu-inference-failed"
+			value = await this.request({ type: "synthesize", text, speed, speaker })
 		}
-		if (epoch !== this.epoch) throw new DOMException("Reading stopped", "AbortError")
-		if (
-			!value ||
-			typeof value !== "object" ||
-			!("pcm" in value) ||
-			!(value.pcm instanceof Float32Array) ||
-			!("sampleRate" in value) ||
-			typeof value.sampleRate !== "number" ||
-			!("words" in value) ||
-			!Array.isArray(value.words)
-		)
-			throw new Error("Invalid speech response")
+		if (epoch !== this.epoch || generation !== this.generation) throw new DOMException("Reading stopped", "AbortError")
 		this.diagnostics.synthesisMs = performance.now() - started
-		return value as SpeechClip
+		return value
 	}
 
 	cancelQueued() {
@@ -160,13 +206,21 @@ export class SpeechEngine {
 		this.clipBytes = 0
 	}
 
-	private request(message: object, transfer: Transferable[] = []): Promise<unknown> {
+	private request(
+		message: Extract<WorkerCommand, { type: "load" }>,
+		transfer?: Transferable[],
+	): Promise<Extract<WorkerSuccess, { type: "load" }>>
+	private request(
+		message: Extract<WorkerCommand, { type: "synthesize" }>,
+		transfer?: Transferable[],
+	): Promise<Extract<WorkerSuccess, { type: "synthesize" }>>
+	private request(message: WorkerCommand, transfer: Transferable[] = []): Promise<WorkerSuccess> {
 		return new Promise((resolve, reject) => {
 			if (!this.worker) return reject(new Error("Choose a downloaded voice first"))
 			const id = ++this.sequence
-			const timer = setTimeout(() => this.stopWorker(new Error("Speech took too long. Please try again.")), 90_000)
-			this.pending.set(id, { resolve, reject, timer })
-			this.worker.postMessage({ ...message, id }, transfer)
+			const timer = setTimeout(() => this.stopWorker(new SpeechTimeoutError("Speech timed out")), 90_000)
+			this.pending.set(id, { type: message.type, resolve, reject, timer })
+			this.worker.postMessage({ ...message, id } satisfies WorkerRequest, transfer)
 		})
 	}
 

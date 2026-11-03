@@ -1,7 +1,11 @@
 import { defineContentScript } from "#imports"
 import { browser } from "wxt/browser"
 
+import { isExtensionBackgroundSender, isExtensionPageSender } from "../extension/sender.ts"
 import { captureDocument, type ReadingDocument, sourceRange } from "../reading/document.ts"
+import { isReaderRequest, readerSize, shouldScrollToWord } from "../reading/host.ts"
+
+import currentWordStyle from "../reading/current-word.css?inline"
 
 export default defineContentScript({
 	registration: "runtime",
@@ -13,11 +17,15 @@ export default defineContentScript({
 		let session = ""
 		let host: HTMLDivElement | undefined
 		let frame: HTMLIFrameElement | undefined
-		let sourceUrl = location.href
+		const pageAddress = () => `${location.origin}${location.pathname}${location.search}`
+		let sourceUrl = pageAddress()
+		let navigationTimer: ReturnType<typeof setInterval> | undefined
 		const key = "read-aloud-current-word"
 		const style = document.createElement("style")
-		style.textContent = `::highlight(${key}) { background: #ffdc78; color: #14191f; }`
+		style.textContent = currentWordStyle
 		const close = () => {
+			clearInterval(navigationTimer)
+			navigationTimer = undefined
 			host?.remove()
 			host = undefined
 			frame = undefined
@@ -28,8 +36,8 @@ export default defineContentScript({
 		}
 		const onMessage: Parameters<typeof browser.runtime.onMessage.addListener>[0] = (message: unknown, sender) => {
 			if (
-				sender.id !== browser.runtime.id ||
-				(sender.url && !sender.url.startsWith(browser.runtime.getURL("/"))) ||
+				(!isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/")) &&
+					!isExtensionBackgroundSender(sender, browser.runtime.id, browser.runtime.getURL("/"))) ||
 				!message ||
 				typeof message !== "object" ||
 				!("type" in message)
@@ -47,7 +55,7 @@ export default defineContentScript({
 					}
 					const captured = captureDocument(message.mode)
 					if (message.mode === "selection") window.getSelection()?.removeAllRanges()
-					sourceUrl = location.href
+					sourceUrl = pageAddress()
 					if (frame?.isConnected) {
 						source = captured
 						return Promise.resolve({ ok: true, reuse: true, session })
@@ -68,6 +76,9 @@ export default defineContentScript({
 						"display:block;width:100%;height:52px;border:0;border-radius:12px;color-scheme:light dark;"
 					shadow.append(frame)
 					document.documentElement.append(host, style)
+					navigationTimer = setInterval(() => {
+						if (pageAddress() !== sourceUrl) close()
+					}, 300)
 					return Promise.resolve({ ok: true })
 				} catch (error) {
 					return Promise.resolve({ error: error instanceof Error ? error.message : "This page could not be read." })
@@ -77,13 +88,9 @@ export default defineContentScript({
 				close()
 				return Promise.resolve({ ok: true })
 			}
-			if (
-				message.type !== "reader" ||
-				!("session" in message) ||
-				message.session !== session ||
-				!("command" in message)
-			)
-				return
+			if (message.type !== "reader") return
+			if (!isReaderRequest(message)) return Promise.resolve({ error: "Invalid reading request." })
+			if (!session || message.session !== session) return Promise.resolve({ error: "This reading session has ended." })
 			if (message.command === "document") return Promise.resolve({ text: source?.text ?? "" })
 			if (message.command === "selection") {
 				if (!window.getSelection()?.toString().trim()) return Promise.resolve({ text: null })
@@ -102,26 +109,17 @@ export default defineContentScript({
 				close()
 				return Promise.resolve({ ok: true })
 			}
-			if (message.command === "resize" && "height" in message && typeof message.height === "number" && frame) {
-				const height = Math.min(240, Math.max(44, message.height))
-				frame.style.height = `${height}px`
-				if (host && "width" in message && typeof message.width === "number" && Number.isFinite(message.width)) {
-					host.style.setProperty("max-width", `${Math.min(640, Math.max(240, message.width))}px`, "important")
-				}
+			if (message.command === "resize" && frame) {
+				const size = readerSize(message.height, message.width)
+				frame.style.height = `${size.height}px`
+				if (host && size.width !== undefined) host.style.setProperty("max-width", `${size.width}px`, "important")
 			}
-			if (
-				message.command === "highlight" &&
-				source &&
-				"start" in message &&
-				"end" in message &&
-				typeof message.start === "number" &&
-				typeof message.end === "number"
-			) {
+			if (message.command === "highlight" && source) {
 				const range = sourceRange(source, message.start, message.end)
 				if (range && CSS.highlights) {
 					CSS.highlights.set(key, new Highlight(range))
 					const rect = range.getBoundingClientRect()
-					if (rect.top < 140 || rect.bottom > innerHeight - 50)
+					if (shouldScrollToWord(rect.top, rect.bottom, innerHeight))
 						window.scrollBy({ top: rect.top - innerHeight * 0.4, behavior: "instant" })
 				} else CSS.highlights?.delete(key)
 			}
@@ -129,9 +127,6 @@ export default defineContentScript({
 		}
 		browser.runtime.onMessage.addListener(onMessage)
 		ctx.addEventListener(window, "pagehide", close)
-		ctx.setInterval(() => {
-			if (host && location.href !== sourceUrl) close()
-		}, 300)
 		ctx.onInvalidated(() => {
 			browser.runtime.onMessage.removeListener(onMessage)
 			scope.__readAloudInstalled = false

@@ -1,16 +1,16 @@
 # Product brief
 
-Started and updated: **2026-10-29**. Product answers below are confirmed by the user; architecture remains under investigation.
+Started **2026-10-29**, updated **2026-11-02**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
 
 ## Confirmed experience
 
 A brutally simple, premium Firefox and Chrome extension for Windows and Linux. It reads web articles, selected text, and the user's PDF benchmark, entirely inside the browser extension with no separate helper application. US English and Czech are mandatory; expose all additional languages that the vetted models/runtime support.
 
-The primary flow is **select text → right-click → read the selection nearly instantly**. Reading only that selection is the defined behavior; continuing into the rest of the article would be a different action. Article reading also belongs in the first release, with its exact invocation still to settle.
+The primary flow is **select text → right-click → read the selection nearly instantly**. Reading only that selection is the defined behavior; continuing into the rest of the article would be a different action. Article reading is available from the browser action or page context menu.
 
 The user considers Piper's medium-quality voices decent and values choosing a lower-quality model for better speed. They dislike missing highlighting, broken model deletion, and playback speed changes that raise voice pitch. A pitch-preserving speed slider is mandatory.
 
-In a subsequent answer, the user explicitly selected a playback bar, word-by-word highlighting, and automatic scrolling. **These are now first-release requirements**, superseding their earlier optional-highlighting preference. Follow Edge closely, with play/pause, previous/next sentence, speed, close/stop, and voice choice in the same surface. Sentence clicking is excluded from the first release.
+The user explicitly selected a playback bar, word-by-word highlighting, and automatic scrolling. **These are first-release requirements**, superseding their earlier optional-highlighting preference. Follow Edge closely, with play/pause, previous/next sentence, speed, volume, close/stop, and voice choice in the same surface. Sentence clicking is excluded from the first release.
 
 The latest clarification is authoritative: **continue on tab switch; stop on source-page navigation or source-tab closure**. This supersedes the user's earlier continue-everywhere answer. The visible surface is a small in-page playback bar. Playback must be independent of toolbar-popup lifetime, but stopped sessions must not be restarted by late inference results.
 
@@ -36,7 +36,7 @@ The latest clarification is authoritative: **continue on tab switch; stop on sou
 
 - WXT following its official extension project structure, with explicit Manifest V3 builds for Firefox and Chrome.
 - Strict TypeScript for first-party application, worker, and tooling code.
-- Bun throughout: runtime, workspace package management, tests, native type checking/formatting, and standalone lab bundling. Run WXT under Bun; no project Node runtime requirement or npm toolchain.
+- Bun throughout: runtime, package management, tests, native type checking/formatting, and standalone bundling. Run WXT under Bun; no project Node runtime requirement or npm toolchain.
 - Bun configuration follows the user's `~/projects/talqo/bunfig.toml` preferences: isolated/global-store installs, a one-day minimum release age, and tabs/double quotes/no semicolons with import sorting. Ignore patterns are adapted to this repository.
 
 ## Mandatory first-release reading benchmarks
@@ -49,7 +49,7 @@ All three must work in the first release; the PDF is not deferred. Define extrac
 
 Initial inspection: both HTML benchmarks provide a `main` element in their server responses. The PDF URL returned an HTML JavaScript interstitial to the command-line fetch on 2026-10-29, not PDF bytes. Browser-context access and an integrated PDF text/rendering path must be investigated. These are observations, not passed reading tests.
 
-## Proposed minimal interface — not yet approved
+## Minimal interface
 
 One selection context-menu action and one compact, Edge-like playback bar containing all confirmed controls. Keep voice choice in the bar. Provide explicit model downloads, preview, and delete through a small secondary view reachable from that choice, without turning playback into a model-management dashboard.
 
@@ -61,23 +61,19 @@ The user likes the idea of multiple workers. Treat this as architectural interes
 
 ## Remaining questions
 
-1. PDF reading opens in a **new extension reader tab**, keeping the original PDF tab. Native PDF viewers cannot host our content UI. Article reading currently uses the browser action; the selection right-click flow remains mandatory.
-2. What extraction behavior is expected for captions, citations, headers/footers, bibliography, tables, and formulas in the thesis PDF? Correct reading order and no dropped prose remain fundamental.
-3. Latency is now confirmed: **medium models should start within 1 second warm and 2 seconds cold** on the target 4-core device. Faster is welcome. Measure first-audio readiness, not just model loading.
-4. What playback-speed range does the user actually need? Performance must be measured at those speeds.
-5. Manual voice/language choice is confirmed sufficient for day one; automatic detection is optional only if demonstrably straightforward. Mixed-language behavior remains a later refinement.
-6. Should model deletion stop an active reading session using that model? Proposed default: clearly explain and stop that session, then remove the model and its cached data.
-7. Public Chrome Web Store/Firefox AMO release, or personal/unlisted distribution initially? Should private browsing be supported initially?
-8. Is offline reading after deliberate provisioning sufficient, or must models also be provisionable without internet access?
+1. What extraction behavior is expected for captions, citations, headers/footers, bibliography, tables, and formulas in the thesis PDF? Correct reading order and no dropped prose remain fundamental.
+2. What playback-speed range does the user actually need? Performance must be measured at those speeds.
+3. Should model deletion stop an active reading session using that model? The current implementation invalidates the loaded model.
+4. Public Chrome Web Store/Firefox AMO release, or personal/unlisted distribution initially? Should private browsing be supported initially?
+5. Is offline reading after deliberate provisioning sufficient, or must models also be provisionable without internet access?
 
 Previously asked questions on setup, reading scope, hardware, downloads, Piper's UX, languages, original-source licensing, playback controls, highlighting, auto-scroll, session continuity, and sentence clicking are answered and should not be repeated.
 
 ## Immediate work
 
-1. Verify a browser-local US-English/Czech inference path and resolve dependency licensing before choosing an engine.
-2. Benchmark cold/warm CPU synthesis and investigate GPU inference in both browsers. The current development machine has no exposed GPU; real GPU/Windows validation will need other hardware.
-3. Prototype explicit model download/delete/preview behavior and pitch-preserving speed, together with the core selection-reading interaction.
-4. Use the user's answers to the remaining interaction questions to refine the smallest coherent playback UI.
+1. Improve cold startup and PDF readiness, and measure against the confirmed 1-second warm / 2-second cold target on the specified device.
+2. Validate CPU fallback, GPU inference, Windows, voice quality, pitch, accessibility, and complete benchmark reading behavior.
+3. Resolve licensing and distribution obligations for the current prototype's dependencies and voices.
 
 ## Product-owner feedback — 2026-10-30
 

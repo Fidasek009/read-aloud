@@ -1,18 +1,25 @@
+import { browser } from "wxt/browser"
+
 import { getVoice, validateConfig, type VoiceConfig } from "./catalog.ts"
 import legacyCzech from "./configs/cs_CZ-jirka-medium.json"
 import legacyEnglish from "./configs/en_US-ljspeech-medium.json"
+import { cancelVoiceDownloads, voiceDownloadCancellation } from "./download-cancellation.ts"
 import { downloadBytes } from "./download.ts"
-import { instrumentModel } from "./instrument.ts"
+import { SpeechVoiceError } from "./errors.ts"
+import { instrumentInWorker } from "./instrument-client.ts"
+import { isVoiceChange } from "./protocol.ts"
 
 interface StoredVoice {
 	id: string
 	sourceHash: string
 	model: ArrayBuffer
 	installedAt: number
+	formatVersion?: number
 	config?: VoiceConfig
 }
 
-const channel = new BroadcastChannel("read-aloud-voices")
+const voiceFormatVersion = 1
+
 let database: Promise<IDBDatabase> | undefined
 const opening = () =>
 	(database ??= new Promise((resolve, reject) => {
@@ -38,37 +45,40 @@ export async function installedVoices(): Promise<string[]> {
 
 export async function readVoice(id: string): Promise<{ model: ArrayBuffer; config: VoiceConfig }> {
 	const stored = await operation<StoredVoice | undefined>("readonly", (store) => store.get(id))
-	if (!stored || stored.sourceHash !== getVoice(id).sha256) throw new Error("Download this voice before reading")
+	if (!stored || stored.sourceHash !== getVoice(id).sha256)
+		throw new SpeechVoiceError("Stored voice is missing or outdated")
+	// Existing prototype downloads used this same format before it had a version field.
+	if ((stored.formatVersion ?? 1) !== voiceFormatVersion)
+		throw new SpeechVoiceError("Stored voice format is incompatible")
 	const config =
 		stored.config ??
 		(id === "en_US-ljspeech-medium" ? legacyEnglish : id === "cs_CZ-jirka-medium" ? legacyCzech : undefined)
-	return { model: stored.model, config: validateConfig(config) }
+	try {
+		return { model: stored.model, config: validateConfig(config) }
+	} catch {
+		throw new SpeechVoiceError("Stored voice configuration is invalid")
+	}
 }
 
 export function onVoicesChanged(callback: (id: string, deleted: boolean) => void): () => void {
-	const listener = (event: MessageEvent<unknown>) => {
-		const value = event.data
-		if (
-			value &&
-			typeof value === "object" &&
-			"id" in value &&
-			typeof value.id === "string" &&
-			"deleted" in value &&
-			typeof value.deleted === "boolean"
-		)
-			callback(value.id, value.deleted)
+	const listener: Parameters<typeof browser.storage.onChanged.addListener>[0] = (changes, area) => {
+		const change: unknown = changes.voiceChange?.newValue
+		if (area === "local" && isVoiceChange(change)) callback(change.id, change.deleted)
 	}
-	channel.addEventListener("message", listener)
-	return () => channel.removeEventListener("message", listener)
+	browser.storage.onChanged.addListener(listener)
+	return () => browser.storage.onChanged.removeListener(listener)
 }
 
-export async function deleteVoice(id: string): Promise<void> {
-	getVoice(id)
-	channel.postMessage({ id, deleted: true })
+export async function deleteVoice(id: string, committed: () => Promise<void>): Promise<void> {
+	// Stored voices can outlive their catalog entries. Deletion must still work
+	// for those records, using the same lock and notifications as known voices.
+	// A deletion request cancels concurrent downloads, but is not a committed
+	// change and must not invalidate a model still used by a reader.
+	cancelVoiceDownloads(id)
 	await navigator.locks.request(`voice:${id}`, async () => {
 		await operation("readwrite", (store) => store.delete(id))
+		await committed()
 	})
-	channel.postMessage({ id, deleted: true })
 }
 
 /** Only a deliberate Download action may call this function. Nothing invokes it on startup. */
@@ -76,16 +86,18 @@ export async function downloadVoice(
 	id: string,
 	signal: AbortSignal,
 	progress: (fraction: number) => void,
+	committed: () => Promise<void>,
 ): Promise<void> {
 	const voice = getVoice(id)
 	if (voice.unsupported) throw new Error(voice.unsupported)
-	const controller = new AbortController()
-	const stop = onVoicesChanged((changed, deleted) => {
-		if (changed === id && deleted)
-			controller.abort(new DOMException("Download cancelled because this voice was deleted.", "AbortError"))
-	})
-	const abort = AbortSignal.any([signal, controller.signal])
+	const cancellation = voiceDownloadCancellation(id, signal)
+	const abort = cancellation.signal
 	try {
+		// Request persistent origin storage only as part of a deliberate download.
+		// Some browsers may decline or not expose this API; quota failures still
+		// surface through the download action.
+		if (navigator.storage?.persist) await navigator.storage.persist().catch(() => false)
+		abort.throwIfAborted()
 		await navigator.locks.request(`voice:${id}`, { signal: abort }, async () => {
 			const configBytes = await downloadBytes(voice.configUrl, {
 				signal: abort,
@@ -103,20 +115,25 @@ export async function downloadVoice(
 			const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes)).toHex()
 			if (digest !== voice.sha256) throw new Error("Voice integrity check failed. Please try again.")
 			abort.throwIfAborted()
-			const model = instrumentModel(bytes.buffer)
+			const model = await instrumentInWorker(
+				bytes.buffer,
+				abort,
+				() => new Worker(new URL("runtime/instrument.js", browser.runtime.getURL("/")), { type: "module" }),
+			)
 			abort.throwIfAborted()
 			await operation("readwrite", (store) =>
 				store.put({
 					id,
 					sourceHash: digest,
-					model: model.buffer,
+					model,
 					config,
 					installedAt: Date.now(),
+					formatVersion: voiceFormatVersion,
 				} satisfies StoredVoice),
 			)
-			channel.postMessage({ id, deleted: false })
+			await committed()
 		})
 	} finally {
-		stop()
+		cancellation.close()
 	}
 }

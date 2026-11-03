@@ -1,0 +1,15 @@
+{
+	"purpose": "Private feasibility experiment; compiled phonemizer is not approved for production redistribution",
+	"runtime": {
+		"repository": "https://github.com/diffusionstudio/piper-wasm",
+		"revision": "022edba0455ef024574747e1134ef893f1d71b76",
+		"npm": "@diffusionstudio/piper-wasm@1.0.0",
+		"packageIntegrity": "sha512-4Hgh7wJ1PuGEVgVi1CpducESnyXwjFRJN4zXjYRpxgquM+Zh6Eqq8ZaiGpCKm4yXvT1Y2SPQXbv0dEckFD9NaQ=="
+	},
+	"schema": {
+		"repository": "https://github.com/onnx/onnx",
+		"revision": "v1.19.1",
+		"path": "onnx/onnx.proto3",
+		"sha256": "c2a24681ba16a6af3eca7ac70c657fb1e3a9598506b6dc98501a77ba0e5ff2bc"
+	}
+}

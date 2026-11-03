@@ -69,10 +69,6 @@ button:focus-visible {
 .pdf-page:not([data-painted]) .textLayer span {
 	color: #202631;
 }
-::highlight(read-aloud-current-word) {
-	color: #14191f;
-	background: #ffdc78;
-}
 .textLayer ::selection {
 	background: rgb(41 93 198 / 35%);
 }

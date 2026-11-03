@@ -1,16 +1,8 @@
+import { voiceModelId } from "./protocol.ts"
 import catalog from "./voices.json"
 
-export interface VoiceConfig {
-	audio: { sample_rate: number }
-	espeak: { voice: string }
-	inference: { noise_scale: number; length_scale: number; noise_w: number }
-	phoneme_id_map: Record<string, number[]>
-	phoneme_type?: string
-	num_speakers?: number
-	default_speaker_id?: number
-	hop_length?: number
-	phoneme_map?: Record<string, string[]>
-}
+export { validateConfig, type VoiceConfig } from "./voice-config.ts"
+
 export interface Voice {
 	id: string
 	name: string
@@ -58,45 +50,22 @@ export function languageLabel(voice: Voice): string {
 }
 
 const byId = new Map(voices.map((voice) => [voice.id, voice]))
+export function qualityLabel(quality: string): string {
+	return quality === "x_low" ? "Extra low" : quality.charAt(0).toUpperCase() + quality.slice(1)
+}
+
 export function getVoice(id: string): Voice {
 	const voice = byId.get(id)
 	if (!voice) throw new Error("This voice is not available")
 	return voice
 }
 
-export function validateConfig(value: unknown): VoiceConfig {
-	if (!value || typeof value !== "object") throw new Error("Invalid voice configuration")
-	const config = value as Partial<VoiceConfig>
-	if (
-		!config.audio ||
-		!Number.isInteger(config.audio.sample_rate) ||
-		config.audio.sample_rate < 8000 ||
-		config.audio.sample_rate > 48000 ||
-		!config.espeak ||
-		typeof config.espeak.voice !== "string" ||
-		!config.inference ||
-		![config.inference.noise_scale, config.inference.length_scale, config.inference.noise_w].every(
-			(value) => Number.isFinite(value) && value >= 0 && value <= 10,
-		) ||
-		!config.phoneme_id_map ||
-		typeof config.phoneme_id_map !== "object" ||
-		!["_", "^", "$", " "].every((key) => Array.isArray(config.phoneme_id_map![key])) ||
-		Object.values(config.phoneme_id_map).some(
-			(ids) =>
-				!Array.isArray(ids) || !ids.length || ids.some((id) => !Number.isSafeInteger(id) || id < 0 || id > 65535),
-		)
-	)
-		throw new Error("Invalid voice configuration")
-	if (config.num_speakers !== undefined && (!Number.isInteger(config.num_speakers) || config.num_speakers < 1))
-		throw new Error("Invalid speaker count")
-	return config as VoiceConfig
-}
-
 export function voiceChoice(value: string): { voice: Voice; speaker: number } {
-	const [id, speakerText] = value.split("#")
-	const voice = getVoice(id ?? "")
-	const speaker = speakerText === undefined ? 0 : Number(speakerText)
-	if (!Number.isInteger(speaker) || speaker < 0 || speaker >= voice.speakers)
+	const id = voiceModelId(value)
+	const speakerText = id.length === value.length ? undefined : value.slice(id.length + 1)
+	const voice = getVoice(id)
+	const speaker = speakerText === undefined ? 0 : /^\d+$/u.test(speakerText) ? Number(speakerText) : NaN
+	if (!Number.isSafeInteger(speaker) || speaker < 0 || speaker >= voice.speakers)
 		throw new Error("This speaker is not available")
 	return { voice, speaker }
 }

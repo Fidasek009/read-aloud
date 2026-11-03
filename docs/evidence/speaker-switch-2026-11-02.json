@@ -1,0 +1,18 @@
+{
+	"recordedAt": "2026-11-02T19:19:14.076Z",
+	"browser": {
+		"protocolVersion": "1.3",
+		"product": "Chrome/155.0.8059.12",
+		"revision": "@384c82079f60e0b79cdca6e49efd5cfceefa5b74",
+		"userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36",
+		"jsVersion": "15.5.35.7"
+	},
+	"voice": "en_GB-aru-medium",
+	"result": {
+		"switchMs": 0.07499998807907104,
+		"firstSamples": 53760,
+		"secondSamples": 44544,
+		"reusedSession": true
+	},
+	"limits": "Development VM, CPU fallback, isolated extension page and cached pinned model. Model noise is disabled and the first speaker is repeated to verify reproducibility. Does not establish audible quality, GPU behavior, Firefox compatibility, or target-device latency."
+}

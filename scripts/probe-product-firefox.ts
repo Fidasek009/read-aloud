@@ -1,16 +1,57 @@
 import { $ } from "bun"
 
 import { checkPdfSelection } from "./check-pdf-selection.ts"
-import { checkSpeedPanel, checkVolume, failNextPlayback, observePlayerAudio } from "./check-player-controls.ts"
+import { checkSpeedPanel, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
+import { checkAbortedVoiceDeletion } from "./check-voice-deletion.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
+import { assert, projectRoot, waitFor } from "./probe-helpers.ts"
+import {
+	recoverSelectionAfterFailure,
+	recoverSelectionFromMenu,
+	type RecoveryDriver,
+	verifySelectionReplay,
+} from "./reader-scenarios.ts"
 
-const root = import.meta.dir.replace(/\/scripts$/, "")
+const root = projectRoot
 const out = `${root}/.cache/product-probe/firefox`
 await $`rm -rf ${out}`.quiet()
 await $`mkdir -p ${out} ${root + "/.cache/product-probe/profiles"}`.quiet()
 await $`cp -R ${root + "/.output/firefox-mv3/."} ${out}`.quiet()
 await observePlayerAudio(out)
 await observeContextMenu(out)
+if (Bun.env.DIRECT_READER_PROBE === "1") {
+	const audio = Bun.file(`${out}/probe-audio.js`)
+	await Bun.write(
+		audio,
+		`${await audio.text()}\n(globalThis.browser??chrome).runtime.onConnect?.addListener(port=>{if(port.name==='direct-reader-probe')port.onMessage.addListener(()=>{document.body.dataset.directReaderProbe='connected'})});`,
+	)
+	const reader = Bun.file(`${out}/content-scripts/reader.js`)
+	await Bun.write(
+		reader,
+		`${await reader.text()}\n;(globalThis.browser??chrome).runtime.onMessage.addListener(message=>{if(message?.type==='probe-direct-reader'){const port=(globalThis.browser??chrome).runtime.connect({name:'direct-reader-probe'});port.postMessage({probe:true});return Promise.resolve({ok:true})}});`,
+	)
+}
+const speakerModel = Bun.file(`${root}/.cache/speaker-fixture/model.onnx`)
+const speakerConfig = Bun.file(`${root}/.cache/speaker-fixture/config.json`)
+const hasSpeakerFixture = (await speakerModel.exists()) && (await speakerConfig.exists())
+const cachedPdf = Bun.env.PDF_CACHED === "1" ? Bun.file(`${root}/.cache/benchmarks/muni-thesis.pdf`) : undefined
+if (
+	cachedPdf &&
+	(!(await cachedPdf.exists()) ||
+		new Bun.CryptoHasher("sha256").update(await cachedPdf.arrayBuffer()).digest("hex") !==
+			"30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32")
+)
+	throw new Error("Provision the pinned original MUNI thesis before using PDF_CACHED=1")
+if (hasSpeakerFixture) {
+	const built = await Bun.build({
+		entrypoints: [`${root}/scripts/check-speakers.ts`],
+		outdir: out,
+		naming: "check-speakers.js",
+		target: "browser",
+		format: "esm",
+	})
+	if (!built.success) throw new AggregateError(built.logs, "Speaker fixture failed to bundle")
+}
 const manifest = await Bun.file(`${out}/manifest.json`).json()
 // Test-only grant for scripted entry; native Firefox action activation is a separate gate.
 manifest.host_permissions = ["http://127.0.0.1/*", "https://is.muni.cz/*"]
@@ -18,12 +59,21 @@ await Bun.write(`${out}/manifest.json`, JSON.stringify(manifest))
 const server = Bun.serve({
 	hostname: "127.0.0.1",
 	port: 0,
-	fetch: () =>
-		new Response(
+	fetch: (request) => {
+		const path = new URL(request.url).pathname
+		if (cachedPdf && path === "/thesis.pdf")
+			return new Response(cachedPdf, { headers: { "Content-Type": "application/pdf" } })
+		if (hasSpeakerFixture && (path === "/model" || path === "/config"))
+			return new Response(path === "/model" ? speakerModel : speakerConfig, {
+				headers: { "Access-Control-Allow-Origin": "*", "Cross-Origin-Resource-Policy": "cross-origin" },
+			})
+		return new Response(
 			'<!doctype html><main><h1>Čtení na vašem zařízení</h1><p id="selection">Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí.</p><p id="warm-selection">Jenom tento výběr.</p><p>Další věta pro ověření přehrávání.</p></main>',
 			{ headers: { "Content-Type": "text/html;charset=utf-8" } },
-		),
+		)
+	},
 })
+const pdfSource = cachedPdf ? new URL("thesis.pdf", server.url).href : "https://is.muni.cz/th/wdhgd/bc.pdf"
 const driver = Bun.spawn(
 	[
 		Bun.env.GECKODRIVER ?? "/snap/bin/geckodriver",
@@ -38,24 +88,12 @@ const driver = Bun.spawn(
 let log = "",
 	endpoint = "",
 	session = ""
+let directReaderProbe: { connected: boolean; onConnectAvailable: boolean; directAttempt: unknown } | undefined
 const consume = async (stream: ReadableStream<Uint8Array>) => {
 	const decoder = new TextDecoder()
 	for await (const chunk of stream) log += decoder.decode(chunk, { stream: true })
 }
 const readers = [consume(driver.stdout), consume(driver.stderr)]
-const waitFor = async <T>(read: () => Promise<T>, accept: (value: T) => boolean, seconds = 60): Promise<T> => {
-	const deadline = performance.now() + seconds * 1000
-	let value: T
-	do {
-		value = await read()
-		if (accept(value)) return value
-		await Bun.sleep(100)
-	} while (performance.now() < deadline)
-	throw new Error(`Condition timed out: ${String(JSON.stringify(value)).slice(0, 600)}`)
-}
-function assert(condition: unknown, message: string): asserts condition {
-	if (!condition) throw new Error(message)
-}
 async function command<T = any>(path: string, body?: unknown, method = "POST"): Promise<T> {
 	const response = await fetch(`${endpoint}${path}`, {
 		method,
@@ -157,11 +195,37 @@ try {
 		15,
 	)
 	await run("/frame", { id: frame })
-
-	await waitFor(
-		() => script("document.querySelector('#bar').dataset.view"),
-		(value) => value === "setup",
-	)
+	try {
+		await waitFor(
+			() => script("document.querySelector('#bar').dataset.view"),
+			(value) => value === "setup",
+		)
+	} catch (error) {
+		console.error(
+			"Firefox player initialization:",
+			await script(
+				"({view:document.querySelector('#bar').dataset.view,status:document.querySelector('#status').textContent,error:document.documentElement.dataset.probeError,rejection:document.documentElement.dataset.probeRejection,hasTabs:!!browser.tabs})",
+			),
+		)
+		throw error
+	}
+	if (Bun.env.DIRECT_READER_PROBE === "1") {
+		await run("/window", { handle: voicesHandle })
+		const directAttempt = await script(`browser.tabs.sendMessage(${tab.id},{type:'probe-direct-reader'},{frameId:0})`)
+		await run("/window", { handle: sourceHandle })
+		await run("/frame", { id: frame })
+		let connected = false
+		try {
+			connected = await waitFor(
+				() => script<boolean>("document.body.dataset.directReaderProbe==='connected'"),
+				Boolean,
+				5,
+			)
+		} catch {}
+		const onConnectAvailable = await script<boolean>("!!browser.runtime.onConnect")
+		directReaderProbe = { connected, onConnectAvailable, directAttempt }
+		console.log("Firefox direct content-to-player port:", JSON.stringify(directReaderProbe))
+	}
 	assert(
 		await script("document.querySelector('#playback').hidden && !document.querySelector('#setup').hidden"),
 		"Firefox exposed empty playback controls",
@@ -206,6 +270,10 @@ try {
 		"Download added a page-level success notice",
 	)
 	console.log("Firefox Czech voice download, integrity check, and persistence passed.")
+	console.log(
+		"Firefox origin storage persistence:",
+		await script("navigator.storage?.persisted ? navigator.storage.persisted() : 'unavailable'"),
+	)
 
 	await run("/window", { handle: sourceHandle })
 	await run("/frame", { id: frame })
@@ -216,6 +284,14 @@ try {
 	assert(
 		await script("document.querySelector('#voice').value==='cs_CZ-jirka-medium'"),
 		"Firefox stale preference left an empty voice picker",
+	)
+	const directReader = await script<any>(`(async()=>{
+		const session=location.hash.slice(1);
+		return {document:await browser.runtime.sendMessage({type:'reader',session,command:'document'}),stale:await browser.runtime.sendMessage({type:'reader',session:'stale',command:'close'})};
+	})()`)
+	assert(
+		typeof directReader.document?.text === "string" && directReader.stale?.error,
+		`Firefox reader contract failed: ${JSON.stringify(directReader)}`,
 	)
 	let status = await waitFor(
 		() => script<string>("document.querySelector('#status')?.textContent"),
@@ -278,7 +354,27 @@ try {
 		throw error
 	})
 	console.log("Firefox highlighted Czech source word:", highlight)
+	await run("/window", { handle: voicesHandle })
+	await script(checkAbortedVoiceDeletion("cs_CZ-jirka-medium"))
+	await run("/window", { handle: sourceHandle })
 	await run("/frame", { id: frame })
+	assert(
+		await script(
+			"document.querySelector('#voice').value==='cs_CZ-jirka-medium' && document.querySelector('#status').textContent==='Reading'",
+		),
+		"An aborted deletion interrupted the Firefox voice",
+	)
+	console.log("Firefox aborted deletion retained the voice and reader without a committed notification.")
+	await script(
+		"browser.storage.local.set({voiceChange:{id:'cs_CZ-jirka-medium',deleted:true,revision:crypto.randomUUID()}})",
+	)
+	await Bun.sleep(500)
+	assert(
+		await script(
+			"document.querySelector('#voice').value==='cs_CZ-jirka-medium' && document.querySelector('#status').textContent==='Reading'",
+		),
+		"A stale deletion notification interrupted the installed Firefox voice",
+	)
 	const cold = (await script<any>("browser.storage.local.get('lastSpeechPerformance')")).lastSpeechPerformance
 	console.log("Firefox cold first-buffer timings:", JSON.stringify(cold))
 	const volume = await script<any>(checkVolume)
@@ -327,18 +423,6 @@ try {
 		"(()=>{document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))})()",
 	)
 	console.log("Firefox speed panel:", JSON.stringify(await script(checkSpeedPanel)))
-	const originalSession = await script("location.hash")
-	await script(failNextPlayback)
-	console.log("Firefox recovery test: waiting for the injected output failure.")
-	await waitFor(
-		() => script("document.querySelector('#status').textContent"),
-		(value) => value === "Reading could not continue.",
-	)
-	assert(await script("!document.querySelector('#play').disabled"), "Firefox failure disabled retry")
-	console.log("Firefox recovery test: failure exposed Play.")
-	await run("/frame", { id: null })
-	await script("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
-	await run("/frame", { id: frame })
 	const pressPlay = async () => {
 		await script("document.querySelector('#play').focus()")
 		await run("/actions", {
@@ -354,65 +438,33 @@ try {
 			],
 		})
 	}
-	await pressPlay()
-	console.log("Firefox recovery test: Play requested the new selection.")
-	await waitFor(
-		() => script<any>("browser.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})"),
-		(value) => value?.text === "Jenom tento výběr.",
-	)
-	assert((await script("location.hash")) === originalSession, "Play replaced the existing Firefox reader")
-	await waitFor(
-		() => script("document.querySelector('#status').textContent"),
-		(value) => value === "Finished",
-	)
-	assert(await script("document.querySelector('#next').disabled"), "Firefox escaped the selected text")
-	console.log("Firefox recovery test: selection completed.")
-	await pressPlay()
-	await waitFor(
-		() => script("document.querySelector('#play').getAttribute('aria-label')"),
-		(value) => value === "Pause",
-	)
-	assert(
-		(
-			await script<any>(
-				"browser.runtime.sendMessage({type:'reader',session:location.hash.slice(1),command:'document'})",
+	const evaluateRecovery = async <T>(expression: string): Promise<T> => {
+		const result = await script<T>(expression)
+		if (result && typeof result === "object" && "probeError" in result && typeof result.probeError === "string")
+			throw new Error(result.probeError)
+		return result
+	}
+	const recovery: RecoveryDriver = {
+		player: evaluateRecovery,
+		source: async <T>(expression: string): Promise<T> => {
+			await run("/frame", { id: null })
+			try {
+				return await evaluateRecovery<T>(expression)
+			} finally {
+				await run("/frame", { id: frame })
+			}
+		},
+		pressPlay,
+		readSelectionFromMenu: async () => {
+			const result = await evaluateRecovery<{ ok?: boolean }>(
+				`browser.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
 			)
-		).text === "Jenom tento výběr.",
-		"Firefox replay escaped the selected text",
-	)
-	await script(failNextPlayback)
-	console.log("Firefox recovery test: testing a second failure before the context-menu command.")
-	await waitFor(
-		() => script("document.querySelector('#status').textContent"),
-		(value) => value === "Reading could not continue.",
-	)
-	await run("/frame", { id: null })
-	await script("window.getSelection().selectAllChildren(document.querySelector('#selection'))")
-	await run("/frame", { id: frame })
-	const menuRestart = await script<{ ok?: boolean; error?: string; probeError?: string }>(
-		`browser.runtime.sendMessage({type:'probe-context-menu',tab:{id:${tab.id}},info:{menuItemId:'read-selection',pageUrl:${JSON.stringify(server.url.href)}}})`,
-	)
-	assert(menuRestart?.ok, `Firefox background menu test failed: ${JSON.stringify(menuRestart)}`)
-	const restartStatus = await waitFor(
-		() => script<string>("document.querySelector('#status').textContent"),
-		(value) => value !== "Reading could not continue." && !value.includes("Getting") && !value.includes("Preparing"),
-	)
-	console.log(
-		"Firefox context-menu restart:",
-		restartStatus,
-		await script(
-			"({context:window.__probeAudio.gain.context.state,activation:navigator.userActivation.hasBeenActive})",
-		),
-	)
-	assert(
-		/^(Reading|Press Play to start listening\.)$/.test(restartStatus),
-		`Firefox context-menu restart failed: ${restartStatus}`,
-	)
-	if (restartStatus.includes("Press Play")) await pressPlay()
-	await waitFor(
-		() => script("document.querySelector('#play').getAttribute('aria-label')"),
-		(value) => value === "Pause",
-	)
+			assert(result?.ok, `Firefox selection menu failed: ${JSON.stringify(result)}`)
+		},
+	}
+	const recoveredScope = await recoverSelectionAfterFailure(recovery, "#warm-selection")
+	await verifySelectionReplay(recovery, recoveredScope)
+	await recoverSelectionFromMenu(recovery, "#selection")
 	console.log("Firefox Play and context-menu commands recovered from playback failure.")
 	await script("document.querySelector('#play').click()")
 	await waitFor(
@@ -422,6 +474,11 @@ try {
 	)
 	await run("/frame", { id: null })
 	await run("/window", { handle: voicesHandle })
+	await script(`(async()=>{
+		const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('read-aloud-voices',1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+		window.__probeSavedVoice=await new Promise((resolve,reject)=>{const req=db.transaction('voices').objectStore('voices').get('cs_CZ-jirka-medium');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+		db.close();
+	})()`)
 	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .danger').click()`)
 	await waitFor(
 		() => script<boolean>("!document.querySelector('[data-voice=\"cs_CZ-jirka-medium\"] .danger')"),
@@ -442,11 +499,16 @@ try {
 	await waitFor(() => script("!document.querySelector('[data-read-aloud]')"), Boolean)
 	await run("/window", { handle: voicesHandle })
 	console.log("Firefox pause, close, and deletion passed.")
+	await script(`(async()=>{
+		const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('read-aloud-voices',1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
+		await new Promise((resolve,reject)=>{const tx=db.transaction('voices','readwrite');tx.objectStore('voices').put(window.__probeSavedVoice);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});
+		db.close();delete window.__probeSavedVoice;await browser.storage.local.set({voice:'cs_CZ-jirka-medium'});
+	})()`)
 	const originalPdf = await script<{ id: number }>(
-		`browser.tabs.create({url:'https://is.muni.cz/th/wdhgd/bc.pdf',active:false})`,
+		`browser.tabs.create({url:${JSON.stringify(pdfSource)},active:false})`,
 	)
 	await script(
-		`browser.tabs.create({url:browser.runtime.getURL('/pdf.html')+'?src='+encodeURIComponent('https://is.muni.cz/th/wdhgd/bc.pdf'),active:true})`,
+		`browser.tabs.create({url:browser.runtime.getURL('/pdf.html')+'?src='+encodeURIComponent(${JSON.stringify(pdfSource)}),active:true})`,
 	)
 	await waitFor(
 		async () => {
@@ -469,7 +531,7 @@ try {
 		(value) => value === "" || !value.startsWith("Opening PDF"),
 		90,
 	)
-	assert(!pdfStatus, `Firefox live PDF fetch failed: ${pdfStatus}`)
+	assert(!pdfStatus, `Firefox PDF fetch failed: ${pdfStatus}`)
 	const pdf = await script<any>(`(async()=>{
 		const session=new URL(document.querySelector('iframe').src).hash.slice(1)
 		const {text}=await window.readAloudHost({session,command:'document'})
@@ -483,12 +545,53 @@ try {
 	)
 	const pdfSelection = await script<{ exactSelection?: boolean }>(checkPdfSelection)
 	assert(pdfSelection.exactSelection, `Firefox PDF selection failed: ${JSON.stringify(pdfSelection)}`)
+	const crossPage = await script<string>(`(async()=>{
+		const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
+		const {text}=await window.readAloudHost({session,command:'document'});
+		const start=text.indexOf('This work was supported',text.indexOf('Acknowledgements'));
+		const end=text.slice(0,text.indexOf('This thesis',start)).trimEnd().length;
+		if(start<0||end<=start)throw Error('Cross-page fixture missing');
+		const tab=await browser.tabs.getCurrent();await browser.storage.session.set({['pdfSelection:'+tab.id]:text.slice(start,end)});
+		return text.slice(start,end);
+	})()`)
+	const pdfSelectionStarted = performance.now()
+	await run("/url", {
+		url: `moz-extension://${uuid}/pdf.html?src=${encodeURIComponent(pdfSource)}&mode=selection`,
+	})
+	const earlyText = await waitFor(
+		() =>
+			script<string>(`(async()=>{
+			const frame=document.querySelector('iframe');if(!frame)return '';
+			return (await window.readAloudHost({session:new URL(frame.src).hash.slice(1),command:'document'})).text;
+		})()`),
+		(value) => typeof value === "string" && value.length > 0,
+		30,
+	)
+	const pdfSelectionReadyMs = performance.now() - pdfSelectionStarted
+	assert(earlyText === crossPage, "Firefox early PDF selection changed its scope")
+	await waitFor(
+		() => script<number>("document.querySelector('iframe')?.contentWindow?.__probeAudio?.sources ?? 0"),
+		(value) => value > 0,
+		90,
+	)
+	const pdfFirstBufferMs = performance.now() - pdfSelectionStarted
 	await run("/window", { handle: voicesHandle })
 	assert(
 		await script(`browser.tabs.get(${originalPdf.id}).then(()=>true,()=>false)`),
 		"The original PDF tab was closed",
 	)
-	console.log("Firefox live MUNI PDF fetch, text mapping, highlighting, and original-tab preservation passed.")
+	console.log(
+		`Firefox ${cachedPdf ? "cached" : "live"} MUNI PDF fetch, text mapping, highlighting, and original-tab preservation passed.`,
+	)
+	const speakerSwitch = hasSpeakerFixture
+		? await script(
+				`import(browser.runtime.getURL('check-speakers.js')).then(m=>m.checkSpeakers(${JSON.stringify(server.url.href)}))`,
+			)
+		: undefined
+	if (hasSpeakerFixture) {
+		assert(speakerSwitch?.reusedSession, `Firefox speaker switching failed: ${JSON.stringify(speakerSwitch)}`)
+		console.log("Firefox two-speaker model reused:", JSON.stringify(speakerSwitch))
+	}
 	await Bun.write(
 		`${root}/docs/evidence/firefox-product-2026-10-30.json`,
 		JSON.stringify(
@@ -500,6 +603,10 @@ try {
 				virtualAudio: Boolean(Bun.env.PULSE_SERVER),
 				pdf,
 				pdfSelection,
+				pdfSelectionReadyMs,
+				pdfFirstBufferMs,
+				...(speakerSwitch ? { speakerSwitch } : {}),
+				...(directReaderProbe ? { directReaderProbe } : {}),
 				passed: [
 					"no-voice state hides unusable controls",
 					"live installation recovers a stale preference",
@@ -518,7 +625,7 @@ try {
 					"pause",
 					"close",
 					"delete",
-					"live MUNI PDF fetch/render/highlight with explicit test-origin grant",
+					`${cachedPdf ? "cached" : "live"} MUNI PDF fetch/render/highlight with explicit test-origin grant`,
 				],
 				limitations: [
 					"Scripted entry with localhost and MUNI test-origin grants; native activeTab/context menu and permission dialog not tested",

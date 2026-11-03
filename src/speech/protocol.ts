@@ -1,3 +1,11 @@
+import type { SpeechDiagnostics } from "./diagnostics.ts"
+import type { SpeechFailureCode } from "./errors.ts"
+
+/** A speaker choice can share one downloaded model with other choices. */
+export function voiceModelId(choice: string): string {
+	const separator = choice.indexOf("#")
+	return separator < 0 ? choice : choice.slice(0, separator)
+}
 import type { WordTiming } from "./phonemes.ts"
 
 export interface SpeechClip {
@@ -33,8 +41,9 @@ export interface SpeechResponse {
 	id: number
 	ok: boolean
 	error?: string
-	diagnostics?: Record<string, unknown>
-	clip?: { pcm: string; sampleRate: number; words: WordTiming[]; skippedText?: boolean }
+	code?: SpeechFailureCode
+	diagnostics?: SpeechDiagnostics
+	clip?: { pcm: string | Float32Array<ArrayBuffer>; sampleRate: number; words: WordTiming[]; skippedText?: boolean }
 }
 export function speechRequest(value: unknown): value is SpeechRequest {
 	if (!value || typeof value !== "object" || !("id" in value) || !Number.isSafeInteger(value.id) || !("type" in value))
