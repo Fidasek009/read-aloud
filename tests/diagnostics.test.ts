@@ -1,6 +1,11 @@
 import { expect, test } from "bun:test"
 
-import { firstBufferPerformance, isWorkerTimings, speechDiagnostics } from "../src/speech/diagnostics.ts"
+import {
+	firstAudioPerformance,
+	firstBufferPerformance,
+	isWorkerTimings,
+	speechDiagnostics,
+} from "../src/speech/diagnostics.ts"
 
 test("diagnostics retain measured metadata and remove source text and arbitrary errors", () => {
 	expect(
@@ -81,18 +86,17 @@ test("performance persistence constructs a fresh allowlisted record without arbi
 			audioContextState: "private",
 		},
 		80,
-		"running",
 	)
 	expect(result).toMatchObject({
 		synthesisMs: 50,
 		reusedSession: true,
 		timeToFirstBufferMs: 80,
-		audioContextState: "running",
 	})
-	expect(Object.keys(result!)).toHaveLength(5)
 	expect(new Date(result!.recordedAt).toISOString()).toBe(result!.recordedAt)
 	expect(JSON.stringify(result)).not.toContain("private")
-	expect(firstBufferPerformance({}, Infinity, "running")).toBeUndefined()
-	expect(firstBufferPerformance({}, 10, "Private article text")).toBeUndefined()
+	expect(firstBufferPerformance({}, Infinity)).toBeUndefined()
+	expect(firstAudioPerformance({}, 10, 9)).toBeUndefined()
+	expect(firstAudioPerformance({}, 10, Infinity)).toBeUndefined()
+	expect(firstAudioPerformance({}, 10, 20)).toMatchObject({ timeToFirstBufferMs: 10, timeToFirstAudioMs: 20 })
 	expect(firstBufferPerformance({ audioContextState: "running" }, 10)).not.toHaveProperty("audioContextState")
 })

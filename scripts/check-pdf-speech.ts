@@ -3,9 +3,10 @@ import { browser } from "wxt/browser"
 import type { SpeechClip } from "../src/speech/protocol.ts"
 import type { WorkerCommand } from "../src/speech/worker-protocol.ts"
 
-import { readingChunks } from "../src/reading/document.ts"
+import { readingChunks } from "../src/reading/chunks.ts"
 import { getVoice } from "../src/speech/catalog.ts"
 import { instrumentModel } from "../src/speech/instrument.ts"
+import { setStoredVoiceFormat, writeStoredVoice } from "./voice-fixtures.ts"
 
 interface WorkerReply extends SpeechClip {
 	id: number
@@ -21,19 +22,7 @@ export async function provisionVoice(base: string) {
 	if (digest !== voice.sha256) throw Error("Wrong model fixture")
 	const config = await (await fetch(base + "config")).json()
 	const model = instrumentModel(bytes).buffer
-	const db = await new Promise<IDBDatabase>((resolve, reject) => {
-		const request = indexedDB.open("read-aloud-voices", 1)
-		request.onupgradeneeded = () => request.result.createObjectStore("voices", { keyPath: "id" })
-		request.onsuccess = () => resolve(request.result)
-		request.onerror = () => reject(request.error)
-	})
-	await new Promise<void>((resolve, reject) => {
-		const tx = db.transaction("voices", "readwrite")
-		tx.objectStore("voices").put({ id: voice.id, sourceHash: digest, config, model, installedAt: Date.now() })
-		tx.oncomplete = () => resolve()
-		tx.onabort = tx.onerror = () => reject(tx.error)
-	})
-	db.close()
+	await writeStoredVoice({ id: voice.id, sourceHash: digest, config, model, installedAt: Date.now() })
 	await browser.storage.local.set({ voice: voice.id })
 }
 
@@ -99,32 +88,11 @@ export async function checkSpeech(text: string, base: string) {
 /** Exercise compatibility against the actual extension IndexedDB store. */
 export async function checkVoiceFormat() {
 	const id = "en_US-ljspeech-medium"
-	// The harness imports this file in Bun too; load the browser-only vault
-	// lazily so its BroadcastChannel does not keep the harness process alive.
 	const { readVoice } = await import("../src/speech/vault.ts")
-	// provisionVoice deliberately installs an unversioned prototype record.
+	await setStoredVoiceFormat(id, undefined)
 	await readVoice(id)
-	const db = await new Promise<IDBDatabase>((resolve, reject) => {
-		const open = indexedDB.open("read-aloud-voices", 1)
-		open.onsuccess = () => resolve(open.result)
-		open.onerror = () => reject(open.error)
-	})
-	const setVersion = (version: number | undefined) =>
-		new Promise<void>((resolve, reject) => {
-			const tx = db.transaction("voices", "readwrite")
-			const store = tx.objectStore("voices")
-			const get = store.get(id)
-			get.onsuccess = () => {
-				const voice = get.result
-				if (version === undefined) delete voice.formatVersion
-				else voice.formatVersion = version
-				store.put(voice)
-			}
-			tx.oncomplete = () => resolve()
-			tx.onabort = tx.onerror = () => reject(tx.error)
-		})
 	try {
-		await setVersion(999)
+		await setStoredVoiceFormat(id, 999)
 		let rejected = false
 		try {
 			await readVoice(id)
@@ -133,8 +101,7 @@ export async function checkVoiceFormat() {
 		}
 		if (!rejected) throw Error("An incompatible stored voice was accepted")
 	} finally {
-		await setVersion(undefined)
-		db.close()
+		await setStoredVoiceFormat(id, undefined)
 	}
 }
 

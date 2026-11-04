@@ -1,5 +1,6 @@
 import { expect, test } from "bun:test"
 
+import { SpeechTextError } from "../src/speech/errors.ts"
 import { type SpeechClip, speechRequest } from "../src/speech/protocol.ts"
 import { SpeechService } from "../src/speech/service.ts"
 
@@ -132,7 +133,6 @@ test("deleting a voice cancels its pending load but leaves unrelated voice prepa
 })
 
 test("cancelling the same reader prevents an in-flight content recovery from spawning new synthesis", async () => {
-	const { SpeechTextError } = await import("../src/speech/errors.ts")
 	let reject: (error: Error) => void = () => {}
 	let calls = 0
 	const service = new SpeechService(

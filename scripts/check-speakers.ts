@@ -1,6 +1,8 @@
-import { getVoice, validateConfig } from "../src/speech/catalog.ts"
+import { getVoice } from "../src/speech/catalog.ts"
 import { SpeechEngine } from "../src/speech/engine.ts"
 import { instrumentModel } from "../src/speech/instrument.ts"
+import { validateConfig } from "../src/speech/voice-config.ts"
+import { writeStoredVoice } from "./voice-fixtures.ts"
 
 /** Use a pinned, explicitly provisioned test voice in an isolated browser profile. */
 export async function checkSpeakers(base: string) {
@@ -17,26 +19,7 @@ export async function checkSpeakers(base: string) {
 	config.inference.noise_scale = 0
 	config.inference.noise_w = 0
 	const model = instrumentModel(bytes).buffer
-	const db = await new Promise<IDBDatabase>((resolve, reject) => {
-		const open = indexedDB.open("read-aloud-voices", 1)
-		open.onupgradeneeded = () => open.result.createObjectStore("voices", { keyPath: "id" })
-		open.onsuccess = () => resolve(open.result)
-		open.onerror = () => reject(open.error)
-	})
-	await new Promise<void>((resolve, reject) => {
-		const tx = db.transaction("voices", "readwrite")
-		tx.objectStore("voices").put({
-			id: voice.id,
-			sourceHash: hash,
-			config,
-			model,
-			installedAt: Date.now(),
-			formatVersion: 1,
-		})
-		tx.oncomplete = () => resolve()
-		tx.onabort = tx.onerror = () => reject(tx.error)
-	})
-	db.close()
+	await writeStoredVoice({ id: voice.id, sourceHash: hash, config, model, installedAt: Date.now() })
 	const engine = new SpeechEngine()
 	try {
 		await engine.load(voice.id)

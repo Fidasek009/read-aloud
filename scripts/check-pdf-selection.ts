@@ -1,11 +1,16 @@
 import type { browser } from "wxt/browser"
 
+import type {} from "../src/reading/bridge.ts"
 import type { ReaderHost } from "../src/reading/host.ts"
 
 type ProbeWindow = Window & { browser?: typeof browser; chrome?: typeof browser }
 
 /** Self-contained acceptance assertions serialized into the real extension PDF tab. */
 async function checkPdfSelectionInBrowser() {
+	const step = (phase: string) => {
+		document.documentElement.dataset.pdfProbeStep = phase
+	}
+	step("initial")
 	function element<T extends Element>(selector: string): T {
 		const node = document.querySelector<T>(selector)
 		if (!node) throw Error("Missing PDF fixture element: " + selector)
@@ -61,36 +66,19 @@ async function checkPdfSelectionInBrowser() {
 	if (!("error" in invalid)) throw Error("PDF reader accepted an invalid highlight")
 	const extension = frameWindow.browser ?? frameWindow.chrome
 	if (!extension) throw Error("PDF player extension APIs are unavailable")
-	const { tabs, storage } = extension
+	const { tabs } = extension
 	// Keep only parent-owned data: Firefox invalidates objects from a closed iframe.
 	const tab = { id: requiredTabId((await tabs.getCurrent())?.id) }
 	const read = async (mode: "article" | "selection", allowError = false) => {
-		const revision = crypto.randomUUID()
-		const key = "pdfCommand:" + tab.id + ":" + revision
-		let listener: Parameters<typeof storage.onChanged.addListener>[0] | undefined
-		let timer: ReturnType<typeof setTimeout> | undefined
-		const received = new Promise<{ ok: boolean; error?: string }>((resolve, reject) => {
-			timer = setTimeout(() => reject(Error("PDF command acknowledgement timed out")), 5000)
-			listener = (changes, area) => {
-				const value: unknown = changes[key]?.newValue
-				if (area !== "session" || !value || typeof value !== "object" || !("result" in value)) return
-				const result = record(value.result)
-				if (result.ok === true) resolve({ ok: true })
-				else if (result.ok === false && typeof result.error === "string") resolve({ ok: false, error: result.error })
-			}
-			storage.onChanged.addListener(listener)
+		step("read-" + mode)
+		// Use the same background->reader route as the production context menu.
+		await api.runtime.sendMessage({
+			type: "probe-context-menu",
+			tab,
+			info: { menuItemId: mode === "selection" ? "read-selection" : "read-page", pageUrl: location.href },
 		})
-		try {
-			const [, result] = await Promise.all([
-				storage.session.set({ [key]: { action: "read", tabId: tab.id, mode, reveal: false, revision } }),
-				received,
-			])
-			if (!result.ok && !allowError) throw Error(result.error)
-		} finally {
-			clearTimeout(timer)
-			if (listener) storage.onChanged.removeListener(listener)
-			await storage.session.remove(key)
-		}
+
+		step("read-complete-" + mode)
 		const error = element<HTMLParagraphElement>("#status").textContent
 		if (error && !allowError) throw Error(error)
 		return { error }
@@ -100,6 +88,7 @@ async function checkPdfSelectionInBrowser() {
 		if (!("text" in response) || typeof response.text !== "string") throw Error("PDF document text is unavailable")
 		return response.text
 	}
+	step("document")
 	const full = await documentText()
 	const abstract = full.indexOf("Abstract")
 	const start = full.indexOf("Molecular dynamics (MD)", abstract)
@@ -107,6 +96,7 @@ async function checkPdfSelectionInBrowser() {
 	const end = full.indexOf(ending, start) + ending.length
 	if (abstract < 0 || start < abstract || end < start) throw Error("Abstract fixture not found")
 	// Select real lazy-rendered text before any highlight can repair its mappings.
+	step("lazy-abstract")
 	const abstractPage = element<HTMLElement>(".pdf-page:nth-child(6)")
 	abstractPage.scrollIntoView()
 	let first: Text | undefined, last: Text | undefined
@@ -248,6 +238,7 @@ async function checkPdfSelectionInBrowser() {
 	if (!rejectedSession || !document.querySelector("iframe"))
 		throw Error("Closed PDF session still controls the new player")
 	if ((await documentText()) !== full.slice(start, end)) throw Error("PDF restart lost its exact selection")
+	step("native-menu")
 	await api.runtime.sendMessage({
 		type: "probe-context-menu",
 		tab,
@@ -265,6 +256,7 @@ async function checkPdfSelectionInBrowser() {
 		throw Error("Floating PDF controls shifted the document")
 	await host({ session, command: "resize", height: frameHeight })
 
+	step("source-reopen")
 	const sourceUrl = new URL(location.href).searchParams.get("src")
 	if (!sourceUrl) throw Error("PDF source URL is unavailable")
 	const createdSource = await api.tabs.create({ url: sourceUrl, active: false })
@@ -308,6 +300,7 @@ async function checkPdfSelectionInBrowser() {
 		})
 		await api.tabs.remove(sourceTab.id)
 	}
+	step("native-reuse")
 	const createdSecondSource = await api.tabs.create({ url: sourceUrl, active: false })
 	const secondSource = { ...createdSecondSource, id: requiredTabId(createdSecondSource.id) }
 	let secondReader: number | undefined
@@ -417,6 +410,7 @@ async function checkPdfSelectionInBrowser() {
 			await new Promise<void>((resolve) => setTimeout(resolve, 25))
 		if ((await pendingKeys()).length) throw Error("Closing the PDF reader left staged selection text")
 	}
+	step("native-menu")
 	await api.runtime.sendMessage({
 		type: "probe-context-menu",
 		tab,

@@ -2,7 +2,10 @@ import { defineBackground } from "#imports"
 import { type Browser, browser } from "wxt/browser"
 
 import { isExtensionPageSender } from "../extension/sender.ts"
-import { isReaderRequest, type ReaderChange } from "../reading/host.ts"
+import { localKeys } from "../extension/storage.ts"
+import { type ReaderChange } from "../reading/host.ts"
+import { maximumReadingCharacters } from "../reading/limits.ts"
+import { isReaderMessage, readingMessages, startReadingMessage } from "../reading/messages.ts"
 import { pdfSelectionKey } from "../reading/pdf-control.ts"
 import { isPdfReaderContext, isPdfReaderUrl } from "../reading/pdf-reader.ts"
 import { commandPdf } from "../reading/pdf-transport.ts"
@@ -78,7 +81,7 @@ export default defineBackground(() => {
 							await commandPdf(previous.currentTab, { action: "stop" }).catch(() => {})
 					} else
 						await browser.tabs
-							.sendMessage(previous.currentTab, { type: "stop-reading" }, { frameId: 0 })
+							.sendMessage(previous.currentTab, { type: readingMessages.stop }, { frameId: 0 })
 							.catch(() => {})
 					await browser.storage.session.remove(readingKeys.currentTab)
 				}
@@ -107,7 +110,8 @@ export default defineBackground(() => {
 					(documentType === undefined || documentType === "application/pdf")
 				) {
 					if (mode === "selection" && !selection?.trim()) throw new Error("Select some PDF text first.")
-					if (selection && selection.length > 500_000) throw new Error("Select a smaller part of the PDF to read.")
+					if (selection && selection.length > maximumReadingCharacters)
+						throw new Error("Select a smaller part of the PDF to read.")
 					const url = new URL(browser.runtime.getURL("/pdf.html"))
 					url.searchParams.set("src", documentUrl)
 					url.searchParams.set("mode", mode)
@@ -162,7 +166,7 @@ export default defineBackground(() => {
 					})
 					return
 				}
-				const message = { type: "start-reading", mode, reveal }
+				const message = startReadingMessage(mode, reveal)
 				let result
 				try {
 					result = await browser.tabs.sendMessage(tabId, message, { frameId: 0 })
@@ -174,7 +178,7 @@ export default defineBackground(() => {
 				await browser.storage.session.set({ [readingKeys.currentTab]: tabId })
 				if (result?.reuse)
 					await browser.storage.local.set({
-						readerChange: { session: result.session, revision: crypto.randomUUID() } satisfies ReaderChange,
+						[localKeys.readerChange]: { session: result.session, revision: crypto.randomUUID() } satisfies ReaderChange,
 					})
 			} catch (error) {
 				await browser.action.setBadgeText({ tabId, text: "!" })
@@ -251,11 +255,11 @@ export default defineBackground(() => {
 			!message ||
 			typeof message !== "object" ||
 			!("type" in message) ||
-			message.type !== "reader" ||
-			!isReaderRequest(message) ||
+			message.type !== readingMessages.reader ||
 			sender.tab?.id === undefined
 		)
 			return
+		if (!isReaderMessage(message)) return Promise.resolve({ error: "Invalid reading request." })
 		return browser.tabs.sendMessage(sender.tab.id, message, { frameId: 0 })
 	})
 })

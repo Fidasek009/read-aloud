@@ -17,6 +17,9 @@ ort.env.wasm.proxy = false
 let session: ort.InferenceSession | undefined
 let phonemizer: Awaited<ReturnType<typeof createEspeak>> | undefined
 let voiceId: string | undefined
+// GPU inference can fail after a successful load. Retain its source buffer so
+// the CPU retry transfers ownership rather than rereading the full model.
+let fallbackModel: ArrayBuffer | undefined
 let config: VoiceConfig | undefined
 let busy = false
 self.onmessage = async ({ data }: MessageEvent<unknown>) => {
@@ -40,6 +43,7 @@ self.onmessage = async ({ data }: MessageEvent<unknown>) => {
 		if (data.type === "load") {
 			const started = performance.now()
 			const model = data.model
+			fallbackModel = SPEECH_BACKEND === "webgpu" ? model : undefined
 			await session?.release()
 			voiceId = undefined
 			config = data.config
@@ -67,7 +71,7 @@ self.onmessage = async ({ data }: MessageEvent<unknown>) => {
 				const began = performance.now()
 				session = await ort.InferenceSession.create(model, {
 					executionProviders: [SPEECH_BACKEND],
-					graphOptimizationLevel: "basic",
+					graphOptimizationLevel: "all",
 					extra: { session: { disable_prepacking: "1" } },
 				})
 				timings.sessionMs = performance.now() - began
@@ -127,7 +131,10 @@ self.onmessage = async ({ data }: MessageEvent<unknown>) => {
 		const model =
 			data.type === "load" && "model" in data && data.model instanceof ArrayBuffer && data.model.byteLength
 				? data.model
-				: undefined
+				: !(error instanceof SpeechTextError)
+					? fallbackModel
+					: undefined
+		if (model) fallbackModel = undefined
 		self.postMessage(
 			{
 				id,

@@ -1,19 +1,16 @@
-/** Development-only phase timing of the production PDF pipeline, with/without visible rendering. */
-import { $ } from "bun"
-
 import { type FixtureRequest, startFixtureServer } from "./probe-fixture-server.ts"
+/** Development-only phase timing of the production PDF pipeline, with/without visible rendering. */
 import {
 	chromeExecutable,
 	chromeExtensionId,
 	chromeTestProfileArguments,
+	copyProbeExtension,
 	projectRoot,
 	waitFor,
 } from "./probe-helpers.ts"
 
 const extension = `${projectRoot}/.cache/pdf-phases-probe`
-await $`rm -rf ${extension}`.quiet()
-await $`mkdir -p ${extension}`.quiet()
-await $`cp -R ${projectRoot + "/.output/chrome-mv3/."} ${extension}`.quiet()
+await copyProbeExtension("chrome", extension)
 let source = await Bun.file(`${projectRoot}/src/entrypoints/pdf/main.ts`).text()
 const edits: [string, string][] = [
 	[

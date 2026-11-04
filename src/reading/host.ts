@@ -1,3 +1,5 @@
+import { maximumSessionIdLength } from "./limits.ts"
+
 export type ReaderCommand =
 	| { command: "document" }
 	| { command: "selection" }
@@ -26,7 +28,7 @@ export function isReaderRequest(value: unknown): value is ReaderRequest {
 		!("session" in value) ||
 		typeof value.session !== "string" ||
 		!value.session ||
-		value.session.length > 80 ||
+		value.session.length > maximumSessionIdLength ||
 		!("command" in value)
 	)
 		return false
@@ -52,17 +54,6 @@ export function isReaderRequest(value: unknown): value is ReaderRequest {
 	return false
 }
 
-export function readerSize(height: number, width?: number) {
-	return {
-		height: Math.min(240, Math.max(44, height)),
-		...(width === undefined ? {} : { width: Math.min(640, Math.max(240, width)) }),
-	}
-}
-
-export function shouldScrollToWord(top: number, bottom: number, viewportHeight: number) {
-	return top < 150 || bottom > viewportHeight - 50
-}
-
 export interface ReaderChange {
 	session: string
 	revision: string
@@ -74,23 +65,9 @@ export function isReaderChange(value: unknown): value is ReaderChange {
 		typeof value === "object" &&
 		"session" in value &&
 		typeof value.session === "string" &&
-		value.session.length <= 80 &&
+		value.session.length <= maximumSessionIdLength &&
 		"revision" in value &&
 		typeof value.revision === "string" &&
-		value.revision.length <= 80
+		value.revision.length <= maximumSessionIdLength
 	)
-}
-
-declare global {
-	interface Window {
-		readAloudHost?: ReaderHost
-	}
-}
-
-export function parentReaderHost(): ReaderHost | undefined {
-	try {
-		return window.parent !== window ? window.parent.readAloudHost : undefined
-	} catch {
-		return undefined
-	} // The ordinary web-page parent is cross-origin.
 }

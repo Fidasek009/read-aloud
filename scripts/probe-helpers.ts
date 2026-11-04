@@ -1,3 +1,5 @@
+import { $ } from "bun"
+
 export const projectRoot = Bun.fileURLToPath(new URL("..", import.meta.url)).replace(/[\\/]$/u, "")
 
 // Bun.WebView's disposable fixture profiles have no real credentials. Avoid
@@ -34,4 +36,54 @@ export function chromeExtensionId(path: string): string {
 	return [...new Bun.CryptoHasher("sha256").update(path).digest("hex").slice(0, 32)]
 		.map((digit) => String.fromCharCode(97 + parseInt(digit, 16)))
 		.join("")
+}
+
+export async function copyProbeExtension(browser: "chrome" | "firefox", destination: string) {
+	await $`rm -rf ${destination}`.quiet()
+	await $`mkdir -p ${destination}`.quiet()
+	await $`cp -R ${projectRoot + "/.output/" + browser + "-mv3/."} ${destination}`.quiet()
+	const bundled = await Bun.build({
+		entrypoints: [projectRoot + "/scripts/voice-fixtures.ts"],
+		outdir: destination,
+		naming: "voice-fixtures.js",
+		target: "browser",
+		format: "esm",
+	})
+	if (!bundled.success) throw new AggregateError(bundled.logs, "Voice fixture helpers failed to bundle")
+}
+
+const chromeProfiles = new WeakMap<Bun.WebView, string>()
+
+/** Identical isolated Chromium launch policy for product and fixture probes. */
+export async function createChromeProbe(extension: string, extraArguments: string[] = []) {
+	const executable = await chromeExecutable()
+	const directory = `${projectRoot}/.cache/browser-profiles/${crypto.randomUUID()}`
+	await $`mkdir -p ${directory}`.quiet()
+	const view = new Bun.WebView({
+		backend: {
+			type: "chrome",
+			url: false,
+			...(executable ? { path: executable } : {}),
+			argv: [
+				...chromeTestProfileArguments,
+				`--disable-extensions-except=${extension}`,
+				`--load-extension=${extension}`,
+				...extraArguments,
+			],
+		},
+		dataStore: { directory },
+	})
+	chromeProfiles.set(view, directory)
+	return view
+}
+
+/** Close the browser before deleting only the fixture directory we created. */
+export async function closeChromeProbe(view: Bun.WebView) {
+	view.close()
+	Bun.WebView.closeAll()
+	const directory = chromeProfiles.get(view)
+	if (directory) {
+		chromeProfiles.delete(view)
+		await $`rm -rf ${directory}`.quiet()
+	}
 }

@@ -4,6 +4,8 @@ A Firefox and Chrome extension in development: local speech, mandatory US Englis
 
 The current extension is a **development prototype** with explicit voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. It is not release-ready: native-entry autoplay, cold startup, PDF acceptance, model provenance, and GPU/Windows acceptance remain open. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for the latest confirmed requirements, including all three mandatory reading benchmarks.
 
+See [known issues](docs/known-issues.md) for user-facing limitations and [the current review tracker](docs/review-tracker-2026-11-04.md) for verified fixes and remaining acceptance work.
+
 ## Development
 
 Use **Bun 1.4.4 or newer**. The runtime, dependency management, tests, type checks, formatter, and tooling all use Bun. WXT's framework build runs under Bun.
@@ -35,10 +37,18 @@ After building, use `bun run probe:chrome` and `bun run probe:firefox` for isola
 
 `bun run probe:pdf` requires the deliberately fetched thesis bytes in `.cache/benchmarks/muni-thesis.pdf`. Its evidence covers PDF rendering/text mapping, not full speech acceptance. See [current status](docs/feasibility-status.md) for exact limits.
 
-The voice page contains the pinned 178-model catalog with search, source terms, variants, and explicit downloads; seven models need pronunciation engines that are not yet implemented. These are labeled unavailable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
+## Voice management
+
+The voice page contains the pinned model catalog with search, source terms, variants, and explicit downloads; seven models need pronunciation engines that are not yet implemented. These are labeled unavailable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
+
+## PDF checks
 
 For a live PDF fetch check, use `PDF_SOURCE_URL=https://is.muni.cz/th/wdhgd/bc.pdf bun run probe:pdf`. The test checks access recovery in a fresh ungranted profile, then uses a narrow grant in a separate test copy; it does not click the browser's native permission dialog. In your normal browser, the new PDF tab may ask for access to the PDF's site. This is optional site access, not an install-time all-sites grant.
 
+## Updating a development package
+
 After updating a development package, reload the extension **and existing source tabs** once to remove listeners left by older builds. On Chrome, the new inference host adds the internal offscreen permission; accept that updated extension permission if the browser asks. No helper app is involved.
+
+## Local diagnostics
 
 Local timing/backend diagnostics are available from the extension page's developer console with `await browser.storage.local.get("lastSpeechPerformance")` (use `chrome` in Chrome). They contain no reading text. Cold initialization is still over the acceptance budget; see the evidence/status documents before interpreting one VM run as a benchmark.

@@ -1,7 +1,9 @@
 import { $ } from "bun"
 
+import type {} from "../src/reading/bridge.ts"
+
 import { observeContextMenu } from "./observe-context-menu.ts"
-import { assert, projectRoot, waitFor } from "./probe-helpers.ts"
+import { assert, copyProbeExtension, projectRoot, waitFor } from "./probe-helpers.ts"
 
 function selectNativePage() {
 	const layer = document.querySelector<HTMLElement>(".page .textLayer")
@@ -35,9 +37,8 @@ async function checkNativeHighlight() {
 }
 const root = projectRoot
 const out = `${root}/.cache/worker-compat-probe`
-await $`rm -rf ${out}`.quiet()
-await $`mkdir -p ${out} ${root + "/.cache/worker-compat-profiles"}`.quiet()
-await $`cp -R ${root + "/.output/firefox-mv3/."} ${out}`.quiet()
+await copyProbeExtension("firefox", out)
+await $`mkdir -p ${root + "/.cache/worker-compat-profiles"}`.quiet()
 const manifest = await Bun.file(`${out}/manifest.json`).json()
 manifest.host_permissions = ["https://arxiv.org/*"]
 await Bun.write(`${out}/manifest.json`, JSON.stringify(manifest))

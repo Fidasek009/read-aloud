@@ -1,10 +1,6 @@
 export type PdfAction = { action: "stop" } | { action: "read"; mode: "article" | "selection"; reveal: boolean }
-export type PdfCommand = PdfAction & { tabId: number; revision: string }
+export type PdfCommand = PdfAction & { type: "pdf-command"; tabId: number }
 export type PdfCommandResult = { ok: true } | { ok: false; error: string }
-
-export function pdfCommandKey(tabId: number, revision: string): string {
-	return `pdfCommand:${tabId}:${revision}`
-}
 
 export function isPdfCommandResult(value: unknown): value is PdfCommandResult {
 	return (
@@ -27,11 +23,12 @@ export function isPdfCommand(value: unknown): value is PdfCommand {
 	if (
 		!value ||
 		typeof value !== "object" ||
+		!("type" in value) ||
+		value.type !== "pdf-command" ||
 		!("tabId" in value) ||
+		typeof value.tabId !== "number" ||
 		!Number.isSafeInteger(value.tabId) ||
-		!("revision" in value) ||
-		typeof value.revision !== "string" ||
-		!isPdfSelectionToken(value.revision) ||
+		value.tabId < 0 ||
 		!("action" in value)
 	)
 		return false

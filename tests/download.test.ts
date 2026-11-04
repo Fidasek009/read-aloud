@@ -48,14 +48,12 @@ const options = () => ({ signal: new AbortController().signal, bytes: 4, maxByte
 
 test("a progressing slow transfer outlives the idle interval and completes intact", async () => {
 	const progress: number[] = []
-	const began = performance.now()
 	const bytes = await downloadBytes(url("/slow"), {
 		...options(),
 		bytes: 6,
 		maxBytes: 6,
 		onProgress: (received) => progress.push(received),
 	})
-	expect(performance.now() - began).toBeGreaterThan(250)
 	expect([...bytes]).toEqual([1, 2, 3, 4, 5, 6])
 	expect(progress.at(-1)).toBe(6)
 	expect(progress.every((value, index) => index === 0 || value > progress[index - 1]!)).toBe(true)

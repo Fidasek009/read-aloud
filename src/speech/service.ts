@@ -1,5 +1,6 @@
-import { speechFailureCode } from "./errors.ts"
-import { type SpeechClip, speechRequest, type SpeechResponse, voiceModelId } from "./protocol.ts"
+import { type SpeechDiagnostics, speechDiagnostics } from "./diagnostics.ts"
+import { speechFailure, speechFailureCode } from "./errors.ts"
+import { type SpeechClip, type SpeechRequest, type SpeechResponse, voiceModelId } from "./protocol.ts"
 import { synthesizeWithRecovery } from "./recovery.ts"
 
 interface SpeechBackend {
@@ -16,7 +17,6 @@ export class SpeechService {
 	private owner = ""
 	private generation = 0
 	private requestedVoice = ""
-	private idle: ReturnType<typeof setTimeout> | undefined
 	constructor(
 		private engine: SpeechBackend,
 		private encoding: "base64" | "structured" = "base64",
@@ -27,9 +27,7 @@ export class SpeechService {
 			this.engine.dispose()
 		}
 	}
-	async request(client: string, value: unknown): Promise<SpeechResponse> {
-		if (!speechRequest(value)) throw new Error("Invalid speech request")
-		clearTimeout(this.idle)
+	async request(client: string, value: SpeechRequest): Promise<SpeechResponse> {
 		try {
 			if (value.type === "load") {
 				if (client === this.owner && this.requestedVoice && this.requestedVoice !== value.voice) {
@@ -43,10 +41,10 @@ export class SpeechService {
 					this.owner = client
 				}
 				await this.engine.load(value.voice)
-				if (client !== this.owner) throw new DOMException("Reading stopped", "AbortError")
+				if (client !== this.owner) throw speechFailure("cancelled")
 				return { id: value.id, ok: true, diagnostics: speechDiagnostics(this.engine.diagnostics) }
 			}
-			if (client !== this.owner) throw new DOMException("Reading stopped", "AbortError")
+			if (client !== this.owner) throw speechFailure("cancelled")
 			if (value.type === "cancel") {
 				this.generation++
 				this.engine.cancelQueued()
@@ -54,12 +52,10 @@ export class SpeechService {
 			}
 			const generation = this.generation
 			const clip = await synthesizeWithRecovery(value.text, (text) => {
-				if (client !== this.owner || generation !== this.generation)
-					throw new DOMException("Reading stopped", "AbortError")
+				if (client !== this.owner || generation !== this.generation) throw speechFailure("cancelled")
 				return this.engine.synthesize(text, value.speed)
 			})
-			if (client !== this.owner || generation !== this.generation)
-				throw new DOMException("Reading stopped", "AbortError")
+			if (client !== this.owner || generation !== this.generation) throw speechFailure("cancelled")
 			return {
 				id: value.id,
 				ok: true,
@@ -83,16 +79,12 @@ export class SpeechService {
 		this.owner = ""
 		this.generation++
 		this.engine.clearClips()
-		// Retain only model/runtime state briefly. Never retain source text after closing.
-		this.idle = setTimeout(() => this.engine.dispose(), 120_000)
+		// The owning host's lifetime clock controls model disposal. Source text
+		// is cleared immediately; there is no competing service retention timer.
 	}
 	dispose() {
-		clearTimeout(this.idle)
 		this.owner = ""
 		this.requestedVoice = ""
 		this.engine.dispose()
 	}
 }
-import type { SpeechDiagnostics } from "./diagnostics.ts"
-
-import { speechDiagnostics } from "./diagnostics.ts"

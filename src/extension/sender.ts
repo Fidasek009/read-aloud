@@ -9,7 +9,7 @@ export function isExtensionPageSender(
 	sender: ExtensionSender | undefined,
 	extensionId: string,
 	extensionRoot: string,
-	paths?: readonly string[],
+	paths: readonly string[],
 ): boolean {
 	if (sender?.id !== extensionId || !sender.url) return false
 	try {
@@ -20,7 +20,7 @@ export function isExtensionPageSender(
 			url.host === own.host &&
 			!url.username &&
 			!url.password &&
-			(!paths || paths.includes(url.pathname))
+			paths.includes(url.pathname)
 		)
 	} catch {
 		return false

@@ -1,35 +1,27 @@
 import { getVoice, voices as catalog } from "../src/speech/catalog.ts"
-import { chromeExecutable, chromeExtensionId, chromeTestProfileArguments, projectRoot } from "./probe-helpers.ts"
+import {
+	chromeExtensionId,
+	closeChromeProbe,
+	copyProbeExtension,
+	createChromeProbe,
+	projectRoot,
+	waitFor as poll,
+} from "./probe-helpers.ts"
 
 const voices = [getVoice("en_US-ljspeech-medium"), getVoice("cs_CZ-jirka-medium")]
 
 const root = projectRoot
-const extension = `${root}/.output/chrome-mv3`
+const extension = `${root}/.cache/preview-probe`
+await copyProbeExtension("chrome", extension)
 for (const browser of ["chrome", "firefox"]) {
 	const packaged = await Array.fromAsync(new Bun.Glob("**/*.{wav,mp3,ogg,m4a}").scan(`${root}/.output/${browser}-mv3`))
 	if (packaged.length) throw new Error(`Bundled audio remains: ${packaged.join(", ")}`)
 }
-const executable = await chromeExecutable()
-const view = new Bun.WebView({
-	backend: {
-		type: "chrome",
-		url: false,
-		...(executable ? { path: executable } : {}),
-		argv: [...chromeTestProfileArguments, `--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
-	},
-	dataStore: "ephemeral",
-})
+const view = await createChromeProbe(extension)
 const requests: string[] = []
-const waitFor = async (expression: string, accept: (value: string) => boolean) => {
-	const until = performance.now() + 30_000
-	let value = ""
-	do {
-		value = await view.evaluate<string>(expression)
-		if (accept(value)) return
-		await Bun.sleep(100)
-	} while (performance.now() < until)
-	throw new Error(`Preview check timed out: ${value}`)
-}
+const waitFor = (expression: string, accept: (value: string) => boolean) =>
+	poll(() => view.evaluate<string>(expression), accept, 30)
+
 try {
 	await view.navigate("about:blank")
 	await view.cdp("Network.enable")
@@ -42,20 +34,9 @@ try {
 	await view.cdp("Page.bringToFront")
 	await waitFor("String(document.querySelectorAll('section').length)", (value) => value === String(catalog.length))
 	const orphanId = "legacy-unlisted-voice"
-	await view.evaluate(`new Promise((resolve,reject)=>{
-		const open = indexedDB.open('read-aloud-voices',1);
-		open.onerror = () => reject(open.error);
-		open.onsuccess = () => {
-			const transaction = open.result.transaction('voices','readwrite');
-			transaction.objectStore('voices').put({id:${JSON.stringify(orphanId)},model:new ArrayBuffer(0)});
-			transaction.onabort = () => reject(transaction.error);
-			transaction.oncomplete = () => {
-				const channel = new BroadcastChannel('read-aloud-voices');
-				channel.postMessage({id:${JSON.stringify(orphanId)},deleted:false});
-				channel.close(); resolve(true);
-			};
-		};
-	})`)
+	await view.evaluate(
+		`import("./voice-fixtures.js").then(module => module.addOrphanVoice(${JSON.stringify(orphanId)}))`,
+	)
 	const orphanSelector = `[data-voice="${orphanId}"] [data-action="delete-unavailable"]`
 	await waitFor(
 		`document.querySelector(${JSON.stringify(orphanSelector)})?.textContent ?? ''`,
@@ -117,5 +98,5 @@ try {
 		"Both packages exclude audio. No preview prefetch. Both remote samples play; switching, stop, and offline recovery pass. No model requests.",
 	)
 } finally {
-	view.close()
+	await closeChromeProbe(view)
 }

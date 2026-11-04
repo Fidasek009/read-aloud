@@ -1,8 +1,6 @@
 import { voiceModelId } from "./protocol.ts"
 import catalog from "./voices.json"
 
-export { validateConfig, type VoiceConfig } from "./voice-config.ts"
-
 export interface Voice {
 	id: string
 	name: string

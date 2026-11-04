@@ -5,6 +5,12 @@ export class SpeechTextError extends Error {
 
 export type SpeechFailureCode = "cancelled" | "text" | "timeout" | "transport" | "voice" | "unavailable"
 
+export const SPEECH_REQUEST_TIMEOUT_MS = 90_000
+
+export function isSpeechCancellation(error: unknown): boolean {
+	return error instanceof Error && error.name === "AbortError"
+}
+
 export class SpeechTimeoutError extends Error {
 	override name = "SpeechTimeoutError"
 }
@@ -26,7 +32,7 @@ export function speechFailureCode(error: unknown): SpeechFailureCode {
 	if (error instanceof SpeechTimeoutError) return "timeout"
 	if (error instanceof SpeechTransportError) return "transport"
 	if (error instanceof SpeechVoiceError) return "voice"
-	if (error instanceof Error && error.name === "AbortError") return "cancelled"
+	if (isSpeechCancellation(error)) return "cancelled"
 	return "unavailable"
 }
 

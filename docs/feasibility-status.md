@@ -1,6 +1,6 @@
 # Implementation and acceptance status
 
-Updated: **2026-11-03**. A working development prototype exists; the requested release is **not complete**.
+Updated: **2026-11-04**. A working development prototype exists; the requested release is **not complete**.
 
 ## Implemented
 
@@ -40,3 +40,10 @@ The Chrome probe checks repeated activation without root-padding changes or dupl
 The [latest session-loading experiment](evidence/session-loading-2026-11-02.json) rotates four options and measures multiple sentences for one voice in Chrome on this VM. Mean load ranged from 5.0 to 7.1 seconds; it does not establish an optimum across models or browsers. The product records show cold first-buffer readiness well above two seconds, with a subsecond warm Chrome result. Warm records now identify session reuse without copying cold initialization timings. These VM measurements do not establish target-device audible latency. Diagnostics contain no source text.
 
 The [cold-start phase investigation](cold-start-investigation-2026-11-03.md) separates runtime initialization from real-model loading. A prepared ORT asset improved cold first-buffer readiness to about five seconds in a Chrome CPU experiment, with deterministic audio/alignment parity; it still misses the target and has not been adopted in production. A separate PDF phase investigation is distinguishing fetch latency from extraction, so the roughly 26-second full-reader readiness figure must not be attributed to text extraction alone.
+
+
+## November 4 review verification
+
+The [F1–F38 tracker](review-tracker-2026-11-04.md) records the verified fixes and remaining acceptance limits. Chrome 155 and Zen 1.24b product probes pass; dedicated PDF tests verify selection ownership while extraction is held, and the offscreen-host probe covers actual English PCM plus background-owned GPU policy. The voice-preview probe passes explicit samples, offline recovery, and no-prefetch/no-bundled-audio checks. Browser tests use the isolated fixtures and grants described above.
+
+First-buffer diagnostics now distinguish native `playing` readiness and include initial document/preferences/voice preparation. Cold startup still exceeds the required budget. The [thread/chunk experiment](evidence/thread-and-chunk-2026-11-04.json) covers configured CPU thread counts and paired word-boundary prefixes on the 8-vCPU development VM. It does not establish physical thread use, target-machine latency, GPU behavior, Firefox isolation, Windows behavior, or subjective speech quality. Firefox extension shared-memory isolation remains a platform limitation; the engineering baseline links the Mozilla issues.

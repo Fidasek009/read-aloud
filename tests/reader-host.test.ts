@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test"
 
-import { isReaderRequest, isReaderResponse, readerSize, shouldScrollToWord } from "../src/reading/host.ts"
+import { isReaderRequest, isReaderResponse } from "../src/reading/host.ts"
+import { readerSize, shouldScrollToWord } from "../src/reading/layout.ts"
 
 test("reader replies must match the requested command on both reading surfaces", () => {
 	expect(isReaderResponse({ command: "document" }, { text: "selected text" })).toBe(true)

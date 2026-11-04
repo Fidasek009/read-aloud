@@ -1,14 +1,15 @@
-import { $ } from "bun"
-
-import { readingChunks, sentenceTarget } from "../src/reading/document.ts"
-import { checkSpeedPanel, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
+import { readingChunks, sentenceTarget } from "../src/reading/chunks.ts"
+import { voices } from "../src/speech/catalog.ts"
+import { voiceStore } from "../src/speech/voice-store.ts"
+import { checkSpeedFocus, checkSpeedPanel, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
 import { checkAbortedVoiceDeletion } from "./check-voice-deletion.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
 import {
 	assert,
-	chromeExecutable,
 	chromeExtensionId,
-	chromeTestProfileArguments,
+	closeChromeProbe,
+	copyProbeExtension,
+	createChromeProbe,
 	projectRoot,
 	waitFor,
 } from "./probe-helpers.ts"
@@ -23,9 +24,7 @@ import {
 // context-menu activation and the activeTab grant are not covered by this test.
 const root = projectRoot
 const extension = `${root}/.cache/product-probe/chromium`
-await $`rm -rf ${extension}`.quiet()
-await $`mkdir -p ${extension}`.quiet()
-await $`cp -R ${root + "/.output/chrome-mv3/."} ${extension}`.quiet()
+await copyProbeExtension("chrome", extension)
 await observePlayerAudio(extension)
 await observeContextMenu(extension)
 const manifest = await Bun.file(`${extension}/manifest.json`).json()
@@ -41,21 +40,7 @@ const server = Bun.serve({
 			{ headers: { "Content-Type": "text/html" } },
 		),
 })
-const executable = await chromeExecutable()
-const view = new Bun.WebView({
-	backend: {
-		type: "chrome",
-		url: false,
-		...(executable ? { path: executable } : {}),
-		argv: [
-			...chromeTestProfileArguments,
-			`--disable-extensions-except=${extension}`,
-			`--load-extension=${extension}`,
-			"--enable-unsafe-extension-debugging",
-		],
-	},
-	dataStore: "ephemeral",
-})
+const view = await createChromeProbe(extension, ["--enable-unsafe-extension-debugging"])
 let sequence = 0
 const calls = new Map<number, { resolve: (value: any) => void; reject: (error: Error) => void }>()
 view.addEventListener("Target.receivedMessageFromTarget", (event: any) => {
@@ -90,13 +75,26 @@ const call = async (session: string, method: string, params: object = {}): Promi
 	await view.cdp("Target.sendMessageToTarget", { sessionId: session, message: JSON.stringify({ id, method, params }) })
 	return result
 }
+const remote = async (session: string, expression: string, userGesture = false, contextId?: number) => {
+	const result = await call(session, "Runtime.evaluate", {
+		expression,
+		returnByValue: true,
+		awaitPromise: true,
+		userGesture,
+		...(contextId ? { contextId } : {}),
+	})
+	if (result.exceptionDetails)
+		throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text)
+	return result.result.value
+}
+
 try {
 	await view.navigate("about:blank")
 	const id = chromeExtensionId(extension)
 	await view.navigate(`chrome-extension://${id}/voices.html`)
 	await waitFor(
 		() => view.evaluate<number>("document.querySelectorAll('section').length"),
-		(value) => value === 178,
+		(value) => value === voices.length,
 	)
 	console.log("Voice catalog loaded; no model download requested.")
 	const catalogShot = await view.cdp<{ data: string }>("Page.captureScreenshot", { format: "png" })
@@ -115,17 +113,7 @@ try {
 	)
 	assert(target, "Fixture tab missing")
 	const { sessionId } = await view.cdp<any>("Target.attachToTarget", { targetId: target.targetId, flatten: false })
-	const evaluate = async (expression: string, contextId?: number) => {
-		const result = await call(sessionId, "Runtime.evaluate", {
-			expression,
-			returnByValue: true,
-			awaitPromise: true,
-			...(contextId ? { contextId } : {}),
-		})
-		if (result.exceptionDetails)
-			throw new Error(result.exceptionDetails.text + ": " + result.exceptionDetails.exception?.description)
-		return result.result.value
-	}
+	const evaluate = (expression: string, contextId?: number) => remote(sessionId, expression, false, contextId)
 	await waitFor(() => evaluate("document.readyState === 'complete' && !!document.querySelector('#selection')"), Boolean)
 	await view.evaluate(`chrome.scripting.executeScript({target:{tabId:${tab.id}},files:['content-scripts/reader.js']})`)
 	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#selection'))")
@@ -137,7 +125,7 @@ try {
 	})
 	await call(sessionId, "Runtime.enable")
 	const started = await view.evaluate<any>(
-		`chrome.tabs.sendMessage(${tab.id},{type:'start-reading',mode:'selection'},{frameId:0})`,
+		`chrome.runtime.sendMessage({type:'probe-context-menu',info:{menuItemId:'read-selection'},tab:{id:${tab.id}}})`,
 	)
 	assert(started?.ok, started?.error ?? "Reader did not start")
 	const playerTarget = await waitFor<{ targetId: string } | undefined>(
@@ -153,17 +141,7 @@ try {
 		await view.cdp<any>("Target.attachToTarget", { targetId: playerTarget.targetId, flatten: false })
 	).sessionId
 	await call(playerSession, "Runtime.enable")
-	const player = async (expression: string, userGesture = false) => {
-		const result = await call(playerSession, "Runtime.evaluate", {
-			expression,
-			returnByValue: true,
-			awaitPromise: true,
-			userGesture,
-		})
-		if (result.exceptionDetails)
-			throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text)
-		return result.result.value
-	}
+	const player = (expression: string, userGesture = false) => remote(playerSession, expression, userGesture)
 	await call(sessionId, "Page.bringToFront")
 
 	await waitFor(
@@ -229,13 +207,10 @@ try {
 		"Download added a page-level success notice",
 	)
 	console.log("Explicit download passed integrity check and persisted.")
-	const installedFormat = await view.evaluate<number>(`new Promise((resolve,reject)=>{
-		const open=indexedDB.open('read-aloud-voices');open.onerror=()=>reject(open.error);open.onsuccess=()=>{
-			const db=open.result,request=db.transaction('voices').objectStore('voices').get('en_US-ljspeech-medium');
-			request.onerror=()=>reject(request.error);request.onsuccess=()=>{resolve(request.result?.formatVersion);db.close()};
-		};
-	})`)
-	assert(installedFormat === 1, "Downloaded voice format version was not stored")
+	const installedFormat = await view.evaluate<number>(
+		`import('./voice-fixtures.js').then(module => module.readStoredVoice('en_US-ljspeech-medium')).then(record => record?.formatVersion)`,
+	)
+	assert(installedFormat === voiceStore.formatVersion, "Downloaded voice format version was not stored")
 
 	await waitFor(
 		() => player("document.querySelector('#bar')?.dataset.view"),
@@ -368,7 +343,7 @@ try {
 	await player(
 		"document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))",
 	)
-	console.log("Speed panel:", JSON.stringify(await player(checkSpeedPanel)))
+	console.log("Speed panel:", JSON.stringify(await player(checkSpeedFocus)))
 	const speedStartCount = await player("window.__probeAudio.starts.length")
 	await player(
 		"document.querySelector('#speed').value='1.1';document.querySelector('#speed').dispatchEvent(new Event('input'));document.querySelector('#speed').dispatchEvent(new Event('change'))",
@@ -442,9 +417,7 @@ try {
 		(await evaluate("document.querySelectorAll('[data-read-aloud]').length")) === 1,
 		"A hash change closed the reader",
 	)
-	await view.evaluate(
-		`chrome.tabs.sendMessage(${tab.id},{type:'start-reading',mode:'article',reveal:true},{frameId:0})`,
-	)
+	await view.evaluate(`chrome.runtime.sendMessage({type:'probe-action-click',tab:{id:${tab.id}}})`)
 	assert(
 		(await evaluate("document.documentElement.style.paddingTop")) === paddingBefore,
 		"Toolbar activation changed page padding",
@@ -589,12 +562,15 @@ try {
 			`chrome.scripting.executeScript({target:{tabId:${tab.id}},files:['content-scripts/reader.js']})`,
 		)
 	await evaluate("window.getSelection().selectAllChildren(document.querySelector('#warm-selection'))")
-	await view.evaluate(`chrome.tabs.sendMessage(${tab.id},{type:'start-reading',mode:'selection'},{frameId:0})`)
+	await view.evaluate(
+		`chrome.runtime.sendMessage({type:'probe-context-menu',info:{menuItemId:'read-selection'},tab:{id:${tab.id}}})`,
+	)
 	assert(
 		(await evaluate("document.querySelectorAll('[data-read-aloud]').length")) === 1,
 		"Reinjection left stale message listeners",
 	)
-	await view.evaluate(`chrome.tabs.sendMessage(${tab.id},{type:'stop-reading'},{frameId:0})`)
+	// Closing the source also exercises production cleanup after reinjection.
+	await view.evaluate(`chrome.tabs.remove(${tab.id})`)
 	await waitFor(
 		async () =>
 			(await view.cdp<any>("Target.getTargets")).targetInfos.some((target: any) =>
@@ -615,17 +591,7 @@ try {
 	)
 	const mdSession = (await view.cdp<any>("Target.attachToTarget", { targetId: mdTarget.targetId, flatten: false }))
 		.sessionId
-	const remote = async (session: string, expression: string, userGesture = false) => {
-		const result = await call(session, "Runtime.evaluate", {
-			expression,
-			returnByValue: true,
-			awaitPromise: true,
-			userGesture,
-		})
-		if (result.exceptionDetails)
-			throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text)
-		return result.result.value
-	}
+
 	await waitFor(
 		() =>
 			remote(
@@ -639,7 +605,7 @@ try {
 	)
 	const captureStarted = performance.now()
 	const mdStarted = await view.evaluate<any>(
-		`chrome.tabs.sendMessage(${mdTab.id},{type:'start-reading',mode:'article'},{frameId:0})`,
+		`chrome.runtime.sendMessage({type:'probe-context-menu',info:{menuItemId:'read-article'},tab:{id:${mdTab.id}}})`,
 	)
 	const mdCaptureMs = performance.now() - captureStarted
 	assert(mdStarted?.ok, mdStarted?.error ?? "MD Dash article capture failed")
@@ -765,6 +731,6 @@ try {
 		) + "\n",
 	)
 } finally {
-	view.close()
+	await closeChromeProbe(view)
 	server.stop(true)
 }

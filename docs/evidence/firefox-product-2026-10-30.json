@@ -1,21 +1,22 @@
 {
-	"recordedAt": "2026-11-03T21:29:09.844Z",
+	"recordedAt": "2026-11-04T10:06:31.795Z",
 	"browserVersion": "1.24b",
 	"voice": "cs_CZ-jirka-medium",
 	"performance": {
 		"cold": {
-			"phonemizerMs": 428,
-			"sessionMs": 7584,
-			"workerLoadMs": 7587,
-			"modelReadMs": 433,
-			"loadMs": 8175,
-			"synthesisMs": 562,
+			"phonemizerMs": 107,
+			"sessionMs": 5765,
+			"workerLoadMs": 5768,
+			"modelReadMs": 359,
+			"loadMs": 6130,
+			"synthesisMs": 428,
 			"threads": 1,
 			"crossOriginIsolated": false,
 			"backend": "cpu",
 			"voice": "cs_CZ-jirka-medium",
-			"timeToFirstBufferMs": 8849,
-			"recordedAt": "2026-11-03T21:28:10.096Z"
+			"timeToFirstBufferMs": 6615,
+			"recordedAt": "2026-11-04T10:05:47.374Z",
+			"timeToFirstAudioMs": 6686
 		},
 		"caveat": "Development VM with virtual audio, not target-hardware latency acceptance."
 	},
@@ -48,10 +49,10 @@
 		"playSelection": true,
 		"domainPreserved": "Consensus.app"
 	},
-	"pdfSelectionReadyMs": 477.34214500000235,
-	"pdfFirstBufferMs": 7779.191845999994,
+	"pdfSelectionReadyMs": 349.045309000001,
+	"pdfFirstBufferMs": 3022.877551999998,
 	"speakerSwitch": {
-		"switchMs": 23,
+		"switchMs": 0,
 		"firstSamples": 53760,
 		"secondSamples": 44544,
 		"reusedSession": true

@@ -1,41 +1,59 @@
 import { type Browser, browser } from "wxt/browser"
 
 import { isExtensionPageSender } from "../extension/sender.ts"
+import { localKeys } from "../extension/storage.ts"
 import { SpeechEngine } from "./engine.ts"
-import { SPEECH_HOST_LOCK } from "./host-lifetime.ts"
-import { isVoiceChange, speechRequest } from "./protocol.ts"
+import { SPEECH_HOST_LOCK, SpeechHostLifetime } from "./host-lifetime.ts"
+import {
+	sendSpeechHost,
+	SPEECH_CLIENT_PORT,
+	SPEECH_GPU_FAILURE_KEY,
+	SPEECH_SERVER_PORT,
+	speechHostDispatcher,
+} from "./host-protocol.ts"
+import { SpeechPortRegistry } from "./port-registry.ts"
+import { isVoiceChange } from "./protocol.ts"
 import { SpeechService } from "./service.ts"
 import { installedVoices } from "./vault.ts"
+import { voiceLock } from "./voice-store.ts"
 
 export function installSpeechBroker() {
 	const isPage = (sender: Browser.runtime.MessageSender | undefined, path: string) =>
 		isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/"), [path])
-	// Read from extension-owned storage, never the embedded frame's partition.
-	browser.runtime.onMessage.addListener((message: unknown, sender) => {
-		if (
-			!isPage(sender, "/player.html") ||
-			!message ||
-			typeof message !== "object" ||
-			!("type" in message) ||
-			message.type !== "installed-voices"
-		)
-			return
-		return installedVoices()
-	})
+	// IndexedDB model storage can be partitioned in an embedded frame. Unlike
+	// IndexedDB, browser.storage.local remains extension-scoped there.
 	const local = import.meta.env.BROWSER === "firefox" ? new SpeechService(new SpeechEngine(), "structured") : undefined
-	const clients = new Map<string, Browser.runtime.Port>()
+	const lifetime = new SpeechHostLifetime()
+	let idleTimer: ReturnType<typeof setTimeout> | undefined
+	const localRegistry = local
+		? new SpeechPortRegistry(local, {
+				connect(client) {
+					clearTimeout(idleTimer)
+					return lifetime.connect(client)
+				},
+				disconnect(client) {
+					lifetime.disconnect(client, performance.now())
+					const delay = lifetime.closeDelay(performance.now())
+					if (delay !== undefined)
+						idleTimer = setTimeout(() => {
+							local.dispose()
+							lifetime.reopen()
+						}, delay)
+				},
+			})
+		: undefined
 	let host: Browser.runtime.Port | undefined
 	let connected: (() => void) | undefined
 	browser.storage.onChanged.addListener((changes, area) => {
-		const change: unknown = changes.voiceChange?.newValue
+		const change: unknown = changes[localKeys.voiceChange]?.newValue
 		if (area !== "local" || !isVoiceChange(change) || !change.deleted) return
-		void navigator.locks.request(`voice:${change.id}`, async () => {
+		void navigator.locks.request(voiceLock(change.id), async () => {
 			// A later download may have committed before this event was handled.
 			if ((await installedVoices()).includes(change.id)) return
 			local?.voiceDeleted(change.id)
 			// The offscreen document may outlive this service worker and have no
 			// port yet. Runtime messaging can reach it without creating it.
-			if (!local) await browser.runtime.sendMessage({ type: "speech-voice-deleted", id: change.id }).catch(() => {})
+			if (!local) await sendSpeechHost({ type: "speech-voice-deleted", id: change.id }).catch(() => {})
 		})
 	})
 	const connectHost = async () => {
@@ -62,7 +80,7 @@ export function installSpeechBroker() {
 					justification:
 						"Run local speech inference with isolated WebAssembly workers, independently of page controls.",
 				})
-			else await browser.runtime.sendMessage({ type: "connect-speech-host" })
+			else await sendSpeechHost({ type: "connect-speech-host" })
 			await waiting
 		} finally {
 			clearTimeout(timer)
@@ -73,48 +91,42 @@ export function installSpeechBroker() {
 		navigator.locks.request(SPEECH_HOST_LOCK, async () => {
 			await connectHost()
 			// Reserve before replying: the player opens its port asynchronously.
-			const lease: unknown = await browser.runtime.sendMessage({ type: "reserve-speech-host" })
-			if (!lease || typeof lease !== "object" || !("ok" in lease) || lease.ok !== true)
-				throw new Error("The speech host is closing")
+			const lease = await sendSpeechHost({ type: "reserve-speech-host" })
+			if (!lease.ok) throw new Error("The speech host is closing")
 		})
-	browser.runtime.onMessage.addListener((message: unknown, sender) => {
-		if (
-			local ||
-			!isPage(sender, "/inference.html") ||
-			!message ||
-			typeof message !== "object" ||
-			!("type" in message) ||
-			message.type !== "close-idle-speech-host"
-		)
-			return
-		return navigator.locks.request(SPEECH_HOST_LOCK, async () => {
-			const claim: unknown = await browser.runtime.sendMessage({ type: "claim-speech-host-close" })
-			if (!claim || typeof claim !== "object" || !("ok" in claim) || claim.ok !== true) return { ok: false }
-			try {
-				await browser.offscreen.closeDocument()
-				host = undefined
-				return { ok: true }
-			} catch (error) {
-				// Keep preparations usable if the browser rejects document closure.
-				await browser.runtime.sendMessage({ type: "release-speech-host-close" }).catch(() => {})
-				throw error
-			}
-		})
+	const playerCommands = speechHostDispatcher({
+		"installed-voices": () => installedVoices(),
+		"prepare-speech-host": () => (local ? { ok: true } : ready().then(() => ({ ok: true }))),
+	})
+	const inferenceCommands = speechHostDispatcher({
+		"speech-gpu-available": async () => ({
+			ok: (await browser.storage.session.get(SPEECH_GPU_FAILURE_KEY))[SPEECH_GPU_FAILURE_KEY] !== true,
+		}),
+		"speech-gpu-failed": async () => {
+			await browser.storage.session.set({ [SPEECH_GPU_FAILURE_KEY]: true })
+			return { ok: true }
+		},
+		"close-idle-speech-host": () =>
+			navigator.locks.request(SPEECH_HOST_LOCK, async () => {
+				const claim = await sendSpeechHost({ type: "claim-speech-host-close" })
+				if (!claim.ok) return { ok: false }
+				try {
+					await browser.offscreen.closeDocument()
+					host = undefined
+					return { ok: true }
+				} catch (error) {
+					// Keep preparations usable if the browser rejects document closure.
+					await sendSpeechHost({ type: "release-speech-host-close" }).catch(() => {})
+					throw error
+				}
+			}),
 	})
 	browser.runtime.onMessage.addListener((message: unknown, sender) => {
-		if (
-			local ||
-			!isPage(sender, "/player.html") ||
-			!message ||
-			typeof message !== "object" ||
-			!("type" in message) ||
-			message.type !== "prepare-speech-host"
-		)
-			return
-		return ready().then(() => ({ ok: true }))
+		if (isPage(sender, "/player.html")) return playerCommands(message)
+		if (!local && isPage(sender, "/inference.html")) return inferenceCommands(message)
 	})
 	browser.runtime.onConnect.addListener((port) => {
-		if (port.name === "speech-server" && isPage(port.sender, "/inference.html")) {
+		if (port.name === SPEECH_SERVER_PORT && isPage(port.sender, "/inference.html")) {
 			host = port
 			connected?.()
 			connected = undefined
@@ -123,27 +135,6 @@ export function installSpeechBroker() {
 			})
 			return
 		}
-		if (!local || port.name !== "speech-client" || !isPage(port.sender, "/player.html")) return
-		const id = crypto.randomUUID()
-		clients.set(id, port)
-		port.onMessage.addListener((request: unknown) => {
-			if (!speechRequest(request)) {
-				port.disconnect()
-				return
-			}
-			const reply = (response: unknown) => {
-				if (clients.get(id) !== port) return
-				try {
-					port.postMessage(response)
-				} catch {
-					port.disconnect()
-				}
-			}
-			void local.request(id, request).then(reply, () => port.disconnect())
-		})
-		port.onDisconnect.addListener(() => {
-			clients.delete(id)
-			local.release(id)
-		})
+		if (port.name === SPEECH_CLIENT_PORT && isPage(port.sender, "/player.html")) localRegistry?.connect(port)
 	})
 }

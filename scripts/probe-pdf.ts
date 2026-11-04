@@ -1,14 +1,16 @@
 import { $ } from "bun"
 
 import { getVoice } from "../src/speech/catalog.ts"
+import { checkPdfIndexing, observePdfIndexing } from "./check-pdf-indexing.ts"
 import { checkPdfSelection } from "./check-pdf-selection.ts"
 import { pdfSpeechCheck } from "./check-pdf-speech.ts"
 import { observePlayerAudio } from "./check-player-controls.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
 import {
-	chromeExecutable,
 	chromeExtensionId,
-	chromeTestProfileArguments,
+	closeChromeProbe,
+	copyProbeExtension,
+	createChromeProbe,
 	projectRoot,
 	waitFor,
 } from "./probe-helpers.ts"
@@ -25,10 +27,9 @@ if (!accessOnly && Bun.env.PDF_SKIP_ACCESS_CHECK !== "1") {
 const speechCheck = Bun.env.PDF_CHECK_SPEECH === "1" && !accessOnly
 const root = projectRoot
 const extension = `${root}/.cache/pdf-probe`
-await $`rm -rf ${extension}`.quiet()
-await $`mkdir -p ${extension}`.quiet()
-await $`cp -R ${root + "/.output/chrome-mv3/."} ${extension}`.quiet()
+await copyProbeExtension("chrome", extension)
 await observeContextMenu(extension)
+await observePdfIndexing(extension)
 if (speechCheck) {
 	await observePlayerAudio(extension)
 	const built = await Bun.build({
@@ -71,22 +72,7 @@ if (!accessOnly) {
 	]
 	await Bun.write(`${extension}/manifest.json`, JSON.stringify(manifest))
 }
-const executable = await chromeExecutable()
-const createView = () =>
-	new Bun.WebView({
-		backend: {
-			type: "chrome",
-			url: false,
-			...(executable ? { path: executable } : {}),
-			argv: [
-				...chromeTestProfileArguments,
-				`--disable-extensions-except=${extension}`,
-				`--load-extension=${extension}`,
-			],
-		},
-		dataStore: "ephemeral",
-	})
-const view = createView()
+const view = await createChromeProbe(extension)
 const waitForPdf = <T>(read: () => Promise<T>, accept: (value: T) => boolean) => waitFor(read, accept, 90)
 async function probe() {
 	try {
@@ -115,6 +101,7 @@ async function probe() {
 		const status = await view.evaluate<string>("document.querySelector('#status').textContent")
 		if (status) throw new Error(status)
 		const textReadyMs = performance.now() - started
+		console.log("PDF indexed:", JSON.stringify({ textReadyMs }))
 		if (Bun.env.PDF_SMOKE === "1") {
 			const pages = await view.evaluate<number>("document.querySelectorAll('.pdf-page').length")
 			if (pages < 1) throw new Error("The PDF has no pages")
@@ -154,7 +141,35 @@ async function probe() {
 	})()`)
 		if (distant.highlighted !== "Bibliography" || distant.scroll < 1000 || distant.textPages >= 60)
 			throw new Error(`Lazy PDF mapping failed: ${JSON.stringify(distant)}`)
+		console.log("PDF selection regressions starting.")
 		const selection = await view.evaluate(checkPdfSelection)
+		console.log("PDF selection regressions complete.")
+		const indexingChecks = []
+		for (const scenario of ["missing", "selection"] as const) {
+			await view.navigate(
+				`chrome-extension://${id}/pdf.html?src=${encodeURIComponent(source)}&probeIndexing=${scenario}`,
+			)
+			await view.cdp("Page.bringToFront")
+			await view.evaluate("scrollTo(0,0)")
+			await waitForPdf(
+				() =>
+					view.evaluate<{ held: number; spans: number; status: string; pages: number; scroll: number }>(
+						"({held:window.__pdfIndexingGate?.held??0,spans:document.querySelectorAll('.pdf-page:first-child .textLayer span').length,status:document.querySelector('#status')?.textContent,pages:document.querySelectorAll('.pdf-page').length,scroll:scrollY})",
+					),
+				(value) => value.held > 0 && value.spans > 0,
+			)
+			indexingChecks.push(await view.evaluate(`${checkPdfIndexing}(${JSON.stringify(scenario)})`))
+			console.log("PDF indexing scenario passed:", scenario)
+		}
+		await view.navigate(`chrome-extension://${id}/pdf.html?src=${encodeURIComponent(source)}`)
+		await waitForPdf(
+			() =>
+				view.evaluate<boolean>(
+					"document.querySelector('#status')?.textContent === '' && !!document.querySelector('iframe')",
+				),
+			Boolean,
+		)
+
 		const crossPage = speechCheck
 			? await view.evaluate<string>(`(async()=>{
 				const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
@@ -171,7 +186,7 @@ async function probe() {
 			await view.evaluate(
 				`import(chrome.runtime.getURL('check-pdf-speech.js')).then(async m=>{await m.provisionVoice(${JSON.stringify(server.url.href)});await m.checkVoiceFormat()})`,
 			)
-		const finishedReadyMs = performance.now() - started
+		const articleChecksElapsedMs = performance.now() - started
 		const initialText = crossPage ?? "Their day-to-day use is nev-\nertheless constrained by four limitations"
 		await view.evaluate(`(async()=>{
 			const tab=await chrome.tabs.getCurrent();
@@ -221,12 +236,15 @@ async function probe() {
 			source: Bun.env.PDF_SOURCE_URL ? "remote PDF source" : "cached MUNI bytes served without CORS",
 			distant,
 			selection,
+			indexingChecks,
 			selectionReadyMs,
 			firstBufferMs,
 			speech,
 			navigationMs,
 			textReadyMs,
-			readyMs: finishedReadyMs,
+			articleChecksElapsedMs,
+			timingScope:
+				"textReadyMs measures initial indexing; articleChecksElapsedMs includes article/selection regression checks and is not startup latency.",
 			limits: speechCheck
 				? "Test-only host grant, cached MUNI PDF and pinned cached English model; actual CPU worker PCM and word timing validation across the acknowledgement/abstract page boundary. Does not validate physical audio quality, hardware GPU behavior, or target-device latency."
 				: "Checks missing-permission recovery, privileged fetch without CORS, rendering, text mapping, and the installed context-menu handler's close/reopen path with Tab.url omitted. Uses a test-only origin grant; native menu UI, activeTab grant, permission dialog, and speech are not covered.",
@@ -277,7 +295,7 @@ async function probe() {
 			)
 		}
 	} finally {
-		view.close()
+		await closeChromeProbe(view)
 		server.stop(true)
 	}
 }

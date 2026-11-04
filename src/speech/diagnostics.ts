@@ -1,3 +1,4 @@
+import { MAX_VOICE_CHOICE_LENGTH } from "./protocol.ts"
 import catalog from "./voices.json"
 
 /** Configured runtime values and elapsed times only; never source text or errors. */
@@ -24,7 +25,8 @@ export interface SpeechDiagnostics extends WorkerTimings {
 
 export interface SpeechPerformance extends SpeechDiagnostics {
 	timeToFirstBufferMs: number
-	audioContextState?: "running" | "suspended" | "closed" | "interrupted"
+	/** Native `playing` event readiness; not a hardware speaker-loopback measurement. */
+	timeToFirstAudioMs?: number
 	recordedAt: string
 }
 
@@ -51,7 +53,7 @@ export function isWorkerTimings(value: unknown): value is WorkerTimings {
 }
 
 function knownVoice(choice: unknown): choice is string {
-	if (typeof choice !== "string" || choice.length > 160) return false
+	if (typeof choice !== "string" || choice.length > MAX_VOICE_CHOICE_LENGTH) return false
 	const [id, speaker, extra] = choice.split("#")
 	const voice = catalog.voices.find((item) => item.id === id)
 	return (
@@ -78,27 +80,21 @@ export function speechDiagnostics(value: unknown): SpeechDiagnostics {
 	return result
 }
 
-/** Build the persisted record without accepting arbitrary strings from callers. */
+/** Buffer readiness and native playback readiness are distinct metrics. */
 export function firstBufferPerformance(
 	diagnostics: unknown,
 	timeToFirstBufferMs: number,
-	audioContextState?: string,
 ): SpeechPerformance | undefined {
-	if (
-		!elapsed(timeToFirstBufferMs) ||
-		!(
-			audioContextState === undefined ||
-			audioContextState === "running" ||
-			audioContextState === "suspended" ||
-			audioContextState === "closed" ||
-			audioContextState === "interrupted"
-		)
-	)
-		return
-	return {
-		...speechDiagnostics(diagnostics),
-		timeToFirstBufferMs,
-		...(audioContextState === undefined ? {} : { audioContextState }),
-		recordedAt: new Date().toISOString(),
-	}
+	if (!elapsed(timeToFirstBufferMs)) return
+	return { ...speechDiagnostics(diagnostics), timeToFirstBufferMs, recordedAt: new Date().toISOString() }
+}
+
+export function firstAudioPerformance(
+	diagnostics: unknown,
+	timeToFirstBufferMs: number,
+	timeToFirstAudioMs: number,
+): SpeechPerformance | undefined {
+	const record = firstBufferPerformance(diagnostics, timeToFirstBufferMs)
+	if (!record || !elapsed(timeToFirstAudioMs) || timeToFirstAudioMs < timeToFirstBufferMs) return
+	return { ...record, timeToFirstAudioMs }
 }

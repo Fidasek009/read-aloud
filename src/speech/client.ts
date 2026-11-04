@@ -1,10 +1,10 @@
 import { type Browser, browser } from "wxt/browser"
 
-import type { SpeechDiagnostics } from "./diagnostics.ts"
 import type { SpeechClip, SpeechRequest, SpeechResponse } from "./protocol.ts"
 
-import { speechDiagnostics } from "./diagnostics.ts"
-import { speechFailure } from "./errors.ts"
+import { type SpeechDiagnostics, speechDiagnostics } from "./diagnostics.ts"
+import { SPEECH_REQUEST_TIMEOUT_MS, speechFailure } from "./errors.ts"
+import { sendSpeechHost, SPEECH_CLIENT_PORT } from "./host-protocol.ts"
 
 // Firefox extension frames can receive typed arrays from another JS realm.
 function isPcm(value: unknown): value is Float32Array<ArrayBuffer> {
@@ -44,15 +44,14 @@ export class SpeechClient {
 	private async openPort(epoch: number) {
 		if (import.meta.env.BROWSER !== "firefox") {
 			try {
-				const ready: unknown = await browser.runtime.sendMessage({ type: "prepare-speech-host" })
-				if (!ready || typeof ready !== "object" || !("ok" in ready) || ready.ok !== true)
-					throw speechFailure("transport")
+				const ready = await sendSpeechHost({ type: "prepare-speech-host" })
+				if (!ready.ok) throw speechFailure("transport")
 			} catch {
 				throw speechFailure("transport")
 			}
 		}
-		if (epoch !== this.connectionEpoch) throw new DOMException("Reading stopped", "AbortError")
-		const port = browser.runtime.connect({ name: "speech-client" })
+		if (epoch !== this.connectionEpoch) throw speechFailure("cancelled")
+		const port = browser.runtime.connect({ name: SPEECH_CLIENT_PORT })
 		this.port = port
 		port.onMessage.addListener((response: SpeechResponse) => {
 			if (!response || !Number.isSafeInteger(response.id)) return
@@ -84,7 +83,7 @@ export class SpeechClient {
 			const timer = setTimeout(() => {
 				this.pending.delete(id)
 				reject(speechFailure("timeout"))
-			}, 90_000)
+			}, SPEECH_REQUEST_TIMEOUT_MS)
 			this.pending.set(id, { resolve, reject, timer })
 			try {
 				port.postMessage({ ...command, id })
@@ -100,10 +99,7 @@ export class SpeechClient {
 		await this.request({ type: "load", voice })
 	}
 	async synthesize(text: string, speed: number): Promise<SpeechClip> {
-		if (!this.port) {
-			if (!this.selectedVoice) throw new Error("Choose a downloaded voice first")
-			await this.load(this.selectedVoice)
-		}
+		if (!this.port || !this.selectedVoice) throw speechFailure("transport")
 		const { clip } = await this.request({ type: "synthesize", text, speed })
 		if (
 			!clip ||
@@ -149,6 +145,6 @@ export class SpeechClient {
 		const port = this.port
 		this.port = undefined
 		port?.disconnect()
-		this.rejectPending(new DOMException("Reading stopped", "AbortError"))
+		this.rejectPending(speechFailure("cancelled"))
 	}
 }

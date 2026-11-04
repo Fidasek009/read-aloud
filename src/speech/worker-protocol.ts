@@ -1,10 +1,8 @@
-import type { WorkerTimings } from "./diagnostics.ts"
 import type { WordTiming } from "./phonemes.ts"
-import type { VoiceConfig } from "./voice-config.ts"
 
-import { isWorkerTimings } from "./diagnostics.ts"
-import { speechRequest } from "./protocol.ts"
-import { validateConfig } from "./voice-config.ts"
+import { isWorkerTimings, type WorkerTimings } from "./diagnostics.ts"
+import { MAX_VOICE_CHOICE_LENGTH, speechRequest } from "./protocol.ts"
+import { validateConfig, type VoiceConfig } from "./voice-config.ts"
 
 function isArrayBuffer(value: unknown): value is ArrayBuffer {
 	return Object.prototype.toString.call(value) === "[object ArrayBuffer]"
@@ -50,7 +48,7 @@ export function isWorkerRequest(value: unknown): value is WorkerRequest {
 		!("voice" in value) ||
 		typeof value.voice !== "string" ||
 		!value.voice ||
-		value.voice.length > 160 ||
+		value.voice.length > MAX_VOICE_CHOICE_LENGTH ||
 		!("speaker" in value) ||
 		typeof value.speaker !== "number" ||
 		!Number.isSafeInteger(value.speaker) ||

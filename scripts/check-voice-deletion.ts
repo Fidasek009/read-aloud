@@ -1,7 +1,9 @@
 import type { browser } from "wxt/browser"
 
+import { voiceStore } from "../src/speech/voice-store.ts"
+
 /** Abort a real IDB delete in the catalog; this is injected only into test copies. */
-async function abortVoiceDeletion(id: string) {
+async function abortVoiceDeletion(id: string, schema: typeof voiceStore) {
 	const page = window as Window & { browser?: typeof browser; chrome?: typeof browser }
 	const api = page.browser ?? page.chrome
 	if (!api) throw new Error("Extension API is unavailable")
@@ -29,9 +31,9 @@ async function abortVoiceDeletion(id: string) {
 		const transaction = nativeTransaction.apply(this, args)
 		if (
 			!aborted &&
-			this.name === "read-aloud-voices" &&
+			this.name === schema.database &&
 			args[1] === "readwrite" &&
-			transaction.objectStoreNames.contains("voices")
+			transaction.objectStoreNames.contains(schema.store)
 		) {
 			aborted = true
 			queueMicrotask(() => transaction.abort())
@@ -49,13 +51,13 @@ async function abortVoiceDeletion(id: string) {
 		if (!aborted || button.disabled || !card.textContent?.includes("could not be deleted"))
 			throw new Error("Failed deletion did not recover its inline action")
 		const db = await new Promise<IDBDatabase>((resolve, reject) => {
-			const request = indexedDB.open("read-aloud-voices", 1)
+			const request = indexedDB.open(schema.database, schema.databaseVersion)
 			request.onsuccess = () => resolve(request.result)
 			request.onerror = () => reject(request.error)
 		})
 		try {
 			const retained = await new Promise<IDBValidKey | undefined>((resolve, reject) => {
-				const request = db.transaction("voices").objectStore("voices").getKey(id)
+				const request = db.transaction(schema.store).objectStore(schema.store).getKey(id)
 				request.onsuccess = () => resolve(request.result)
 				request.onerror = () => reject(request.error)
 			})
@@ -71,4 +73,5 @@ async function abortVoiceDeletion(id: string) {
 	}
 }
 
-export const checkAbortedVoiceDeletion = (id: string) => `(${abortVoiceDeletion.toString()})(${JSON.stringify(id)})`
+export const checkAbortedVoiceDeletion = (id: string) =>
+	`(${abortVoiceDeletion.toString()})(${JSON.stringify(id)},${JSON.stringify(voiceStore)})`

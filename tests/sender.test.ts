@@ -26,10 +26,10 @@ test("extension page senders match browser identity, protocol, host and an allow
 })
 
 test("invalid or absent sender URLs fail without throwing", () => {
-	expect(isExtensionPageSender(undefined, id, root)).toBe(false)
-	expect(isExtensionPageSender({ id }, id, root)).toBe(false)
-	expect(isExtensionPageSender({ id, url: "not a URL" }, id, root)).toBe(false)
-	expect(isExtensionPageSender(player, id, "not a URL")).toBe(false)
+	expect(isExtensionPageSender(undefined, id, root, ["/player.html"])).toBe(false)
+	expect(isExtensionPageSender({ id }, id, root, ["/player.html"])).toBe(false)
+	expect(isExtensionPageSender({ id, url: "not a URL" }, id, root, ["/player.html"])).toBe(false)
+	expect(isExtensionPageSender(player, id, "not a URL", ["/player.html"])).toBe(false)
 })
 
 test("background messages allow absent URL only with the extension identity and no source tab", () => {

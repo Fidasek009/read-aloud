@@ -1,8 +1,9 @@
 import { expect, test } from "bun:test"
 
-import { getVoice, qualityLabel, validateConfig, voiceChoice, voices } from "../src/speech/catalog.ts"
+import { getVoice, languageLabel, qualityLabel, voiceChoice, voices } from "../src/speech/catalog.ts"
 import { tokenizeText } from "../src/speech/phonemes.ts"
 import { voiceModelId } from "../src/speech/protocol.ts"
+import { validateConfig } from "../src/speech/voice-config.ts"
 
 test("catalog assets are pinned and multilingual speaker choices refer to the shared model", () => {
 	expect(new Set(voices.map((voice) => voice.id)).size).toBe(voices.length)
@@ -31,8 +32,7 @@ test("grapheme voice tokens keep original word spans and reject unreadable chara
 	expect(() => tokenizeText("123", map, "uk")).toThrow("cannot read")
 })
 
-test("language labels omit redundant regions and keep catalog dialects distinct", async () => {
-	const { getVoice, languageLabel } = await import("../src/speech/catalog.ts")
+test("language labels omit redundant regions and keep catalog dialects distinct", () => {
 	expect(languageLabel(getVoice("cs_CZ-jirka-medium"))).toBe("Czech")
 	expect(languageLabel(getVoice("en_US-ljspeech-medium"))).toBe("English (United States)")
 	expect(languageLabel(getVoice("en_GB-alan-medium"))).toBe("English (Great Britain)")

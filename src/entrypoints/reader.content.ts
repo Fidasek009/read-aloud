@@ -2,8 +2,11 @@ import { defineContentScript } from "#imports"
 import { browser } from "wxt/browser"
 
 import { isExtensionBackgroundSender, isExtensionPageSender } from "../extension/sender.ts"
+import { createReaderDispatcher } from "../reading/dispatch.ts"
 import { captureDocument, type ReadingDocument, sourceRange } from "../reading/document.ts"
-import { isReaderRequest, readerSize, shouldScrollToWord } from "../reading/host.ts"
+import { currentWordHighlight, paintReaderHighlight } from "../reading/layout.ts"
+import { isStartReadingMessage, readingMessages } from "../reading/messages.ts"
+import { ReaderSession } from "../reading/session.ts"
 
 import currentWordStyle from "../reading/current-word.css?inline"
 
@@ -13,14 +16,13 @@ export default defineContentScript({
 		const scope = globalThis as { __readAloudInstalled?: boolean }
 		if (scope.__readAloudInstalled) return
 		scope.__readAloudInstalled = true
-		let source: ReadingDocument | undefined
-		let session = ""
+		const session = new ReaderSession<ReadingDocument>()
 		let host: HTMLDivElement | undefined
 		let frame: HTMLIFrameElement | undefined
 		const pageAddress = () => `${location.origin}${location.pathname}${location.search}`
 		let sourceUrl = pageAddress()
 		let navigationTimer: ReturnType<typeof setInterval> | undefined
-		const key = "read-aloud-current-word"
+		const key = currentWordHighlight
 		const style = document.createElement("style")
 		style.textContent = currentWordStyle
 		const close = () => {
@@ -29,25 +31,36 @@ export default defineContentScript({
 			host?.remove()
 			host = undefined
 			frame = undefined
-			source = undefined
-			session = ""
+			session.close()
 			CSS.highlights?.delete(key)
 			style.remove()
 		}
+		const dispatch = createReaderDispatcher({
+			session,
+			selection() {
+				if (!window.getSelection()?.toString().trim()) return undefined
+				const selected = captureDocument("selection")
+				window.getSelection()?.removeAllRanges()
+				return selected
+			},
+			replaced() {
+				CSS.highlights?.delete(key)
+			},
+			close,
+			resize(size) {
+				if (!frame || !host) throw new Error("This reading session has ended.")
+				frame.style.height = `${size.height}px`
+				if (size.width !== undefined) host.style.setProperty("max-width", `${size.width}px`, "important")
+			},
+			highlight(start, end) {
+				paintReaderHighlight(session.source ? sourceRange(session.source, start, end) : null)
+			},
+		})
 		const onMessage: Parameters<typeof browser.runtime.onMessage.addListener>[0] = (message: unknown, sender) => {
-			if (
-				(!isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/")) &&
-					!isExtensionBackgroundSender(sender, browser.runtime.id, browser.runtime.getURL("/"))) ||
-				!message ||
-				typeof message !== "object" ||
-				!("type" in message)
-			)
-				return
-			if (
-				message.type === "start-reading" &&
-				"mode" in message &&
-				(message.mode === "selection" || message.mode === "article")
-			) {
+			if (!message || typeof message !== "object" || !("type" in message)) return
+			const background = isExtensionBackgroundSender(sender, browser.runtime.id, browser.runtime.getURL("/"))
+			const player = isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/"), ["/player.html"])
+			if (isStartReadingMessage(message) && background) {
 				try {
 					if ("reveal" in message && message.reveal === true && frame?.isConnected) {
 						frame.focus()
@@ -57,12 +70,12 @@ export default defineContentScript({
 					if (message.mode === "selection") window.getSelection()?.removeAllRanges()
 					sourceUrl = pageAddress()
 					if (frame?.isConnected) {
-						source = captured
-						return Promise.resolve({ ok: true, reuse: true, session })
+						session.replace(captured)
+						CSS.highlights?.delete(key)
+						return Promise.resolve({ ok: true, reuse: true, session: session.id })
 					}
 					close()
-					source = captured
-					session = crypto.randomUUID()
+					session.replace(captured)
 					host = document.createElement("div")
 					host.dataset.readAloud = ""
 					host.style.cssText =
@@ -70,7 +83,7 @@ export default defineContentScript({
 					const shadow = host.attachShadow({ mode: "open" })
 					frame = document.createElement("iframe")
 					frame.title = "Read Aloud playback controls"
-					frame.src = `${browser.runtime.getURL("/player.html")}#${session}`
+					frame.src = `${browser.runtime.getURL("/player.html")}#${session.id}`
 					if (import.meta.env.BROWSER !== "firefox") frame.allow = "autoplay"
 					frame.style.cssText =
 						"display:block;width:100%;height:52px;border:0;border-radius:12px;color-scheme:light dark;"
@@ -84,46 +97,12 @@ export default defineContentScript({
 					return Promise.resolve({ error: error instanceof Error ? error.message : "This page could not be read." })
 				}
 			}
-			if (message.type === "stop-reading") {
+			if (message.type === readingMessages.stop && background) {
 				close()
 				return Promise.resolve({ ok: true })
 			}
-			if (message.type !== "reader") return
-			if (!isReaderRequest(message)) return Promise.resolve({ error: "Invalid reading request." })
-			if (!session || message.session !== session) return Promise.resolve({ error: "This reading session has ended." })
-			if (message.command === "document") return Promise.resolve({ text: source?.text ?? "" })
-			if (message.command === "selection") {
-				if (!window.getSelection()?.toString().trim()) return Promise.resolve({ text: null })
-				try {
-					source = captureDocument("selection")
-					window.getSelection()?.removeAllRanges()
-					CSS.highlights?.delete(key)
-					return Promise.resolve({ text: source.text })
-				} catch (error) {
-					return Promise.resolve({
-						error: error instanceof Error ? error.message : "This selection could not be read.",
-					})
-				}
-			}
-			if (message.command === "close") {
-				close()
-				return Promise.resolve({ ok: true })
-			}
-			if (message.command === "resize" && frame) {
-				const size = readerSize(message.height, message.width)
-				frame.style.height = `${size.height}px`
-				if (host && size.width !== undefined) host.style.setProperty("max-width", `${size.width}px`, "important")
-			}
-			if (message.command === "highlight" && source) {
-				const range = sourceRange(source, message.start, message.end)
-				if (range && CSS.highlights) {
-					CSS.highlights.set(key, new Highlight(range))
-					const rect = range.getBoundingClientRect()
-					if (shouldScrollToWord(rect.top, rect.bottom, innerHeight))
-						window.scrollBy({ top: rect.top - innerHeight * 0.4, behavior: "instant" })
-				} else CSS.highlights?.delete(key)
-			}
-			return Promise.resolve({ ok: true })
+			if (message.type !== readingMessages.reader || (!background && !player)) return
+			return dispatch(message)
 		}
 		browser.runtime.onMessage.addListener(onMessage)
 		ctx.addEventListener(window, "pagehide", close)

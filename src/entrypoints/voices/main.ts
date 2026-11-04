@@ -1,5 +1,6 @@
 import { browser } from "wxt/browser"
 
+import { localKeys } from "../../extension/storage.ts"
 import { languageLabel, qualityLabel, voices } from "../../speech/catalog.ts"
 import { deleteVoice, downloadVoice, installedVoices, onVoicesChanged } from "../../speech/vault.ts"
 import "./style.css"
@@ -60,6 +61,11 @@ for (const [locale, name] of [...new Map(voices.map((voice) => [voice.locale, la
 )) {
 	language.add(new Option(name, locale))
 }
+for (const quality of [...new Set(voices.map((voice) => voice.quality))].sort((a, b) =>
+	qualityLabel(a).localeCompare(qualityLabel(b)),
+))
+	qualityFilter.add(new Option(qualityLabel(quality), quality))
+
 async function refreshInstalled() {
 	const current = ++renderRevision
 	const latest = await installedVoices()
@@ -108,10 +114,11 @@ function render() {
 				.toLocaleLowerCase()
 				.includes(query),
 	)
-	count.textContent =
+	const resultCount =
 		shown.length + shownOrphans.length
 			? `${shown.length + shownOrphans.length} of ${voices.length + orphans.length} models · ${installed.size} downloaded`
 			: "No models match these filters."
+	if (count.textContent !== resultCount) count.textContent = resultCount
 	for (const [id, row] of orphanRows) {
 		if (!installed.has(id)) {
 			row.remove()
@@ -143,7 +150,7 @@ function render() {
 			notice.hidden = true
 			try {
 				await deleteVoice(id, () =>
-					browser.storage.local.set({ voiceChange: { id, deleted: true, revision: crypto.randomUUID() } }),
+					browser.storage.local.set({ [localKeys.voiceChange]: { id, deleted: true, revision: crypto.randomUUID() } }),
 				)
 			} catch {
 				notice.textContent = "The voice could not be deleted. Please try again."
@@ -243,7 +250,7 @@ function render() {
 				try {
 					await deleteVoice(voice.id, () =>
 						browser.storage.local.set({
-							voiceChange: { id: voice.id, deleted: true, revision: crypto.randomUUID() },
+							[localKeys.voiceChange]: { id: voice.id, deleted: true, revision: crypto.randomUUID() },
 						}),
 					)
 				} catch {
@@ -271,10 +278,10 @@ function render() {
 						if (value === 1) downloadNotice(voice.id, "Finishing download…")
 					},
 					async () => {
-						const preferences = await browser.storage.local.get("voice")
+						const preferences = await browser.storage.local.get(localKeys.voice)
 						await browser.storage.local.set({
-							...(!preferences.voice ? { voice: voice.id } : {}),
-							voiceChange: { id: voice.id, deleted: false, revision: crypto.randomUUID() },
+							...(!preferences[localKeys.voice] ? { [localKeys.voice]: voice.id } : {}),
+							[localKeys.voiceChange]: { id: voice.id, deleted: false, revision: crypto.randomUUID() },
 						})
 					},
 				)

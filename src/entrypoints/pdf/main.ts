@@ -4,17 +4,16 @@ import { getDocument, GlobalWorkerOptions, TextLayer } from "pdfjs-dist"
 import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url"
 import { browser } from "wxt/browser"
 
+import { isExtensionBackgroundSender } from "../../extension/sender.ts"
+import { createReaderDispatcher } from "../../reading/dispatch.ts"
 import { overlappingRuns, type ReadingDocument, sourceRange, type TextRun } from "../../reading/document.ts"
-import { isReaderRequest, readerSize, shouldScrollToWord } from "../../reading/host.ts"
+import { currentWordHighlight, paintReaderHighlight } from "../../reading/layout.ts"
+import { readingMessages } from "../../reading/messages.ts"
 import { normalizeDocument } from "../../reading/normalize.ts"
-import {
-	isPdfCommand,
-	isPdfSelectionToken,
-	type PdfCommand,
-	pdfCommandKey,
-	pdfSelectionKey,
-} from "../../reading/pdf-control.ts"
+import { fetchPdf } from "../../reading/pdf-access.ts"
+import { isPdfCommand, isPdfSelectionToken, type PdfCommand, pdfSelectionKey } from "../../reading/pdf-control.ts"
 import { invalidateSelectionIndex, mapNativeSelection, selectRange } from "../../reading/selection.ts"
+import { ReaderSession } from "../../reading/session.ts"
 import { parsePdfReaders, readingKeys } from "../../reading/state.ts"
 import "pdfjs-dist/web/pdf_viewer.css"
 import "../../reading/current-word.css"
@@ -24,24 +23,26 @@ const pages = document.querySelector<HTMLDivElement>("#pages")!
 const status = document.querySelector<HTMLParagraphElement>("#status")!
 const controls = document.querySelector<HTMLDivElement>("#controls")!
 const params = new URLSearchParams(location.search)
-const key = "read-aloud-current-word"
-let session = ""
-let source: ReadingDocument = { text: "", runs: [] }
-let complete: ReadingDocument = source
+const highlightKey = currentWordHighlight
+const session = new ReaderSession<ReadingDocument>()
+let complete: ReadingDocument = { text: "", runs: [] }
 let nativeMapping: ReturnType<typeof mapNativeSelection> | undefined
 let currentHighlight: { start: number; end: number } | undefined
 let frame: HTMLIFrameElement | undefined
 let tabId: number | undefined
 let alive = true
-let revision = 0
 let allowStart = true
+let indexing = true
+const indexed = Promise.withResolvers<void>()
+void indexed.promise.catch(() => {})
+const ownTab = browser.tabs.getCurrent().then((tab) => (tabId = tab?.id))
 let pendingSelection: ReadingDocument | undefined
 let pendingSelectionKey: string | undefined
 function captureSelection() {
 	const selection = getSelection()
 	if (selection?.toString().trim() && selection.rangeCount) {
 		try {
-			pendingSelection = selectRange(complete, selection.getRangeAt(0))
+			pendingSelection = normalizeDocument(selectRange(complete, selection.getRangeAt(0)), true)
 		} catch {
 			pendingSelection = undefined
 		}
@@ -50,7 +51,7 @@ function captureSelection() {
 function takeSelection(): ReadingDocument | undefined {
 	const selection = getSelection()
 	const captured = selection?.toString().trim()
-		? selectRange(complete, selection.rangeCount ? selection.getRangeAt(0) : null)
+		? normalizeDocument(selectRange(complete, selection.rangeCount ? selection.getRangeAt(0) : null), true)
 		: pendingSelection
 	pendingSelection = undefined
 	selection?.removeAllRanges()
@@ -111,32 +112,34 @@ function ensureText(state: PageState): Promise<void> {
 function stop() {
 	nativeMapping = undefined
 	currentHighlight = undefined
-	revision++
 	pendingSelection = undefined
-	session = ""
+	session.close()
 	frame?.remove()
 	frame = undefined
-	CSS.highlights?.delete(key)
+	CSS.highlights?.delete(highlightKey)
 }
 
 async function start(mode: "article" | "selection", initial?: ReadingDocument) {
-	revision++
-	if (!initial && !complete.text.trim()) throw new Error("This PDF has no readable text layer yet.")
-	const selected = initial ?? (mode === "selection" ? takeSelection() : complete)
-	if (!selected) throw new Error("Select some PDF text first.")
-	source = selected
-	nativeMapping = undefined
-	currentHighlight = undefined
-	pendingSelection = undefined
+	// Any explicit request supersedes startup, including a rejected selection.
+	allowStart = false
+	const started = await session.start(async () => {
+		const selected = initial ?? (mode === "selection" ? takeSelection() : undefined)
+		if (mode === "selection" && !selected) throw new Error("Select some PDF text first.")
+		if (!selected) await indexed.promise
+		const scope = selected ?? complete
+		if (!scope.text.trim()) throw new Error("This PDF has no readable text layer.")
+		return scope
+	})
+	if (!started || !alive) return
+	clearMapping()
 	if (frame) {
-		frame.contentWindow?.dispatchEvent(new Event("read-aloud-source-changed"))
+		frame.contentWindow?.dispatchEvent(new Event(readingMessages.sourceChanged))
 		return
 	}
 	frame = document.createElement("iframe")
-	session = crypto.randomUUID()
 	frame.title = "Read Aloud playback controls"
 	if (import.meta.env.BROWSER !== "firefox") frame.allow = "autoplay"
-	frame.src = `${browser.runtime.getURL("/player.html")}#${session}`
+	frame.src = `${browser.runtime.getURL("/player.html")}#${session.id}`
 	controls.append(frame)
 }
 
@@ -150,94 +153,66 @@ async function handleCommand(command: PdfCommand) {
 		frame.focus()
 		return
 	}
-	allowStart = true
-	await start(command.mode)
+	const reading = start(command.mode)
+	if (command.mode === "article" && indexing) {
+		// Accept preparation without holding the background's routing lock until
+		// indexing finishes. A newer selection/stop can invalidate this request.
+		void reading.catch((error: unknown) => {
+			if (alive) status.textContent = error instanceof Error ? error.message : "This PDF could not be read."
+		})
+		return
+	}
+	await reading
 	status.textContent = ""
 }
 
-let commands = Promise.resolve()
-const receiving = new Set<string>()
-function receiveCommand(key: string, value: unknown) {
+// A synchronous guard leaves unrelated runtime messages for their own receiver.
+// Identity is established before the load routine yields its first document work.
+browser.runtime.onMessage.addListener((message: unknown, sender) => {
 	if (
-		!isPdfCommand(value) ||
-		value.tabId !== tabId ||
-		!alive ||
-		key !== pdfCommandKey(value.tabId, value.revision) ||
-		"result" in value ||
-		receiving.has(key)
+		!isPdfCommand(message) ||
+		message.tabId !== tabId ||
+		!isExtensionBackgroundSender(sender, browser.runtime.id, browser.runtime.getURL("/"))
 	)
 		return
-	receiving.add(key)
-	commands = commands
-		.then(async () => {
-			try {
-				// A sender can time out or the source tab can close while this is queued.
-				const pending = await browser.storage.session.get(key)
-				if (!alive || !(key in pending)) return
-				let result: { ok: true } | { ok: false; error: string }
-				try {
-					await handleCommand(value)
-					result = { ok: true }
-				} catch (error) {
-					const message =
-						error instanceof Error
-							? error.message
-							: "This PDF could not be read. Select the text again and try Read selection."
-					status.textContent = message
-					result = { ok: false, error: message }
-				}
-				if (alive) await browser.storage.session.set({ [key]: { ...value, result } })
-			} finally {
-				receiving.delete(key)
-			}
-		})
-		.catch(() => {
-			if (alive) status.textContent = "The PDF command could not be delivered. Try Read selection again."
-		})
-}
-browser.storage.onChanged.addListener((changes, area) => {
-	if (area !== "session") return
-	for (const [key, change] of Object.entries(changes)) receiveCommand(key, change.newValue)
+	return (async () => {
+		try {
+			await handleCommand(message)
+			return { ok: true }
+		} catch (error) {
+			const failure = error instanceof Error ? error.message : "This PDF could not be read. Select the text again."
+			if (alive) status.textContent = failure
+			return { ok: false, error: failure }
+		}
+	})()
 })
 
-window.readAloudHost = async (message) => {
-	if (!isReaderRequest(message)) return { error: "Invalid reading request." }
-	if (!session || message.session !== session) return { error: "This reading session has ended." }
-	if (message.command === "document") return { text: source.text }
-	if (message.command === "selection") {
-		try {
-			const captured = takeSelection()
-			if (!captured) return { text: null }
-			revision++
-			source = captured
-			nativeMapping = undefined
-			currentHighlight = undefined
-			CSS.highlights?.delete(key)
-			return { text: source.text }
-		} catch (error) {
-			return {
-				error: error instanceof Error ? error.message : "This PDF selection could not be read. Select it again.",
-			}
-		}
-	}
-	if (message.command === "close") {
-		stop()
-		return { ok: true }
-	}
-	if (message.command === "resize" && frame) {
-		const size = readerSize(message.height, message.width)
+function clearMapping() {
+	nativeMapping = undefined
+	currentHighlight = undefined
+	pendingSelection = undefined
+	CSS.highlights?.delete(highlightKey)
+}
+
+window.readAloudHost = createReaderDispatcher({
+	session,
+	selection: takeSelection,
+	replaced: clearMapping,
+	close: stop,
+	resize(size) {
+		if (!frame) throw new Error("This reading session has ended.")
 		frame.style.height = `${size.height}px`
 		if (size.width !== undefined) controls.style.maxWidth = `${size.width}px`
-	}
-	if (message.command === "highlight") {
-		currentHighlight = { start: message.start, end: message.end }
-		const printed = nativeMapping?.document ?? source
-		const bounds = nativeMapping ? nativeMapping.range(message.start, message.end) : message
-		if (!bounds) {
-			CSS.highlights?.delete(key)
-			return { ok: true }
+	},
+	async highlight(start, end) {
+		currentHighlight = { start, end }
+		const printed = nativeMapping?.document ?? session.source
+		const bounds = nativeMapping ? nativeMapping.range(start, end) : { start, end }
+		if (!bounds || !printed) {
+			paintReaderHighlight(null)
+			return
 		}
-		const current = revision
+		const current = session.revision
 		try {
 			for (const run of overlappingRuns(printed, bounds.start, bounds.end)) {
 				const page = owners.get(run.node)
@@ -245,19 +220,12 @@ window.readAloudHost = async (message) => {
 			}
 		} catch {
 			if (alive) status.textContent = "Could not highlight this page. Playback continues."
-			return { ok: false }
+			throw new Error("Could not highlight this page. Playback continues.")
 		}
-		if (current !== revision || !alive || !frame) return { ok: false }
-		const range = sourceRange(printed, bounds.start, bounds.end)
-		if (range && CSS.highlights) {
-			CSS.highlights.set(key, new Highlight(range))
-			const rect = range.getBoundingClientRect()
-			if (shouldScrollToWord(rect.top, rect.bottom, innerHeight))
-				window.scrollBy({ top: rect.top - innerHeight * 0.4, behavior: "instant" })
-		} else CSS.highlights?.delete(key)
-	}
-	return { ok: true }
-}
+		if (!session.isCurrent(current) || !alive || !frame) return
+		paintReaderHighlight(sourceRange(printed, bounds.start, bounds.end))
+	},
+})
 
 const renderers = new Map<Element, PageState>()
 const observer = new IntersectionObserver(
@@ -321,8 +289,7 @@ async function load() {
 	if (!raw) throw new Error("Open a PDF and choose Read Aloud from the browser toolbar.")
 	const url = new URL(raw)
 	if (!["https:", "http:", "file:"].includes(url.protocol)) throw new Error("This PDF address is not supported.")
-	tabId = (await browser.tabs.getCurrent())?.id
-	for (const [key, value] of Object.entries(await browser.storage.session.get(null))) receiveCommand(key, value)
+	await ownTab
 	let initial: ReadingDocument | undefined
 	if (params.has("source") && tabId !== undefined) {
 		const stored = await browser.storage.session.get(readingKeys.pdfReaders)
@@ -347,7 +314,7 @@ async function load() {
 	GlobalWorkerOptions.workerSrc = new URL(pdfWorkerUrl, location.href).href
 	let bytes: Uint8Array<ArrayBuffer> | undefined
 	for (let attempt = 0; attempt < 2; attempt++) {
-		const response = await fetchPdf(url, lifecycle.signal)
+		const response = await fetchPdf(url, lifecycle.signal, status)
 		if (!response.ok) throw new Error("The PDF could not be downloaded. Open it on its original site and try again.")
 		const candidate = new Uint8Array(await response.arrayBuffer())
 		// A login/challenge response can establish cookies before serving the
@@ -402,9 +369,25 @@ async function load() {
 		throw error
 	})
 	const result: ReadingDocument = { text: "", runs: [] }
+	complete = result
+	const textRequests = new Map<number, Promise<{ page: PDFPageProxy; content: PageState["content"] }>>()
+	const pageText = (number: number) => {
+		let pending = textRequests.get(number)
+		if (!pending) {
+			pending = pdf.getPage(number).then(async (page) => ({ page, content: await page.getTextContent() }))
+			void pending.catch(() => {}) // A stopped reader may never consume prefetched work.
+			textRequests.set(number, pending)
+		}
+		return pending
+	}
+	if (pdf.numPages > 1) void pageText(2)
 	for (let n = 1; n <= pdf.numPages && alive; n++) {
+		// Keep progress visual without announcing every extracted page.
+		status.setAttribute("aria-live", "off")
 		status.textContent = `Opening PDF · ${n} of ${pdf.numPages} pages`
-		const page = await pdf.getPage(n)
+		const { page, content } = await pageText(n)
+		textRequests.delete(n)
+		if (n + 1 <= pdf.numPages) void pageText(n + 1)
 		const scale = Math.min(1.4, Math.max(280, innerWidth - 40) / page.getViewport({ scale: 1 }).width)
 		const viewport = page.getViewport({ scale })
 		const section = document.createElement("section")
@@ -419,7 +402,6 @@ async function load() {
 		container.className = "textLayer"
 		section.append(canvas, container)
 		pages.append(section)
-		const content = await page.getTextContent()
 		const state: PageState = {
 			page,
 			canvas,
@@ -446,15 +428,20 @@ async function load() {
 			if (item.hasEOL) result.text += "\n"
 		}
 		result.text = result.text.replace(/\n?$/u, "\n\n")
+		invalidateSelectionIndex(complete)
 		renderers.set(section, state)
 		observer.observe(section)
 	}
 	complete = normalizeDocument(result, true)
+	indexing = false
+	indexed.resolve()
 	status.textContent = ""
-	if (initial && source === initial && frame && alive) {
+	status.setAttribute("aria-live", "polite")
+	if (initial && session.source === initial && frame && alive) {
 		try {
 			nativeMapping = mapNativeSelection(complete, initial.text)
-			if (currentHighlight) await window.readAloudHost?.({ session, command: "highlight", ...currentHighlight })
+			if (currentHighlight)
+				await window.readAloudHost?.({ session: session.id, command: "highlight", ...currentHighlight })
 		} catch {
 			status.textContent = "Highlighting is unavailable for this selection."
 		}
@@ -462,132 +449,9 @@ async function load() {
 	if (!initial && allowStart && alive) await start("article")
 }
 
-async function fetchPdf(url: URL, signal: AbortSignal): Promise<Response> {
-	if (url.protocol === "file:") {
-		const read = () => fetch(url, { signal })
-		try {
-			const response = await read()
-			if (response.ok) return response
-		} catch {
-			if (signal.aborted) throw signal.reason
-			/* A browser file-access grant may be required. */
-		}
-		status.textContent = "Allow local file access to open this PDF directly."
-		const allow = document.createElement("button")
-		allow.textContent = "Allow local file access"
-		const fallback = document.createElement("button")
-		fallback.textContent = "Choose file instead"
-		status.append(" ", allow, " ", fallback)
-		const direct =
-			import.meta.env.BROWSER === "firefox"
-				? undefined
-				: await new Promise<Response | undefined>((resolve, reject) => {
-						const abort = () => reject(signal.reason)
-						signal.addEventListener("abort", abort, { once: true })
-						const done = (response: Response | undefined) => {
-							signal.removeEventListener("abort", abort)
-							resolve(response)
-						}
-						fallback.onclick = () => done(undefined)
-						allow.onclick = () => {
-							void browser.permissions
-								.request({ origins: ["file:///*"] })
-								.then(async (granted) => {
-									if (!granted) return
-									try {
-										const response = await read()
-										if (response.ok) {
-											done(response)
-											return
-										}
-									} catch {
-										/* Explain the actual browser boundary below. */
-									}
-									const allowed = await browser.extension.isAllowedFileSchemeAccess()
-									status.firstChild!.textContent =
-										allowed || import.meta.env.BROWSER === "firefox"
-											? "The browser blocked reading this local file directly."
-											: "Enable local file access for Read Aloud in your browser’s extension settings, then try again."
-									allow.textContent = "Try again"
-								})
-								.catch(() => {
-									status.firstChild!.textContent =
-										"Local file access could not be granted. Check your browser’s extension settings."
-								})
-						}
-					})
-		if (direct) {
-			status.textContent = "Opening PDF…"
-			return direct
-		}
-		// A user-selected File works in both browsers without filesystem-wide access.
-		status.textContent =
-			import.meta.env.BROWSER === "firefox"
-				? "Firefox blocks direct access to local PDF files. Choose this PDF to read it on your device."
-				: "Choose this PDF to open it locally."
-		const input = document.createElement("input")
-		input.type = "file"
-		input.accept = "application/pdf,.pdf"
-		input.setAttribute("aria-label", "Choose PDF")
-		status.append(" ", input)
-		const file = await new Promise<File>((resolve, reject) => {
-			const abort = () => reject(signal.reason)
-			signal.addEventListener("abort", abort, { once: true })
-			input.onchange = () => {
-				const selected = input.files?.[0]
-				if (!selected) return
-				signal.removeEventListener("abort", abort)
-				resolve(selected)
-			}
-		})
-		status.textContent = "Opening PDF…"
-		return new Response(file)
-	}
-
-	const request = () =>
-		fetch(url, {
-			credentials: "include",
-			referrerPolicy: "no-referrer",
-			signal: AbortSignal.any([signal, AbortSignal.timeout(60_000)]),
-		})
-	try {
-		return await request()
-	} catch (error) {
-		if (signal.aborted) throw error
-		const origins = [`${url.protocol}//${url.hostname}/*`]
-		if (await browser.permissions.contains({ origins }))
-			throw new Error("The PDF could not be reached. Check your connection and the original PDF tab, then try again.", {
-				cause: error,
-			})
-		// The activeTab grant belongs to the original PDF tab. Firefox does not
-		// transfer it to this new extension tab, and most PDF servers do not allow CORS.
-		status.textContent = `Allow access to ${url.hostname} to open this PDF.`
-		const open = document.createElement("button")
-		open.textContent = "Allow access and open PDF"
-		status.append(" ", open)
-		await new Promise<void>((resolve) => {
-			open.onclick = () => {
-				// Keep the permission request inside the trusted click handler.
-				void browser.permissions
-					.request({ origins })
-					.then((granted) => {
-						if (granted) resolve()
-						else status.firstChild!.textContent = `Access to ${url.hostname} is needed to open this PDF. `
-					})
-					.catch(() => {
-						status.firstChild!.textContent = "Access could not be requested. Reload this reader and try again. "
-					})
-			}
-		})
-		status.textContent = "Opening PDF…"
-		try {
-			return await request()
-		} catch (cause) {
-			throw new Error("The PDF could not be reached. Open it on its original site, then try again.", { cause })
-		}
-	}
-}
 void load().catch((error) => {
+	indexed.reject(error)
+	status.setAttribute("aria-live", "polite")
 	if (pendingSelectionKey) void browser.storage.session.remove(pendingSelectionKey)
 	if (!alive) return
 	status.textContent = error instanceof Error ? error.message : "This PDF could not be opened."

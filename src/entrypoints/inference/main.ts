@@ -3,7 +3,13 @@ import { browser } from "wxt/browser"
 import { isExtensionBackgroundSender, isExtensionPageSender } from "../../extension/sender.ts"
 import { SpeechEngine } from "../../speech/engine.ts"
 import { SPEECH_HOST_LOCK, SpeechHostLifetime } from "../../speech/host-lifetime.ts"
-import { speechRequest } from "../../speech/protocol.ts"
+import {
+	sendSpeechHost,
+	SPEECH_CLIENT_PORT,
+	SPEECH_SERVER_PORT,
+	speechHostDispatcher,
+} from "../../speech/host-protocol.ts"
+import { SpeechPortRegistry } from "../../speech/port-registry.ts"
 import { SpeechService } from "../../speech/service.ts"
 
 const service = new SpeechService(new SpeechEngine())
@@ -24,9 +30,9 @@ function scheduleClose() {
 function requestClose() {
 	closeTimer = undefined
 	if (!alive) return
-	void browser.runtime.sendMessage({ type: "close-idle-speech-host" }).then(
-		(response: unknown) => {
-			if (response && typeof response === "object" && "ok" in response && response.ok === true) return
+	void sendSpeechHost({ type: "close-idle-speech-host" }).then(
+		(response) => {
+			if (response.ok) return
 			const delay = lifetime.closeDelay(performance.now())
 			if (delay === undefined || delay > 0) {
 				closeFailures = 0
@@ -52,55 +58,34 @@ function requestClose() {
 
 function connect() {
 	if (!alive || connectedPort) return
-	const port = browser.runtime.connect({ name: "speech-server" })
+	const port = browser.runtime.connect({ name: SPEECH_SERVER_PORT })
 	connectedPort = port
 	port.onDisconnect.addListener(() => {
 		if (connectedPort !== port) return
 		connectedPort = undefined
 	})
 }
-browser.runtime.onConnect.addListener((port) => {
-	if (
-		port.name !== "speech-client" ||
-		!isExtensionPageSender(port.sender, browser.runtime.id, browser.runtime.getURL("/"), ["/player.html"])
-	)
-		return
-	const client = crypto.randomUUID()
-	if (!alive || !lifetime.connect(client)) {
-		port.disconnect()
-		return
-	}
-	closeFailures = 0
-	scheduleClose()
-	let open = true
-	port.onMessage.addListener((request: unknown) => {
-		if (!speechRequest(request)) {
-			port.disconnect()
-			return
-		}
-		void service.request(client, request).then(
-			(response) => {
-				if (!open || !alive) return
-				try {
-					port.postMessage(response)
-				} catch {
-					port.disconnect()
-				}
-			},
-			() => port.disconnect(),
-		)
-	})
-	port.onDisconnect.addListener(() => {
-		open = false
-		service.release(client)
+const registry = new SpeechPortRegistry(service, {
+	connect(client) {
+		if (!alive || !lifetime.connect(client)) return false
+		closeFailures = 0
+		scheduleClose()
+		return true
+	},
+	disconnect(client) {
 		lifetime.disconnect(client, performance.now())
 		scheduleClose()
-	})
+	},
 })
-browser.runtime.onMessage.addListener((message: unknown, sender) => {
-	if (!isExtensionBackgroundSender(sender, browser.runtime.id, browser.runtime.getURL("/"))) return
-	if (!alive || !message || typeof message !== "object" || !("type" in message)) return
-	if (message.type === "reserve-speech-host") {
+browser.runtime.onConnect.addListener((port) => {
+	if (
+		port.name === SPEECH_CLIENT_PORT &&
+		isExtensionPageSender(port.sender, browser.runtime.id, browser.runtime.getURL("/"), ["/player.html"])
+	)
+		registry.connect(port)
+})
+const backgroundCommands = speechHostDispatcher({
+	"reserve-speech-host": () => {
 		// Only the broker sends reservations, while holding the lifetime lock.
 		// Thus any earlier claim belongs to a finished or terminated operation.
 		lifetime.reopen()
@@ -109,32 +94,36 @@ browser.runtime.onMessage.addListener((message: unknown, sender) => {
 			closeFailures = 0
 			scheduleClose()
 		}
-		return Promise.resolve({ ok: reserved })
-	}
-	if (message.type === "claim-speech-host-close") {
+		return { ok: reserved }
+	},
+	"claim-speech-host-close": () => {
 		const claimed = lifetime.claimClose(performance.now())
 		if (claimed) {
 			clearTimeout(closeTimer)
 			closeTimer = undefined
 			service.dispose()
 		}
-		return Promise.resolve({ ok: claimed })
-	}
-	if (message.type === "release-speech-host-close") {
+		return { ok: claimed }
+	},
+	"release-speech-host-close": () => {
 		lifetime.reopen()
-		return Promise.resolve({ ok: true })
-	}
-	if (message.type === "speech-voice-deleted" && "id" in message && typeof message.id === "string") {
+		return { ok: true }
+	},
+	"speech-voice-deleted": (message) => {
 		service.voiceDeleted(message.id)
-		return Promise.resolve({ ok: true })
-	}
-	if (message.type === "connect-speech-host") {
+		return { ok: true }
+	},
+	"connect-speech-host": () => {
 		const old = connectedPort
 		connectedPort = undefined
 		old?.disconnect()
 		connect()
-		return Promise.resolve({ ok: true })
-	}
+		return { ok: true }
+	},
+})
+browser.runtime.onMessage.addListener((message: unknown, sender) => {
+	if (alive && isExtensionBackgroundSender(sender, browser.runtime.id, browser.runtime.getURL("/")))
+		return backgroundCommands(message)
 })
 window.addEventListener("pagehide", () => {
 	alive = false

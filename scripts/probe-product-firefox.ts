@@ -1,10 +1,11 @@
 import { $ } from "bun"
 
+import { voices } from "../src/speech/catalog.ts"
 import { checkPdfSelection } from "./check-pdf-selection.ts"
-import { checkSpeedPanel, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
+import { checkSpeedFocus, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
 import { checkAbortedVoiceDeletion } from "./check-voice-deletion.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
-import { assert, projectRoot, waitFor } from "./probe-helpers.ts"
+import { assert, copyProbeExtension, projectRoot, waitFor } from "./probe-helpers.ts"
 import {
 	recoverSelectionAfterFailure,
 	recoverSelectionFromMenu,
@@ -14,9 +15,8 @@ import {
 
 const root = projectRoot
 const out = `${root}/.cache/product-probe/firefox`
-await $`rm -rf ${out}`.quiet()
-await $`mkdir -p ${out} ${root + "/.cache/product-probe/profiles"}`.quiet()
-await $`cp -R ${root + "/.output/firefox-mv3/."} ${out}`.quiet()
+await copyProbeExtension("firefox", out)
+await $`mkdir -p ${root + "/.cache/product-probe/profiles"}`.quiet()
 await observePlayerAudio(out)
 await observeContextMenu(out)
 if (Bun.env.DIRECT_READER_PROBE === "1") {
@@ -160,7 +160,7 @@ try {
 	)
 	await waitFor(
 		() => script<number>("document.querySelectorAll('section').length"),
-		(value) => value === 178,
+		(value) => value === voices.length,
 	)
 	await script("browser.storage.local.set({voice:'cs_CZ-jirka-medium#999'})")
 	const tab = await script<{ id: number }>(`browser.tabs.create({url:${JSON.stringify(server.url.href)},active:true})`)
@@ -187,7 +187,7 @@ try {
 	await run("/window", { handle: voicesHandle })
 	await script(`browser.scripting.executeScript({target:{tabId:${tab.id}},files:['content-scripts/reader.js']})`)
 	const started = await script(
-		`browser.tabs.sendMessage(${tab.id},{type:'start-reading',mode:'selection'},{frameId:0})`,
+		`browser.runtime.sendMessage({type:'probe-context-menu',info:{menuItemId:'read-selection'},tab:{id:${tab.id}}})`,
 	)
 	assert(started.ok, started.error ?? "Reader did not start")
 	await run("/window", { handle: sourceHandle })
@@ -460,7 +460,7 @@ try {
 	await script(
 		"(()=>{document.querySelector('#volume').value='100';document.querySelector('#volume').dispatchEvent(new Event('input'));document.querySelector('#volume').dispatchEvent(new Event('change'))})()",
 	)
-	console.log("Firefox speed panel:", JSON.stringify(await script(checkSpeedPanel)))
+	console.log("Firefox speed panel:", JSON.stringify(await script(checkSpeedFocus)))
 	const pressPlay = async () => {
 		await script("document.querySelector('#play').focus()")
 		await run("/actions", {
@@ -512,11 +512,9 @@ try {
 	)
 	await run("/frame", { id: null })
 	await run("/window", { handle: voicesHandle })
-	await script(`(async()=>{
-		const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('read-aloud-voices',1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
-		window.__probeSavedVoice=await new Promise((resolve,reject)=>{const req=db.transaction('voices').objectStore('voices').get('cs_CZ-jirka-medium');req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
-		db.close();
-	})()`)
+	await script(
+		`import('./voice-fixtures.js').then(async module => {window.__probeSavedVoice = await module.readStoredVoice('cs_CZ-jirka-medium')})`,
+	)
 	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .danger').click()`)
 	await waitFor(
 		() => script<boolean>("!document.querySelector('[data-voice=\"cs_CZ-jirka-medium\"] .danger')"),
@@ -537,11 +535,9 @@ try {
 	await waitFor(() => script("!document.querySelector('[data-read-aloud]')"), Boolean)
 	await run("/window", { handle: voicesHandle })
 	console.log("Firefox pause, close, and deletion passed.")
-	await script(`(async()=>{
-		const db=await new Promise((resolve,reject)=>{const req=indexedDB.open('read-aloud-voices',1);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)});
-		await new Promise((resolve,reject)=>{const tx=db.transaction('voices','readwrite');tx.objectStore('voices').put(window.__probeSavedVoice);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error)});
-		db.close();delete window.__probeSavedVoice;await browser.storage.local.set({voice:'cs_CZ-jirka-medium'});
-	})()`)
+	await script(
+		`import('./voice-fixtures.js').then(async module => {await module.writeStoredVoice(window.__probeSavedVoice);delete window.__probeSavedVoice;await browser.storage.local.set({voice:'cs_CZ-jirka-medium'})})`,
+	)
 	const originalPdf = await script<{ id: number }>(
 		`browser.tabs.create({url:${JSON.stringify(pdfSource)},active:false})`,
 	)

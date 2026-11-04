@@ -1,5 +1,6 @@
 import type { browser } from "wxt/browser"
 
+import { playbackCopy } from "../src/playback/copy.ts"
 import { failNextPlayback } from "./check-player-controls.ts"
 import { assert, waitFor } from "./probe-helpers.ts"
 
@@ -59,13 +60,12 @@ function expression<Args extends unknown[], Result>(operation: (...args: Args) =
 }
 const readState = (driver: RecoveryDriver) => driver.player<ReturnType<typeof playerState>>(expression(playerState))
 const readScope = (driver: RecoveryDriver) => driver.player<string>(expression(currentScope))
-const safeFailure = "Reading could not continue. Press Play to try again."
 
 async function failAndCheckRetry(driver: RecoveryDriver) {
 	await driver.player(failNextPlayback)
 	const failed = await waitFor(
 		() => readState(driver),
-		(state) => state.status === safeFailure,
+		(state) => state.status === playbackCopy.failed,
 	)
 	assert(failed.canRetry, "Playback failure disabled Play instead of offering recovery")
 }

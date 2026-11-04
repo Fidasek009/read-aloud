@@ -1,14 +1,17 @@
 /** Development-only: distinguish ORT runtime initialization from a large voice session. */
-import { $ } from "bun"
 import protobuf from "protobufjs"
 
 import { instrumentModel } from "../src/speech/instrument.ts"
-import { chromeExecutable, chromeExtensionId, chromeTestProfileArguments, projectRoot } from "./probe-helpers.ts"
+import {
+	chromeExtensionId,
+	closeChromeProbe,
+	copyProbeExtension,
+	createChromeProbe,
+	projectRoot,
+} from "./probe-helpers.ts"
 
 const extension = `${projectRoot}/.cache/cold-phases-probe`
-await $`rm -rf ${extension}`.quiet()
-await $`mkdir -p ${extension}`.quiet()
-await $`cp -R ${projectRoot + "/.output/chrome-mv3/."} ${extension}`.quiet()
+await copyProbeExtension("chrome", extension)
 
 const schema = protobuf.parse(await Bun.file(`${projectRoot}/vendor/onnx/onnx.proto3`).text()).root
 const Model = schema.lookupType("onnx.ModelProto")
@@ -85,16 +88,7 @@ const server = Bun.serve({
 			headers: { "Access-Control-Allow-Origin": "*", "Cross-Origin-Resource-Policy": "cross-origin" },
 		}),
 })
-const executable = await chromeExecutable()
-const view = new Bun.WebView({
-	backend: {
-		type: "chrome",
-		url: false,
-		...(executable ? { path: executable } : {}),
-		argv: [...chromeTestProfileArguments, `--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
-	},
-	dataStore: "ephemeral",
-})
+const view = await createChromeProbe(extension)
 interface Evaluation {
 	result: {
 		value: {
@@ -161,6 +155,6 @@ try {
 		) + "\n",
 	)
 } finally {
-	view.close()
+	await closeChromeProbe(view)
 	server.stop(true)
 }

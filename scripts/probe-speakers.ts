@@ -1,11 +1,13 @@
-import { $ } from "bun"
-
-import { chromeExecutable, chromeExtensionId, chromeTestProfileArguments, projectRoot } from "./probe-helpers.ts"
+import {
+	chromeExtensionId,
+	closeChromeProbe,
+	copyProbeExtension,
+	createChromeProbe,
+	projectRoot,
+} from "./probe-helpers.ts"
 
 const extension = `${projectRoot}/.cache/speaker-probe`
-await $`rm -rf ${extension}`.quiet()
-await $`mkdir -p ${extension}`.quiet()
-await $`cp -R ${projectRoot + "/.output/chrome-mv3/."} ${extension}`.quiet()
+await copyProbeExtension("chrome", extension)
 const build = await Bun.build({
 	entrypoints: [`${projectRoot}/scripts/check-speakers.ts`],
 	outdir: extension,
@@ -26,16 +28,7 @@ const server = Bun.serve({
 			headers: { "Access-Control-Allow-Origin": "*", "Cross-Origin-Resource-Policy": "cross-origin" },
 		}),
 })
-const executable = await chromeExecutable()
-const view = new Bun.WebView({
-	backend: {
-		type: "chrome",
-		url: false,
-		...(executable ? { path: executable } : {}),
-		argv: [...chromeTestProfileArguments, `--disable-extensions-except=${extension}`, `--load-extension=${extension}`],
-	},
-	dataStore: "ephemeral",
-})
+const view = await createChromeProbe(extension)
 try {
 	await view.navigate(`chrome-extension://${chromeExtensionId(extension)}/voices.html`)
 	const result = await view.cdp<{ result: { value: unknown }; exceptionDetails?: { text: string } }>(
@@ -64,6 +57,6 @@ try {
 		) + "\n",
 	)
 } finally {
-	view.close()
+	await closeChromeProbe(view)
 	server.stop(true)
 }

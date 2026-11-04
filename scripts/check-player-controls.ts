@@ -179,7 +179,7 @@ async function verifyVolume() {
 	}
 }
 
-async function verifySpeedPanel() {
+async function verifySpeedPanel(verifyRestart = false) {
 	const bar = document.querySelector<HTMLElement>("#bar")
 	const rate = document.querySelector<HTMLButtonElement>("#rate")
 	const panel = document.querySelector<HTMLElement>("#speed-panel")
@@ -198,8 +198,19 @@ async function verifySpeedPanel() {
 	const rect = panel.getBoundingClientRect()
 	if (rect.top < barHeight + 7 || rect.bottom > innerHeight || bar.getBoundingClientRect().height !== barHeight)
 		throw new Error("Speed panel enlarged the bar or clipped")
-	panel.hidePopover()
-	return { floating: true, barHeightUnchanged: true, sliderFocused: true }
+	if (verifyRestart) {
+		const speed = document.querySelector<HTMLInputElement>("#speed")!
+		const sound = document.querySelector<HTMLButtonElement>("#sound")!
+		// A committed adjustment must dismiss before disabling its focused slider.
+		// Keep the same value so following scenarios retain their chosen rate.
+		speed.dispatchEvent(new Event("change"))
+		if (panel.matches(":popover-open") || document.activeElement !== sound || sound.disabled || !speed.disabled)
+			throw new Error("Preparing speech stranded focus in the speed popover")
+		const prepared = performance.now() + 90_000
+		while (speed.disabled && performance.now() < prepared) await new Promise((resolve) => setTimeout(resolve, 25))
+		if (speed.disabled) throw new Error("Speed preparation did not finish")
+	} else panel.hidePopover()
+	return { focusPreserved: verifyRestart, floating: true, barHeightUnchanged: true, sliderFocused: true }
 }
 
 function failPlayback() {
@@ -212,4 +223,5 @@ function failPlayback() {
 // Drivers still consume expressions, but every assertion above is checked by TypeScript.
 export const checkVolume = `(${verifyVolume.toString()})()`
 export const checkSpeedPanel = `(${verifySpeedPanel.toString()})()`
+export const checkSpeedFocus = `(${verifySpeedPanel.toString()})(true)`
 export const failNextPlayback = `(${failPlayback.toString()})()`
