@@ -33,7 +33,7 @@
 	"devDependencies": {
 		"@types/bun": "1.4.4",
 		"@webgpu/types": "0.1.74",
-		"protobufjs": "7.6.6",
+		"protobufjs": "8.8.1",
 		"typescript": "7.0.2",
 		"wxt": "0.21.5"
 	},
