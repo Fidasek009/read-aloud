@@ -3,6 +3,13 @@ name: Store check
 # Credential validation only: no tag, upload, submission or GitHub release.
 on:
   workflow_dispatch:
+    inputs:
+      store:
+        description: Store to authenticate without uploading
+        type: choice
+        options: [chrome, firefox, all]
+        default: chrome
+        required: true
 
 permissions:
   contents: read
@@ -17,4 +24,5 @@ jobs:
     uses: ./.github/workflows/cd.yml
     with:
       dry-run: true
+      store: ${{ inputs.store }}
     secrets: inherit

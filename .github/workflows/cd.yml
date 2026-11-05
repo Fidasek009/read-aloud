@@ -7,6 +7,9 @@ on:
       dry-run:
         type: boolean
         default: false
+      store:
+        type: string
+        default: all
 
 permissions:
   contents: read
@@ -18,6 +21,7 @@ jobs:
     timeout-minutes: 10
     env:
       DRY_RUN: ${{ inputs.dry-run }}
+      STORE: ${{ inputs.store }}
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
       CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
@@ -27,19 +31,28 @@ jobs:
       FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
       FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
     steps:
-      - name: Check both stores before any upload
+      - name: Check requested store configuration
         shell: bash
         run: |
+          case "$STORE" in chrome|firefox|all) ;; *) echo 'Unknown store'; exit 1 ;; esac
           if test "$DRY_RUN" = true; then
             test "$GITHUB_REF_TYPE" = branch
             test "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH"
           else
             test "$GITHUB_REF_TYPE" = tag
+            test "$STORE" = all
           fi
-          for key in CHROME_EXTENSION_ID CHROME_PUBLISHER_ID FIREFOX_EXTENSION_ID CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL CHROME_SERVICE_ACCOUNT_PRIVATE_KEY FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET; do
+          keys=()
+          if test "$STORE" != firefox; then
+            keys+=(CHROME_EXTENSION_ID CHROME_PUBLISHER_ID CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL CHROME_SERVICE_ACCOUNT_PRIVATE_KEY)
+          fi
+          if test "$STORE" != chrome; then
+            keys+=(FIREFOX_EXTENSION_ID FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET)
+            test "$FIREFOX_EXTENSION_ID" != 'read-aloud@local.invalid'
+          fi
+          for key in "${keys[@]}"; do
             test -n "${!key}" || { echo "Missing publishing configuration: $key"; exit 1; }
           done
-          test "$FIREFOX_EXTENSION_ID" != 'read-aloud@local.invalid'
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
@@ -52,10 +65,12 @@ jobs:
           pattern: extension-*
           merge-multiple: true
           path: .output
-      - name: Authenticate both stores without uploading
-        run: |
-          bun scripts/publish-extension.ts chrome --dry-run
-          bun scripts/publish-extension.ts firefox --dry-run
+      - name: Authenticate Chrome without uploading
+        if: inputs.store == 'all' || inputs.store == 'chrome'
+        run: bun scripts/publish-extension.ts chrome --dry-run
+      - name: Authenticate Firefox without uploading
+        if: inputs.store == 'all' || inputs.store == 'firefox'
+        run: bun scripts/publish-extension.ts firefox --dry-run
 
   publish:
     name: Publish (${{ matrix.browser }})
