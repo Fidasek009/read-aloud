@@ -4,6 +4,9 @@ linker = "isolated"
 minimumReleaseAge = 86400
 exact = true
 
+[install.security]
+scanner = "./scripts/dependency-age-scanner.ts"
+
 [run]
 bun = true
 shell = "bun"

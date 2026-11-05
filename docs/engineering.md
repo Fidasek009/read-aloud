@@ -4,6 +4,10 @@ This documents the development prototype, not release readiness. See [acceptance
 
 ## Toolchain
 
+Dependency cooldown (verified 2026-11-05): Dependabot waits one day for both Bun and GitHub Actions version updates. Bun's `minimumReleaseAge = 86400` filters new direct and transitive resolutions. Because [Bun preserves locked versions](https://bun.sh/docs/pm/cli/install#minimum-release-age), the local [install scanner](https://bun.sh/docs/pm/security-scanner-api) also verifies npm publication timestamps before installation, including frozen installs. Exactly 24 hours is allowed; younger releases, missing timestamps, registry failures, and non-public-npm sources stop installation. This adds registry metadata requests even for cached/frozen installs, so dependency installation requires network access. It does not affect extension runtime or offline speech. No additional scanner package is installed.
+
+[Dependabot cooldown excludes security updates](https://docs.github.com/en/code-security/reference/supply-chain-security/dependabot-options-reference#cooldown): those PRs can still appear immediately, but their Bun installs must pass the same age check before CI succeeds. GitHub Actions cooldown is enforced by Dependabot, not Bun. Keep the scanner source in reviewer archives; do not bypass it to make an update green.
+
 Use WXT 0.21.5, strict TypeScript, explicit Manifest V3 builds for Chrome and Firefox, and Bun 1.4.4 for package management, scripts, tests, native checking, and formatting. Keep a single frozen Bun lockfile. Browser code must not depend on development-only Bun APIs. Relevant upstream guidance: [WXT project structure](https://wxt.dev/guide/essentials/project-structure.html), [browser targets](https://wxt.dev/guide/essentials/target-different-browsers.html), [Bun checking](https://bun.com/docs/runtime/check), and [Bun formatting](https://bun.com/docs/format).
 
 `bun run typecheck` checks page, worker, tool, and test environments; `bun run test` runs the product tests in `tests/`. `bun run format:check` checks repository formatting. Build the two browser targets with `bun run build` and `bun run build:firefox`.
