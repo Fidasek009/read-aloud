@@ -1,0 +1,65 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"] # GitHub globs are not regex; validation rejects non-X.Y.Z tags.
+
+permissions:
+  contents: read
+
+# Never interrupt a store submission. Serialize different release versions too.
+concurrency:
+  group: store-release
+  cancel-in-progress: false
+
+jobs:
+  version:
+    name: Validate release
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+      - run: bun scripts/release-version.ts --release
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+
+  ci:
+    needs: version
+    uses: ./.github/workflows/ci.yml
+
+  cd:
+    needs: ci
+    uses: ./.github/workflows/cd.yml
+    secrets: inherit
+
+  release:
+    name: GitHub release
+    needs: [ci, cd]
+    runs-on: ubuntu-26.04
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: extension-*
+          merge-multiple: true
+          path: artifacts
+      - name: Attach tested packages and checksums
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: bun scripts/github-release.ts

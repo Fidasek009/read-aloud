@@ -38,6 +38,8 @@ const instrumentation = await Bun.build({
 	naming: "instrument.js",
 	target: "browser",
 	format: "esm",
+	// Remove machine-specific module-path comments, retaining license comments.
+	minify: { whitespace: true },
 })
 if (!instrumentation.success) throw new AggregateError(instrumentation.logs, "Voice preparation worker bundling failed")
 expected.set(out, new Set(["instrument.js"]))
@@ -51,6 +53,7 @@ for (const [directory, backend, runtime] of [
 		naming: "speech.js",
 		target: "browser",
 		format: "esm",
+		minify: { whitespace: true },
 		define: { SPEECH_BACKEND: JSON.stringify(backend) },
 		plugins: [
 			{

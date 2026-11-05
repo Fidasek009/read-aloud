@@ -4,6 +4,25 @@ import { defineConfig } from "wxt"
 export default defineConfig({
 	srcDir: "src",
 	manifestVersion: 3,
+	zip: {
+		includeSources: [
+			"src/**",
+			"scripts/**",
+			"public/**",
+			"vendor/**",
+			"docs/**",
+			"package.json",
+			"bun.lock",
+			"bunfig.toml",
+			"tsconfig*.json",
+			"wxt.config.ts",
+			"README.md",
+			"SOURCE_CODE_REVIEW.md",
+			"LICENSE",
+			"NOTICE.md",
+		],
+		excludeSources: ["public/runtime/**", "public/pdf-runtime/**"],
+	},
 	hooks: {
 		"build:before": async () => {
 			await $`bun scripts/prepare-runtime.ts`.quiet()
@@ -12,7 +31,6 @@ export default defineConfig({
 	manifest: ({ browser }) => ({
 		name: "Read Aloud",
 		description: "Read pages and selected text aloud on your device.",
-		version: "0.0.0",
 		permissions: [
 			"activeTab",
 			"scripting",
@@ -43,7 +61,7 @@ export default defineConfig({
 			? {
 					browser_specific_settings: {
 						gecko: {
-							id: "read-aloud@local.invalid",
+							id: process.env.FIREFOX_EXTENSION_ID || "read-aloud@local.invalid",
 							strict_min_version: "140.0",
 							data_collection_permissions: { required: ["none"] },
 						},

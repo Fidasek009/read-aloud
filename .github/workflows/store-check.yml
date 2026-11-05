@@ -1,0 +1,20 @@
+name: Store check
+
+# Credential validation only: no tag, upload, submission or GitHub release.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch)
+    uses: ./.github/workflows/ci.yml
+
+  dry-run:
+    needs: ci
+    uses: ./.github/workflows/cd.yml
+    with:
+      dry-run: true
+    secrets: inherit

@@ -1,0 +1,101 @@
+name: CD
+
+# Both callers run CI first. Manual Store check always requests dry-run.
+on:
+  workflow_call:
+    inputs:
+      dry-run:
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  preflight:
+    runs-on: ubuntu-26.04
+    environment: stores
+    timeout-minutes: 10
+    env:
+      RELEASE_READY: ${{ vars.RELEASE_READY }}
+      DRY_RUN: ${{ inputs.dry-run }}
+      DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+      CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+      CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
+      FIREFOX_EXTENSION_ID: ${{ vars.FIREFOX_EXTENSION_ID }}
+      CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+      CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
+      FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+      FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+    steps:
+      - name: Check both stores before any upload
+        shell: bash
+        run: |
+          if test "$DRY_RUN" = true; then
+            test "$GITHUB_REF_TYPE" = branch
+            test "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH"
+          else
+            test "$GITHUB_REF_TYPE" = tag
+            test "$RELEASE_READY" = true || { echo 'Release readiness is not cleared; see docs/releasing.md'; exit 1; }
+          fi
+          for key in CHROME_EXTENSION_ID CHROME_PUBLISHER_ID FIREFOX_EXTENSION_ID CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL CHROME_SERVICE_ACCOUNT_PRIVATE_KEY FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET; do
+            test -n "${!key}" || { echo "Missing publishing configuration: $key"; exit 1; }
+          done
+          test "$FIREFOX_EXTENSION_ID" != 'read-aloud@local.invalid'
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          pattern: extension-*
+          merge-multiple: true
+          path: .output
+      - name: Authenticate both stores without uploading
+        run: |
+          bun scripts/publish-extension.ts chrome --dry-run
+          bun scripts/publish-extension.ts firefox --dry-run
+
+  publish:
+    name: Publish (${{ matrix.browser }})
+    if: ${{ !inputs.dry-run }}
+    needs: preflight
+    runs-on: ubuntu-26.04
+    environment: stores
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chrome, firefox]
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version-file: package.json
+      - run: bun install --frozen-lockfile
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8
+        with:
+          name: extension-${{ matrix.browser }}
+          path: .output
+      - name: Submit Chrome for review and automatic publication
+        if: matrix.browser == 'chrome'
+        env:
+          RELEASE_READY: ${{ vars.RELEASE_READY }}
+          CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
+          CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
+          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
+          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
+        run: bun scripts/publish-extension.ts chrome --publish
+      - name: Submit Firefox and reviewer sources
+        if: matrix.browser == 'firefox'
+        run: bun scripts/publish-extension.ts firefox --publish
+        env:
+          RELEASE_READY: ${{ vars.RELEASE_READY }}
+          FIREFOX_EXTENSION_ID: ${{ vars.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}

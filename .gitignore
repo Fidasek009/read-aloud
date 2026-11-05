@@ -4,6 +4,8 @@ public/pdf-runtime/
 .wxt/
 .output/
 .cache/
+.env
+.env.*
 lab/local-speech/dist/
 lab/local-speech/results/
 

@@ -52,3 +52,7 @@ After updating a development package, reload the extension **and existing source
 ## Local diagnostics
 
 Local timing/backend diagnostics are available from the extension page's developer console with `await browser.storage.local.get("lastSpeechPerformance")` (use `chrome` in Chrome). They contain no reading text. Cold initialization is still over the acceptance budget; see the evidence/status documents before interpreting one VM run as a benchmark.
+
+## CI and publishing
+
+PRs run type, format, test and both browser packaging checks. Stable `vX.Y.Z` tags run CI, submit the tested artifacts to Chrome Web Store and Firefox Add-ons, then create a GitHub release. First store publication and credentials require setup; publishing stays blocked until existing acceptance and licensing gates are cleared. See [release setup and versioning](docs/releasing.md) and [reviewer build instructions](SOURCE_CODE_REVIEW.md).
