@@ -62,6 +62,8 @@ jobs:
         with:
           name: extension-${{ matrix.browser }}
           path: .output/*.zip
+          # WXT writes archives into a dot-directory; only these ZIPs are uploaded.
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
 
