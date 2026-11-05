@@ -23,6 +23,8 @@ jobs:
           bun-version-file: package.json
       - run: bun install --frozen-lockfile
       - run: bun scripts/release-version.ts
+      - name: Check licensing review fingerprints (public release may remain blocked)
+        run: bun run check:licenses
       - run: bun run typecheck
       - run: bun run format:check
       - run: bun run test

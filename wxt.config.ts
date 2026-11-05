@@ -14,6 +14,7 @@ export default defineConfig({
 			"scripts/**",
 			"public/**",
 			"vendor/**",
+			"release/**",
 			"docs/**",
 			"package.json",
 			"bun.lock",

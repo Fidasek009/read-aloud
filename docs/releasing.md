@@ -15,7 +15,7 @@ git tag -a v0.1.0 -m 'Release 0.1.0'
 git push origin v0.1.0
 ```
 
-No package bump, manual ZIP build, artwork task, separate `RELEASE_READY` variable or manual GitHub release creation is required. The tag triggers **CI → CD → published GitHub release**. Chrome is submitted with default automatic publication after approval; Firefox uses AMO's listed channel. The stores retain control of review timing and decisions. GitHub release notes state that submission success is not a claim of store approval.
+No package bump, manual ZIP build, artwork task, separate `RELEASE_READY` variable or manual GitHub release creation is required. An agent-owned, fingerprint-bound licensing review is nevertheless enforced before live distribution; unresolved legal conditions/assessments cannot be bypassed by pushing a tag. The tag triggers **CI → CD → published GitHub release**. Chrome is submitted with default automatic publication after approval; Firefox uses AMO's listed channel. The stores retain control of review timing and decisions. GitHub release notes state that submission success is not a claim of store approval.
 
 ## Workflows
 
@@ -54,7 +54,7 @@ First submission consumes a version just as an automated upload does. Complete t
 
 ## Acceptance and retries
 
-Removing a redundant manual ready switch does not declare the current prototype ready or clear its separate licenses. The agent must resolve the existing release gates in `docs/licensing.md`, `NOTICE.md` and `docs/feasibility-status.md` before initiating real publication. Full corresponding source/build provenance for bundled GPL components and model/preview clearance are still unresolved. The reviewer ZIP is not a claim of complete GPL corresponding source. Latency, Windows, GPU/CPU and real-browser acceptance are separate from unit/packaging checks. Do not push a real release tag merely to test credentials: use Store check.
+Removing a redundant manual ready switch does not declare the current prototype ready or clear its separate licenses. `bun run check:licenses --release` now enforces the committed review before the release proceeds, in live reusable CD, and in standalone store/GitHub publication scripts. CI checks fingerprint freshness without requiring unresolved reviews to be cleared; development and credential dry-runs stay usable. The agent must resolve the existing release gates in `docs/licensing.md`, `NOTICE.md` and `docs/feasibility-status.md` before initiating real publication. Full pinned Spellophone/eSpeak sources and expanded notices are now supplied; whole-combined-source/notice coverage and scoped model/preview assessments remain unresolved. Kasandra medium now has a substantiated owner-issued grant for the exact checkpoint; do not describe that mandatory Czech model as unlicensed by default. The reviewer ZIP is not a claim of complete GPL corresponding source. Latency, Windows, GPU/CPU and real-browser acceptance are separate from unit/packaging checks. Do not push a real release tag merely to test credentials: use Store check.
 
 Stores and GitHub cannot commit an atomic transaction. If one store accepts and the other fails, the accepted submission remains; GitHub release publication is withheld. Inspect state and rerun only failed jobs, never blindly repeat a successful upload. If a request timed out after acceptance, reconcile the store state before retrying. Code fixes get a higher tag; existing tags and published artifacts stay immutable.
 

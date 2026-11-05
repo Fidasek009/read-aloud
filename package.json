@@ -30,7 +30,8 @@
 		"lint:workflows": "bun scripts/lint-workflows.ts",
 		"check:source-rebuild": "bun scripts/check-source-rebuild.ts",
 		"assets:store": "bun scripts/generate-store-assets.ts",
-		"package:store": "bun scripts/package-store.ts"
+		"package:store": "bun scripts/package-store.ts",
+		"check:licenses": "bun scripts/release-licensing.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "1.4.4",

@@ -1,0 +1,2419 @@
+File-level notices from eSpeak NG 1.52.0 (4870adfa25b1a32b4361592f1be8a40337c58d6c).
+Collected from the supplied source tree; this is a conservative superset, not a claim every listed file is linked. Full source and notices remain in the source archive.
+
+===== src/libespeak-ng/common.c =====
+/*
+ * Copyright (C) 2005 to 2013 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/common.h =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2015 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/compiledata.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/compiledict.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write see:
+ *             <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/compiledict.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/compilembrola.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/dictionary.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/dictionary.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/encoding.c =====
+/*
+ * Copyright (C) 2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/error.c =====
+/* Error handling APIs.
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/error.h =====
+/* Internal error APIs.
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/espeak_api.c =====
+/* An implementation of the eSpeak API using the espeak-ng API.
+ *
+ * Copyright (C) 2005 to 2013 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/espeak_command.c =====
+/*
+ * Copyright (C) 2007, Gilles Casse <gcasse@oralux.org>
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/espeak_command.h =====
+/*
+ * Copyright (C) 2007, Gilles Casse <gcasse@oralux.org>
+ * Copyright (C) 2015 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/event.c =====
+/*
+ * Copyright (C) 2007, Gilles Casse <gcasse@oralux.org>
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+// This source file is only used for asynchronous modes
+
+===== src/libespeak-ng/event.h =====
+/*
+ * Copyright (C) 2007, Gilles Casse <gcasse@oralux.org>
+ * Copyright (C) 2015-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+/*
+   Manage events (sentence, word, mark, end,...), is responsible of calling the external
+   callback as soon as the relevant audio sample is played.
+
+
+   The audio stream is composed of samples from synthetised messages or audio icons.
+   Each event is associated to a sample.
+
+   Scenario:
+
+   - event_declare is called for each expected event.
+
+   - A timeout is started for the first pending event.
+
+   - When the timeout happens, the synth_callback is called.
+
+   Note: the timeout is checked against the real progress of the audio stream, which depends on pauses or underruns. If the real progress is lower than the expected one, a new timeout starts.
+
+ */
+
+===== src/libespeak-ng/fifo.c =====
+/*
+ * Copyright (C) 2007, Gilles Casse <gcasse@oralux.org>
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+// This source file is only used for asynchronous modes
+
+===== src/libespeak-ng/fifo.h =====
+/*
+ * Copyright (C) 2007, Gilles Casse <gcasse@oralux.org>
+ * Copyright (C) 2015-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+// Helps to add espeak commands in a first-in first-out queue
+// and run them asynchronously.
+
+===== src/libespeak-ng/ieee80.c =====
+/*
+ * Copyright (C) 2022 Ulrich Müller <ulm@gentoo.org>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ *
+ *
+ * Alternatively, at your option, you can distribute this file under
+ * the terms of the 2-clause BSD license.
+ */
+
+===== src/libespeak-ng/intonation.c =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/intonation.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/klatt.c =====
+/*
+ * Copyright (C) 2008 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * Based on a re-implementation by:
+ * (c) 1993,94 Jon Iles and Nick Ing-Simmons
+ * of the Klatt cascade-parallel formant synthesizer
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+// See URL: ftp://svr-ftp.eng.cam.ac.uk/pub/comp.speech/synthesis/klatt.3.04.tar.gz
+
+===== src/libespeak-ng/klatt.h =====
+/*
+ * Copyright (C) 2008 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * Based on a re-implementation by:
+ * (c) 1993,94 Jon Iles and Nick Ing-Simmons
+ * of the Klatt cascade-parallel formant synthesizer
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/langopts.c =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ * Copyright (C) 2022 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/langopts.h =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/mbrola.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+// declarations for compilembrola.c and synth_mbrola.c
+
+===== src/libespeak-ng/mbrowrap.c =====
+/*
+ * mbrowrap -- A wrapper library around the mbrola binary
+ * providing a subset of the API from the Windows mbrola DLL.
+ *
+ * Copyright (C) 2005 to 2013 by Jonathan Duddington
+ * Copyright (C) 2010 by Nicolas Pitre <nico@fluxnic.net>
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+===== src/libespeak-ng/mbrowrap.h =====
+/*
+ * mbrowrap -- A wrapper library around the mbrola binary
+ * providing a subset of the API from the Windows mbrola DLL.
+ *
+ * Copyright (C) 2010 by Nicolas Pitre <nico@fluxnic.net>
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ */
+
+===== src/libespeak-ng/mnemonics.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/mnemonics.h =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2015 Reece H. Dunn
+ * Copyright (C) 2021 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/numbers.c =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2016, 2020 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/numbers.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/phoneme.c =====
+/*
+ * Copyright (C) 2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/phoneme.h =====
+/*
+ * Copyright (C) 2005 to 2010 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/phonemelist.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/phonemelist.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/readclause.c =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/readclause.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/setlengths.c =====
+/*
+ * Copyright (C) 2005 to 2011 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/setlengths.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/sintab.h =====
+/*
+ * Copyright (C) 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/soundicon.c =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ * Copyright (C) 2021 Juho Hiltunen
+ * 
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/soundicon.h =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ * Copyright (C) 2021 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/spect.c =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/spect.h =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/speech.c =====
+/*
+ * Copyright (C) 2005 to 2013 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/speech.h =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2013-2015 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/ssml.c =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/ssml.h =====
+/* SSML (Speech Synthesis Markup Language) processing APIs.
+ *
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/synth_mbrola.c =====
+/*
+ * Copyright (C) 2005 to 2013 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/synthdata.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/synthdata.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/synthesize.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/synthesize.h =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/tr_languages.c =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2016, 2020 Reece H. Dunn
+ * Copyright (C) 2021 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/translate.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/translate.h =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017, 2020 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/translateword.c =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/translateword.h =====
+/*
+ * Copyright (C) 2005 to 2014 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017, 2020 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/voice.h =====
+/*
+ * Copyright (C) 2005 to 2007 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/voices.c =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/libespeak-ng/wavegen.c =====
+/*
+ * Copyright (C) 2005 to 2013 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+// this version keeps wavemult window as a constant fraction
+// of the cycle length - but that spreads out the HF peaks too much
+
+===== src/libespeak-ng/wavegen.h =====
+/*
+ * Copyright (C) 2005 to 2015 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2015-2018 Reece H. Dunn
+ * Copyright (C) 2018 Juho Hiltunen
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/ucd-tools/src/case.c =====
+/* Unicode Case Conversion
+ *
+ * Copyright (C) 2012-2018, 2021 Reece H. Dunn
+ *
+ * This file is part of ucd-tools.
+ *
+ * ucd-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ucd-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ucd-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* NOTE: This file is automatically generated from the UnicodeData.txt file in
+ * the Unicode Character database by the ucd-tools/tools/case.py script.
+ */
+
+===== src/ucd-tools/src/categories.c =====
+/* Unicode General Categories
+ *
+ * Copyright (C) 2012-2018 Reece H. Dunn
+ *
+ * This file is part of ucd-tools.
+ *
+ * ucd-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ucd-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ucd-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* NOTE: This file is automatically generated from the UnicodeData.txt file in
+ * the Unicode Character database by the ucd-tools/tools/categories.py script.
+ */
+
+===== src/ucd-tools/src/ctype.c =====
+/* ctype-style APIs.
+ *
+ * Copyright (C) 2012-2018 Reece H. Dunn
+ *
+ * This file is part of ucd-tools.
+ *
+ * ucd-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ucd-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ucd-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+===== src/ucd-tools/src/include/ucd/ucd.h =====
+/* Unicode Character Database API
+ *
+ * Copyright (C) 2012-2018 Reece H. Dunn
+ *
+ * This file is part of ucd-tools.
+ *
+ * ucd-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ucd-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ucd-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+===== src/ucd-tools/src/proplist.c =====
+/* PropList APIs.
+ *
+ * Copyright (C) 2017-2018 Reece H. Dunn
+ *
+ * This file is part of ucd-tools.
+ *
+ * ucd-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ucd-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ucd-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+===== src/ucd-tools/src/scripts.c =====
+/* Unicode Scripts
+ *
+ * Copyright (C) 2012-2018 Reece H. Dunn
+ *
+ * This file is part of ucd-tools.
+ *
+ * ucd-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ucd-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ucd-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/* NOTE: This file is automatically generated from the Scripts.txt file in
+ * the Unicode Character database by the ucd-tools/tools/scripts.py script.
+ */
+
+===== src/ucd-tools/src/tostring.c =====
+/* Enumeration types to string.
+ *
+ * Copyright (C) 2012-2018 Reece H. Dunn
+ *
+ * This file is part of ucd-tools.
+ *
+ * ucd-tools is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * ucd-tools is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with ucd-tools.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+===== src/speechPlayer/include/speechPlayer.h =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/frame.cpp =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/frame.h =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/sample.h =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/speechPlayer.cpp =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/speechPlayer.h =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/speechWaveGenerator.cpp =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+/*
+Based on klsyn-88, found at http://linguistics.berkeley.edu/phonlab/resources/
+*/
+
+===== src/speechPlayer/src/speechWaveGenerator.h =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/utils.h =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/speechPlayer/src/waveGenerator.h =====
+/*
+This file is a part of the NV Speech Player project. 
+URL: https://bitbucket.org/nvaccess/speechplayer
+Copyright 2014 NV Access Limited.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License, as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+This license can be found at:
+http://www.gnu.org/licenses/gpl.html
+*/
+
+===== src/include/compat/endian.h =====
+/* Compatibility shim for <endian.h>
+ *
+ * "License": Public Domain
+ * "Original": https://gist.github.com/panzi/6856583
+ *
+ * I, Mathias Panzenböck, place this file hereby into the public domain. Use it
+ * at your own risk for whatever you like. In case there are jurisdictions that
+ * don't support putting things in the public domain you can also consider it
+ * to be "dual licensed" under the BSD, MIT and Apache licenses, if you want
+ * to. This code is trivial anyway. Consider it an example on how to get the
+ * endian conversion functions on different platforms.
+ *
+ * Modifications also in the Public Domain and dual licensed under BSD, MIT and
+ * Apache licenses (using the terms outlined above):
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ */
+
+===== src/include/compat/getopt.h =====
+/* Compatibility shim for <getopt.h>
+ *
+ * Copyright (C) 2006 to 2013 by Jonathan Duddington
+ * email: jonsd@users.sourceforge.net
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/math.h =====
+/* Compatibility shim for <math.h>
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/stdint.h =====
+/* Compatibility shim for <stdint.h>
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/stdio.h =====
+/* Compatibility shim for <stdio.h>
+ *
+ * Copyright (C) 2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/string.h =====
+/* Compatibility shim for <string.h>
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/strings.h =====
+/* Compatibility shim for <strings.h>
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/sys/stat.h =====
+/* Compatibility shim for <sys/stat.h>
+ *
+ * Copyright (C) 2016-2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/unistd.h =====
+/* Compatibility shim for <unistd.h>
+ *
+ * Copyright (C) 2016 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/wchar.h =====
+/* Compatibility shim for <wchar.h>
+ *
+ * Copyright (C) 2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/compat/wctype.h =====
+/* Compatibility shim for <wctype.h>
+ *
+ * Copyright (C) 2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/espeak-ng/encoding.h =====
+/*
+ * Copyright (C) 2017 Reece H. Dunn
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, see: <http://www.gnu.org/licenses/>.
+ */
+
+===== src/include/espeak-ng/espeak_ng.h =====
+/* eSpeak NG API.
+ *
+ * Copyright (C) 2015-2017 Reece H. Dunn
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+===== dictsource/ar_list =====
+// *   arabic Language ar ar_list
+// *   This file writen by TAHA Zerrouki 2012
+// ***************************************************************************
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************
+//
+// You can use the en_extra file, rather than this one
+// to add your own pronunciation definitions.
+//
+// This file is UTF-8 encoded
+// all words must be LOWER CASE  (although the initial letter will be automatically
+// converted if it's a 7bit ascii character)
+//
+//stress symbols  ' primary  , secondary  % unstressed
+// letter names, as they are spoken as a single character in text
+// precede by _  to distinguish from pronunciation as a language word
+
+// Arabic alphabet
+
+===== dictsource/ar_rules =====
+// *   Arabic Language ar ar_rules
+// *   This file writen by Taha Zerrouki 2012
+// ***************************************************************************
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+//
+// This file is UTF-8 encoded
+// all words must be LOWER CASE  (although the initial letter will be automatically
+// converted if it's a 7bit ascii character)
+// Text to phoneme rules for Arabic
+//
+// replace Arabic  eastern  character numbers with Arabic western character numbers
+
+===== dictsource/de_rules =====
+// ***************************************************************************
+// *   Copyright (C) 2006 to 2010 by Jonathan Duddington                     *
+// *   email: jonsd@users.sourceforge.net                                    *
+// *                                                                         *
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, write see:                           *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+===== dictsource/en_rules =====
+// ***************************************************************************
+// *   Copyright (C) 2005 to 2014 by Jonathan Duddington                     *
+// *   email: jonsd@users.sourceforge.net                                    *
+// *   Copyright (C) 2016-2017 Reece H. Dunn                                 *
+// *                                                                         *
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+// This file is UTF-8 encoded
+
+// Conditional rules
+// ?2  Use voiceless [w#] for "wh"
+// ?3  General American
+// ?!3  Not General American
+// ?5  split [3:] er [3:], ir [IR], ur [VR]
+// ?6  'one' = [wVn], 'of' = [Vv] (now uses phoneme [02])
+// ?7  Scottish
+// ?8  Use full vowel, not schwa in some word endings
+
+
+// Group Y, vowels + y
+
+===== dictsource/extra/yue_listx =====
+// yue_list - the Cantonese dictionary file for eSpeak and Ekho
+// Maintainer: Cameron Wong, hgneng at gmail.com
+// Website: http://www.eguidedog.net/cantonese.php
+// License: Creative Commons Attribution-Share Alike 3.0
+// http://creativecommons.org/licenses/by-sa/3.0/
+//
+// This file is generated by script jyutdict2zhy.py from JyutDict.
+// Generated at Fri Feb 21 16:39:42 2014
+//
+// Some of the data is from CC-CEDICT (http://cc-cedict.org/wiki/)
+//
+// Michael Tang (michael.tang.email at gmail.com) is another main
+// contributor of this dictionary.
+
+// numbers
+
+===== dictsource/fa_list =====
+// *   Farsi Language fa (or Parsi or Persian) fa_list Version 3.138
+// *   This file writen by Shadyar Khodayari and Ehsan Esmaili who has managed  collecting exceptional words. 07-06-2021
+//*********
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+//*********
+// You can use the en_extra file, rather than this one
+// to add your own pronunciation definitions.
+// ***************************************************************************/
+
+// This file is UTF-8 encoded
+// all words must be LOWER CASE  (although the initial letter will be automatically
+//    converted if it's a 7bit ascii character)
+
+//stress symbols  ' primary  , secondary  % unstressed
+
+// letter names, as they are spoken as a single character in text
+// precede by _  to distinguish from pronunciation as a language word
+// Special Persian Symbls.
+
+===== dictsource/fa_rules =====
+// *   Farsi Language fa (or Parsi or Persian) fa_rules Version 3.138
+// *   This file writen by Shadyar Khodayari 07-06-2021
+//*********
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+// This file is UTF-8 encoded
+// all words must be LOWER CASE  (although the initial letter will be automatically
+//    converted if it's a 7bit ascii character)
+// Text to phoneme rules for Farsi
+
+
+// replacing unknown characters and Arabic   numbers with Farsi characters and Latin  numbers
+
+===== dictsource/fr_list =====
+// ***************************************************************************
+// *   Copyright (C) 2005 to 2012 by Jonathan Duddington                     *
+// *   email: jonsd@users.sourceforge.net                                    *
+// *                                                                         *
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+
+// This file in UTF8 encoded
+
+// Conditional rules
+// ?2  Special numbering for Belgium and Switzerland
+
+// 2006-11-18  Gilles Casse  <gcasse@oralux.org>
+//
+// Updated 2012-04-15 Michel Such  <michel.such@free.fr>
+//
+//	* Numbers, a few abbreviations and exceptions.
+//
+
+
+// Letters names
+// If a letter has a "word" pronunciation which is different from its
+// "letter" name, then include the letter name here, with the letter
+// prefixed by a _ character.
+
+===== dictsource/fr_rules =====
+// French translation rules for Espeak
+
+// ***************************************************************************
+// *   Copyright (C) 2005 to 2014 by Jonathan Duddington                     *
+// *   email: jonsd@users.sourceforge.net                                    *
+// *                                                                         *
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+// This file is UTF-8 encoded
+
+// 2006-11-18  Gilles Casse  <gcasse@oralux.org>
+// Initial rules for French, imported from
+//   Cicero TTS: A Small, Fast and Free Text-To-Speech Engine.
+// http://www.fluxnic.net/cicero
+//
+// Rules are now maintained by Michel Such <michel.such@free.fr>
+// Last update: 2014-02-20 Michel Such  <michel.such@free.fr>
+//
+
+// Letter classes:
+// A  all vowels:  a e i o u y â ä é ê è î ï ô ö ù û
+// C  all consonants
+// Y  front vowels: e i y é ê è î
+// K  not a vowel  (i.e. consonant, space, )
+
+===== dictsource/io_list =====
+// ***************************************************************************
+// *   Copyright (C) 2020 by José Miguel López (LaMashino)                   *
+// *   email: lamashino <at> hotmail <dot> com                               *
+// *                                                                         *
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+// This file is UTF-8 encoded
+
+// Numbers
+
+===== dictsource/io_rules =====
+// ***************************************************************************
+// *   Copyright (C) 2020 by José Miguel López (LaMashino)                   *
+// *   email: lamashino <at> hotmail <dot> com                                    *
+// *                                                                         *
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+// Translation rules for Ido
+// Version 1.0: 8-8-2020
+
+// This file is UTF-8 encoded
+
+===== dictsource/ja_rules =====
+// Japanese
+//
+// Copyright (C) 2017 Reece H. Dunn
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, see: <http://www.gnu.org/licenses/>.
+
+// Replacements:
+// 1.  Map Katakana to Hiragana.
+// 2.  Map voiced characters to their base form and voicing combined character.
+
+===== dictsource/ky_list =====
+// ***************************************************************************/ 
+// *   Kyrgyz Language ky ky_list                                            *
+// *   Original Author Joshua Meyer 7-1-2016                                 *
+// *   Contact info: joshua.richard.meyer@gmail.com                          *
+// ***************************************************************************/
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+
+// SOME USEFUL SYNTAX
+// ' 	primary stress
+// , 	secondary stress
+// % 	unstressed syllable
+// = 	put the primary stress on the preceding syllable
+// _: 	short pause
+// _ 	a shorter pause
+// || 	indicates a word boundary within a phoneme string
+// | 	can be used to separate two adjacent characters, to prevent 
+//      them from being considered as a multi-character phoneme mnemonic
+
+// Letters
+
+===== dictsource/ky_rules =====
+// ***************************************************************************/ 
+// *   Kyrgyz Language ky ky_rules                                           *
+// *   Original Author Joshua Meyer 7-1-2016                                 *
+// *   Contact info: joshua.richard.meyer@gmail.com                          *
+// ***************************************************************************/
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+// Stress rule: Right-most vowel
+
+// Letter groups:                                                      // are these getting defined?
+// A any vowel:        а о у ы э е ё и ю я ө ү                               // all vowels
+// B back vowels:      а о у ы ё ю я                                 // back vowels
+// C any consonant:    п б д т к г х ш щ ж з с ц ч й л м н ң ф в р ъ ь      // all consonants  
+// F front vowels:     э е и ө ү                                       // front vowels
+
+===== dictsource/ru_rules =====
+// ***************************************************************************
+// *   Copyright (C) 2007 to 2013 by Jonathan Duddington                     *
+// *   email: jonsd@users.sourceforge.net                                    *
+// *   Copyright (C) 2018 Reece H. Dunn                                      *
+// *   Copyright (C) 2022 by Kirill Kolov                                      *
+// *   email: kirillkolovi@gmail.com                                    *
+
+// *                                                                         *
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+// Russian translation rules
+// This file is UTF8 encoded
+
+// Special characters:
+// A  vowel:                    а е ё и о у ы э ю я ә ө ұ ү і
+// B  soft consonant:           ь й ч щ
+// C  any consonant:            б в г д ж з й к л м н п р с т ф х ц ч ш щ ъ ь қ ң һ
+// F  consonant, not hard:      б в г д з й к л м н п р с т ф х ч щ ь
+// G  voiced:                   б в г д ж з
+// H  hard consonant:           ъ ж ц ш
+// Y  iotated vowel, softsign:  ь ю я ё
+
+// Conditional rules
+// ?2 Russian (Latvia)
+
+===== dictsource/ta_rules =====
+/***************************************************************************
+ *   Copyright (C) 2009 to 2014 by Jonathan Duddington                     *
+ *   email: jonsd@users.sourceforge.net                                    *
+ *                                                                         *
+ *   This program is free software; you can redistribute it and/or modify  *
+ *   it under the terms of the GNU General Public License as published by  *
+ *   the Free Software Foundation; either version 3 of the License, or     *
+ *   (at your option) any later version.                                   *
+ *                                                                         *
+ *   This program is distributed in the hope that it will be useful,       *
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+ *   GNU General Public License for more details.                          *
+ *                                                                         *
+ *   You should have received a copy of the GNU General Public License     *
+ *   along with this program; if not, see:                                 *
+ *               <http://www.gnu.org/licenses/>.                           *
+ ***************************************************************************/
+
+// This file is UTF8 encoded 
+// Spelling to phoneme rules for Tamil
+
+// B means a combining vowel sign, or a virama
+// K means a consonant or end-of-word
+// phoneme [V#] means vowel [V], but NULL if the next phoneme is a vowel or [#]
+
+===== phsource/mbrola/ir1 =====
+// eSpeak Phonemes to Mbrola
+// Persian (Farsi) & English
+// mb-ir1 Phonemes Translation
+// Seyed Mahmood Taghavi Shahri
+// mahmood.taghavi at Gmail.com
+// http://www.amardan.ir
+// License: GPL
+// Release: 2013-11-07
+
+// Limitation: Some English vowels can not be present or play with only two "ir1" diphones!
+// I need ability of combine up to four Mbrola diphones for good eSpeak to Mbrola translation.
+// Most English vowels can be present with two or three "ir1" diphones. But for playing them,
+// Mbrola "ir1" don't allow consequence of Persian vowels and also begin with a Persian vowel.
+// So in most case I forced to add "?" Persian consonant to do work with "ir1" specifications. 
+
+// Persian vowels
+
+===== phsource/ph_japanese =====
+// Japanese Phonemes
+//
+// Copyright (C) 2017 Reece H. Dunn
+//
+// This program is free software; you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation; either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, see: <http://www.gnu.org/licenses/>.
+
+// This is using the X-SAMPA transcriptions
+// (http://www.phon.ucl.ac.uk/home/sampa/x-sampa.htm).
+
+===== phsource/ph_kyrgyz =====
+// ***************************************************************************/ 
+// *   Kyrgyz Language ky ph_kyrgyz                                          *
+// *   Original Author Joshua Meyer 7-1-2016                                 *
+// *   Contact info: joshua.richard.meyer@gmail.com                          *
+// ***************************************************************************/
+// *   This program is free software; you can redistribute it and/or modify  *
+// *   it under the terms of the GNU General Public License as published by  *
+// *   the Free Software Foundation; either version 3 of the License, or     *
+// *   (at your option) any later version.                                   *
+// *                                                                         *
+// *   This program is distributed in the hope that it will be useful,       *
+// *   but WITHOUT ANY WARRANTY; without even the implied warranty of        *
+// *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         *
+// *   GNU General Public License for more details.                          *
+// *                                                                         *
+// *   You should have received a copy of the GNU General Public License     *
+// *   along with this program; if not, see:                                 *
+// *               <http://www.gnu.org/licenses/>.                           *
+// ***************************************************************************/
+
+
+// ============ //
+// SHORT VOWELS //
+// ============ //
+
+
+// ''atai'' /a/ f1 840 f2 1540  f3 2892  f4 3269

@@ -1,0 +1,138 @@
+{
+	"schemaVersion": 1,
+	"reviewedAt": "2026-11-05",
+	"scope": "Agent-owned evidence review. Concrete notice/source duties and unresolved scope questions are distinguished; no legal-proof or quality/store-approval claim.",
+	"inputs": {
+		"NOTICE.md": "c01fee13f12ae622545f45a333a639c1e69167b8a79557bfe23d200b759de63e",
+		"bun.lock": "6d594569a305d5735585fd11a2129b78e34f63894d3b55037417ded5fc204e3b",
+		"docs/evidence/license-audit-2026-11-05.json": "ebd372bb7a5a90d7a378197d6497d1511e7871321c63d04f2e107b6296a7ca84",
+		"docs/licensing-clarification-drafts.md": "cfd045d8b6315e596761e12283a1deeeba84be2a2afeade7def3a926a181c091",
+		"docs/licensing.md": "8389b3c73537b3ed86b6db57904cf41d56e55fdab742eccc11ecbf831a9e42ea",
+		"package.json": "230d01ad834ffb0051d0997b79fef13a86fb786e84c4d24d3fa49c0e881f6109",
+		"public/notices.html": "a0965d0c3dd77baa5a8e0d9deea51cb58863eb27d1e28b7e315a0a2ba15a40c2",
+		"scripts/prepare-runtime.ts": "1ddc8c7cee76ece355126bd0d77d7b6d7873963668eb8683ed3e29891d874167",
+		"scripts/release-licensing.ts": "7af3cd197e1c3a52a68cd3cb1339b31a8db3b387c2f705ab6192bf499a87e9cf",
+		"src/speech/catalog.ts": "2b2da432daa8adb0bbbe3304b1d6e2f831f46dacc4e2b648960e8ac236d5b019",
+		"src/speech/data-fetch.ts": "b0e89a7ddb78e5e935a4dfd67473fd0271462ad620cc0392da7156492db37321",
+		"src/speech/vault.ts": "6e002028ebb32c276a3e6b89a0ed7af7b363ed4e7e4968aef0fabb71a6561c1d",
+		"src/speech/voice-store.ts": "327991fec15df2de3f5b1d3baaccc53cb684a0e5f2eca9311a2e0d26fd8dfff0",
+		"src/speech/voices.json": "15f6f8448187a68dadf0386c6d9d93b639a2218ee9114f0672d994476ac5504e",
+		"src/speech/worker.ts": "36a739a2ac168bb86176d6dfb507f407d9141a1b41b92b3710790c055ec7f214",
+		"vendor/emscripten/LICENSE": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86",
+		"vendor/emscripten/libcxx-LICENSE": "539dd7aed86e8a4f12cbdd0e6c50c189c7d74847e4fecc64ce2c6ee3a01da38b",
+		"vendor/emscripten/libcxxabi-LICENSE": "e2b35be49f7284a45b7baca8fc7b3ab7440e7902392b2528a457816b5bb2a15c",
+		"vendor/emscripten/musl-COPYRIGHT": "b870108ec5e7790e9f9919064f1b9421d62d5f9b0e6c230c6adf7ea2da62e97b",
+		"vendor/espeak-ng/licenses/COPYING": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903",
+		"vendor/espeak-ng/licenses/COPYING.APACHE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+		"vendor/espeak-ng/licenses/COPYING.BSD2": "a8b0c1c7d7af6c0415c068be8cf373799d1a42b0707b79dc4ccfcaf593cd902d",
+		"vendor/espeak-ng/licenses/COPYING.UCD": "be029c50df83105a810e391778b6edcb522d6cb4b4e142332aca54437a499bf7",
+		"vendor/espeak-ng/licenses/FILE-NOTICES.txt": "a328013d63475f0610dbc13873871fb0135eea5d0e23d75a59a0972b1fd55bd0",
+		"vendor/onnx/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+		"vendor/onnxruntime/LICENSE": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c",
+		"vendor/onnxruntime/ThirdPartyNotices.txt": "143764b952fdb1a7c69ce653bfba74a7744d6a8a573bfb73e235fba356c83de3",
+		"vendor/source/README.md": "12d2457747c45a1bb66b23c2d600b227d0c3c0540a2f1d42c2f5a610ee638c65",
+		"vendor/source/espeak-ng-4870adfa25b1a32b4361592f1be8a40337c58d6c.tar.gz": "cd83f84c4e495f281ac14e919aecf2834306ec1ea1b498de8ef6000f3a0f90de",
+		"vendor/source/provenance.json": "f80559ca0eebe5d926d193adbaa163a516051011b2f31f2c55ca21dbc1d5b5da",
+		"vendor/source/spellophone-6d51a872d54a773e4969d7130fdaed665b2d6d18.tar.gz": "6702e673c93ea1d8d90300a162d64aaab9fdc23737068173ec54e0c0ca4c58c6",
+		"vendor/source/wxt-e690f91730aa679a58fba905f30f8ca80ea4f490.tar.gz": "507a9f2f3590cfce7b318da403a22eee4ee55c4b014e49455d0c654a0ecd865e",
+		"vendor/wxt/LICENSE": "7b0b00fcdbc6a036078aad84d0bc0fae240ac67144b86c911149c2daa37c9f85",
+		"wxt.config.ts": "80fd69bcc1cd4e9784fa0c6058597a494dcff25b7126eb9ec243332c6a34a8f6"
+	},
+	"findings": [
+		{
+			"id": "corresponding-source",
+			"kind": "unresolved-source-coverage-assessment",
+			"status": "unresolved",
+			"evidence": [
+				"vendor/source/README.md",
+				"vendor/source/provenance.json",
+				"docs/evidence/license-audit-2026-11-05.json",
+				"https://www.gnu.org/licenses/gpl-3.0.html#section6"
+			],
+			"resolved": [
+				"Full pinned Spellophone/eSpeak source archives, deterministic dictionary patch, native glue/data/CMake/TypeScript/build descriptions supplied.",
+				"Full WXT preferred source supplied; installed browser adapter source matched.",
+				"Public repository/tag delivery identified, distinct from private AMO reviewer upload; archives stay outside extension binary package."
+			],
+			"remaining": [
+				"Map the exact ONNX Runtime 1.31.1 selected Web/WASM backend native/submodule source and required scripts to a GPL6-compliant public source-access mechanism.",
+				"Finish the specific PDF.js 6.5.438 OpenJPEG/JBIG2/qcms/QuickJS native-wrapper/source mapping recorded in the evidence.",
+				"Determine which embedded compiler-runtime code needs source versus actual GPL system/general-tool exceptions; do not assume every compiler tool is required or demand byte-identical compilation. These are evidence-review tasks, not a finding that existing upstream source access is unlawful."
+			]
+		},
+		{
+			"id": "runtime-notices",
+			"kind": "identified-notice-retention-conditions",
+			"status": "satisfied",
+			"evidence": [
+				"NOTICE.md",
+				"public/notices.html",
+				"vendor/espeak-ng/licenses/FILE-NOTICES.txt",
+				"vendor/source/provenance.json"
+			],
+			"resolved": [
+				"Preserved actual eSpeak/ucd/speechPlayer holder headers and GPL/Apache/BSD/Unicode texts; added generated-runtime and WXT MIT notice texts.",
+				"ONNX Runtime license/umbrella notices matched official v1.31.1 hashes.",
+				"PDF.js 6.5.438 source link corrected; copied cmap/font/decoder license files remain alongside assets.",
+				"No claim all libraries named in umbrella texts are linked; full source-coverage analysis remains separate."
+			],
+			"remaining": []
+		},
+		{
+			"id": "model-downloads",
+			"kind": "scoped-model-integration-assessment",
+			"status": "unresolved",
+			"evidence": [
+				"docs/licensing.md",
+				"docs/evidence/license-audit-2026-11-05.json",
+				"https://huggingface.co/rhasspy/piper-voices/discussions/93",
+				"https://brycebeattie.com/files/tts/"
+			],
+			"resolved": [
+				"Kasandra medium exact checkpoint has owner-issued CC BY 4.0 grant and required author/source/license/change notices are supplied.",
+				"LJSpeech medium has an original-trainer public-domain model grant, beyond dataset metadata.",
+				"No model weights/training recordings bundled or rehosted; explicit user-directed source-host downloads remain the behavior.",
+				"No language/voice silently removed as a licensing workaround."
+			],
+			"remaining": [
+				"Complete the scoped 178-entry catalog assessment of distributor versus recipient download/use duties, including attribution and local graph-instrumentation disclosure.",
+				"Resolve or substantiate Jirka low/medium checkpoint/parent grant scope; fine-tuning plus a research-restricted recording agreement does not itself establish illegality or automatic license inheritance."
+			]
+		},
+		{
+			"id": "preview-integration",
+			"kind": "unresolved-preview-use-scope",
+			"status": "unresolved",
+			"evidence": [
+				"docs/licensing.md",
+				"docs/licensing-clarification-drafts.md",
+				"https://github.com/rhasspy/piper-samples/tree/da672d1157136d07365790f51da3357a17cf9650"
+			],
+			"resolved": [
+				"No preview audio bundled/rehosted/prefetched; explicit Listen streams original upstream files.",
+				"No root general license found in the pinned sample tree, but that fact alone is not a universal prohibition on linking or streaming."
+			],
+			"remaining": [
+				"Assess the specific upstream-sample embedding/streaming/caching and recording/transcript/output grant scope. Model licenses do not automatically decide every sample right; use the unsent clarification draft or substantiate an existing applicable grant/policy."
+			]
+		},
+		{
+			"id": "store-distribution",
+			"kind": "source-access-and-store-terms-assessment",
+			"status": "unresolved",
+			"evidence": [
+				"docs/licensing.md",
+				"docs/releasing.md",
+				"store/listing.md",
+				"https://extensionworkshop.com/documentation/publish/add-on-policies/"
+			],
+			"resolved": [
+				"Original-source MIT and combined GPL scope are separated in notices/listing material.",
+				"Tag-only version authority retained; no owner-operated READY toggle introduced."
+			],
+			"remaining": [
+				"Confirm source-access directions and licensing declarations in the actual Chrome/AMO listings and reconcile any relevant distribution terms with GPL rights before live distribution. Evaluate currently effective rules as of 2026-11-05, not Mozilla policy changes announced for 2026-12-01."
+			]
+		}
+	]
+}

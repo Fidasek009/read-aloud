@@ -1,3 +1,4 @@
+import { assertReleaseLicensing } from "./release-licensing"
 import { buildVersion, parseVersion } from "./release-version"
 
 // Keep only product safety gates here. WXT owns store options/authentication.
@@ -33,6 +34,7 @@ if (import.meta.main) {
 	const version = buildVersion()
 	const args = submissionArgs(browser, version, dryRun)
 	if (!dryRun) {
+		await assertReleaseLicensing()
 		if (process.env.GITHUB_REF_TYPE !== "tag" || process.env.GITHUB_REF_NAME !== `v${version}`)
 			throw new Error("Publishing requires the matching release tag")
 	}

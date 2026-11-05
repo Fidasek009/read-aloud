@@ -85,6 +85,16 @@ await copyDirectory(`${phonemizer}/espeak-ng-data`, `${out}/espeak-ng-data`, out
 await copyAsset(`${phonemizer}/wasm/espeak-ng.wasm`, `${out}/espeak-ng.wasm`, out)
 for (const [source, target] of [
 	[`${phonemizer}/LICENSE`, "spellophone-GPL-3.0.txt"],
+	[`${root}/vendor/espeak-ng/licenses/COPYING`, "espeak-ng-GPL-3.0.txt"],
+	[`${root}/vendor/espeak-ng/licenses/COPYING.APACHE`, "espeak-ng-Apache-2.0.txt"],
+	[`${root}/vendor/espeak-ng/licenses/COPYING.BSD2`, "espeak-ng-BSD-2-Clause.txt"],
+	[`${root}/vendor/espeak-ng/licenses/COPYING.UCD`, "espeak-ng-Unicode.txt"],
+	[`${root}/vendor/espeak-ng/licenses/FILE-NOTICES.txt`, "espeak-ng-file-notices.txt"],
+	[`${root}/vendor/wxt/LICENSE`, "wxt-MIT.txt"],
+	[`${root}/vendor/emscripten/LICENSE`, "emscripten-license.txt"],
+	[`${root}/vendor/emscripten/musl-COPYRIGHT`, "emscripten-musl.txt"],
+	[`${root}/vendor/emscripten/libcxx-LICENSE`, "emscripten-libcxx.txt"],
+	[`${root}/vendor/emscripten/libcxxabi-LICENSE`, "emscripten-libcxxabi.txt"],
 	[`${root}/vendor/onnxruntime/LICENSE`, "onnxruntime-MIT.txt"],
 	[`${root}/vendor/onnxruntime/ThirdPartyNotices.txt`, "onnxruntime-third-party.txt"],
 	[`${root}/vendor/onnx/LICENSE`, "onnx-Apache-2.0.txt"],

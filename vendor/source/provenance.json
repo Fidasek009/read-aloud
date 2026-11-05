@@ -1,0 +1,114 @@
+{
+	"reviewedAt": "2026-11-05",
+	"spellophone": {
+		"version": "0.2.1",
+		"commit": "6d51a872d54a773e4969d7130fdaed665b2d6d18",
+		"archive": "spellophone-6d51a872d54a773e4969d7130fdaed665b2d6d18.tar.gz",
+		"sourceUrl": "https://codeload.github.com/Spelling-Creator/spellophone/tar.gz/6d51a872d54a773e4969d7130fdaed665b2d6d18",
+		"sha256": "6702e673c93ea1d8d90300a162d64aaab9fdc23737068173ec54e0c0ca4c58c6",
+		"registryPackageIntegrity": "sha512-VIqceoh9+mdm63S2pY1FGGVH5nateiLZY0PoD+ADFqKWl+zYLnY13zeywVDzc/w+hv9uLTItSC96sHbHBiNPtA==",
+		"provenance": "Registry-supplied npm provenance decoded and matched to source commit/tarball digest; signature bundle not independently cryptographically verified in this audit.",
+		"registryPayloads": [
+			{
+				"_type": "https://in-toto.io/Statement/v0.1",
+				"subject": [
+					{
+						"name": "pkg:npm/%40spelling-creator/spellophone@0.2.1",
+						"digest": {
+							"sha512": "548a9c7a887dfa6766eb74b6a58d45186547e676ad7a22d96343e80fe00316a29697ecd82e7635df37b2c150f373fc3e86ff6e2d322d482f7ab076c706234fb4"
+						}
+					}
+				],
+				"predicateType": "https://github.com/npm/attestation/tree/main/specs/publish/v0.1",
+				"predicate": {
+					"name": "@spelling-creator/spellophone",
+					"version": "0.2.1",
+					"registry": "https://registry.npmjs.org"
+				}
+			},
+			{
+				"_type": "https://in-toto.io/Statement/v1",
+				"subject": [
+					{
+						"name": "pkg:npm/%40spelling-creator/spellophone@0.2.1",
+						"digest": {
+							"sha512": "548a9c7a887dfa6766eb74b6a58d45186547e676ad7a22d96343e80fe00316a29697ecd82e7635df37b2c150f373fc3e86ff6e2d322d482f7ab076c706234fb4"
+						}
+					}
+				],
+				"predicateType": "https://slsa.dev/provenance/v1",
+				"predicate": {
+					"buildDefinition": {
+						"buildType": "https://slsa-framework.github.io/github-actions-buildtypes/workflow/v1",
+						"externalParameters": {
+							"workflow": {
+								"ref": "refs/tags/v0.2.1",
+								"repository": "https://github.com/Spelling-Creator/spellophone",
+								"path": ".github/workflows/release.yml"
+							}
+						},
+						"internalParameters": {
+							"github": {
+								"event_name": "release",
+								"repository_id": "1412569499",
+								"repository_owner_id": "322280089"
+							}
+						},
+						"resolvedDependencies": [
+							{
+								"uri": "git+https://github.com/Spelling-Creator/spellophone@refs/tags/v0.2.1",
+								"digest": {
+									"gitCommit": "6d51a872d54a773e4969d7130fdaed665b2d6d18"
+								}
+							}
+						]
+					},
+					"runDetails": {
+						"builder": {
+							"id": "https://github.com/actions/runner/github-hosted"
+						},
+						"metadata": {
+							"invocationId": "https://github.com/Spelling-Creator/spellophone/actions/runs/38167207679/attempts/1"
+						}
+					}
+				}
+			}
+		]
+	},
+	"espeakNg": {
+		"version": "1.52.0",
+		"commit": "4870adfa25b1a32b4361592f1be8a40337c58d6c",
+		"archive": "espeak-ng-4870adfa25b1a32b4361592f1be8a40337c58d6c.tar.gz",
+		"sourceUrl": "https://codeload.github.com/espeak-ng/espeak-ng/tar.gz/4870adfa25b1a32b4361592f1be8a40337c58d6c",
+		"sha256": "cd83f84c4e495f281ac14e919aecf2834306ec1ea1b498de8ef6000f3a0f90de",
+		"upstreamPatch": "Spellophone archive vendor/patches/0001-deterministic-dictionary-compile.patch must be applied before compiling data."
+	},
+	"wxt": {
+		"version": "0.21.5",
+		"commit": "e690f91730aa679a58fba905f30f8ca80ea4f490",
+		"licenseSource": "https://raw.githubusercontent.com/wxt-dev/wxt/e690f91730aa679a58fba905f30f8ca80ea4f490/LICENSE",
+		"archive": "wxt-e690f91730aa679a58fba905f30f8ca80ea4f490.tar.gz",
+		"sha256": "507a9f2f3590cfce7b318da403a22eee4ee55c4b014e49455d0c654a0ecd865e",
+		"sourceUrl": "https://codeload.github.com/wxt-dev/wxt/tar.gz/e690f91730aa679a58fba905f30f8ca80ea4f490",
+		"browserAdapterVersion": "0.3.7",
+		"browserAdapterVerification": "The installed src/index.mjs matches packages/browser/src/index.mjs at this commit byte-for-byte."
+	},
+	"emscripten": {
+		"version": "6.0.12",
+		"source": "https://github.com/emscripten-core/emscripten/tree/6.0.12",
+		"basis": "Spellophone v0.2.1 mise.toml pins emsdk 6.0.12. Emscripten/musl/libc++/libc++abi notices copied from that release; not a claim that all these library components survive linking.",
+		"commit": "5488e0871d46d19a3209988190fa6a653126256f"
+	},
+	"onnxRuntime": {
+		"version": "1.31.1",
+		"commit": "6af1a932e2286d5c58166085d24c68783033edee",
+		"sourceUrl": "https://github.com/microsoft/onnxruntime/tree/6af1a932e2286d5c58166085d24c68783033edee",
+		"status": "Specific native/submodule build-source mapping still under review; source access URL alone is not a completed combined-source assessment."
+	},
+	"pdfJs": {
+		"version": "6.5.438",
+		"commit": "0a4153349dc473ba950fc17941c5ca7eda43c1de",
+		"sourceUrl": "https://github.com/mozilla/pdf.js/tree/0a4153349dc473ba950fc17941c5ca7eda43c1de",
+		"status": "Separate decoder build-source mapping for the copied OpenJPEG/JBIG2/qcms/QuickJS assets still under review."
+	}
+}

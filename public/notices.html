@@ -4,32 +4,60 @@
 	<main>
 		<h1>Licenses and source code</h1>
 		<p>
-			Original Read Aloud source files are MIT. This prototype bundles GPL-3.0-or-later Spellophone and eSpeak NG. The
-			combined distribution is subject to GPL terms; it is not an MIT-only bundle.
+			Original Read Aloud source and artwork are MIT. This prototype bundles GPL-3.0-or-later Spellophone and eSpeak NG.
+			The combined distribution has GPL obligations and is not an MIT-only archive.
 		</p>
 		<p>
-			<a href="runtime/licenses/spellophone-GPL-3.0.txt">GPL license</a> ·
-			<a href="https://github.com/Spelling-Creator/spellophone/tree/v0.2.1"
-				>Spellophone source and build scripts, version 0.2.1</a
+			<a href="runtime/licenses/spellophone-GPL-3.0.txt">Spellophone GPL</a> ·
+			<a href="runtime/licenses/espeak-ng-GPL-3.0.txt">eSpeak NG GPL</a> ·
+			<a href="runtime/licenses/espeak-ng-Apache-2.0.txt">Apache notices</a> ·
+			<a href="runtime/licenses/espeak-ng-BSD-2-Clause.txt">BSD notices</a> ·
+			<a href="runtime/licenses/espeak-ng-Unicode.txt">Unicode notices</a> ·
+			<a href="runtime/licenses/espeak-ng-file-notices.txt">File-level copyright and license notices</a>
+		</p>
+		<p>
+			<a href="https://github.com/Fidasek009/read-aloud/tree/main/vendor/source"
+				>Pinned Spellophone/eSpeak source archives, hashes and build information</a
 			>
-			· <a href="https://github.com/espeak-ng/espeak-ng/tree/1.52.0">eSpeak NG source, version 1.52.0</a>
+			· <a href="https://github.com/Fidasek009/read-aloud/tags">Application source by release tag</a>. Use the tag
+			matching the installed extension version. Public source access must accompany a distributed binary; reviewer-only
+			source is insufficient. Complete combined-source coverage remains a release assessment, not a claim made by these
+			links.
 		</p>
 		<p>
-			<a href="runtime/licenses/onnxruntime-MIT.txt">ONNX Runtime MIT license</a> ·
-			<a href="runtime/licenses/onnxruntime-third-party.txt">Runtime third-party notices</a> ·
-			<a href="runtime/licenses/onnx-Apache-2.0.txt">ONNX schema Apache-2.0 license</a>
+			<a href="runtime/licenses/emscripten-license.txt">Emscripten</a> ·
+			<a href="runtime/licenses/emscripten-musl.txt">musl</a> ·
+			<a href="runtime/licenses/emscripten-libcxx.txt">libc++</a> ·
+			<a href="runtime/licenses/emscripten-libcxxabi.txt">libc++abi</a> ·
+			<a href="runtime/licenses/wxt-MIT.txt">WXT MIT</a>
 		</p>
 		<p>
-			Voice models are separate downloads from rhasspy/piper-voices, revision 5041a7a49ae5b3a0f30e6837769eb03fdbb231bd
-			(repository license MIT, which does not establish individual model or dataset rights). Each catalog entry links
-			its pinned model terms before download. Grants vary and may include attribution, share-alike, noncommercial, or
-			research-only restrictions. LJSpeech uses public-domain recordings and was trained from scratch. Jirka lists a CC0
-			dataset and fine-tuning from Lessac. Model provenance and complete corresponding-source packaging remain release
-			gates for this development prototype.
+			<a href="runtime/licenses/onnxruntime-MIT.txt">ONNX Runtime MIT</a> ·
+			<a href="runtime/licenses/onnxruntime-third-party.txt">ONNX Runtime third-party notices</a> ·
+			<a href="runtime/licenses/onnx-Apache-2.0.txt">ONNX schema Apache-2.0</a>
 		</p>
 		<p>
-			<a href="pdf-runtime/LICENSE">PDF.js Apache-2.0 license</a> ·
-			<a href="https://github.com/mozilla/pdf.js/tree/v6.4.299">PDF.js 6.4.299 source</a>
+			<a href="pdf-runtime/LICENSE">PDF.js Apache-2.0</a> ·
+			<a href="https://github.com/mozilla/pdf.js/tree/v6.5.438">PDF.js 6.5.438 source</a>. Font, cmap and decoder
+			notices are retained alongside their assets.
+		</p>
+		<p>
+			No model weights, training recordings or samples are bundled. Voices are fetched only on Download; prerecorded
+			samples only on Listen. Each catalog entry links its pinned model terms. Repository-level metadata does not settle
+			individual checkpoint, dataset, sample or use restrictions.
+		</p>
+		<p>
+			Kasandra medium: Ondřej Šimek,
+			<a href="https://huggingface.co/rhasspy/piper-voices/discussions/93">owner-issued grant and source</a>,
+			<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Downloaded model graphs are locally
+			instrumented for word timing; original weights are unchanged. The author grant was tied to the exact pinned
+			checkpoint. LJSpeech medium has an original-trainer public-domain grant. Jirka and the wider model/sample
+			integration have separate unresolved review items.
+		</p>
+		<p>
+			<a href="https://github.com/Fidasek009/read-aloud/blob/main/docs/licensing.md"
+				>Current licensing assessment and remaining release blockers</a
+			>. This development prototype is not cleared for public release.
 		</p>
 	</main>
 </html>

@@ -2,6 +2,7 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { basename, join } from "node:path"
 
+import { assertReleaseLicensing } from "./release-licensing"
 import { versionFromTag } from "./release-version"
 
 interface Result {
@@ -54,6 +55,7 @@ export async function publishRelease(tag: string, files: string[], notes: string
 }
 
 if (import.meta.main) {
+	await assertReleaseLicensing()
 	const tag = process.env.RELEASE_TAG
 	if (!tag) throw new Error("RELEASE_TAG is required")
 	const version = versionFromTag(tag)
