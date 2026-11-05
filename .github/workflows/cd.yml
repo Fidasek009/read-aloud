@@ -17,6 +17,9 @@ permissions:
 jobs:
   preflight:
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      id-token: write
     environment: stores
     timeout-minutes: 10
     env:
@@ -26,8 +29,8 @@ jobs:
       CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
       CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
       FIREFOX_EXTENSION_ID: ${{ vars.FIREFOX_EXTENSION_ID }}
-      CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
-      CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
+      CHROME_SERVICE_ACCOUNT_EMAIL: ${{ vars.CHROME_SERVICE_ACCOUNT_EMAIL }}
+      CHROME_WORKLOAD_IDENTITY_PROVIDER: ${{ vars.CHROME_WORKLOAD_IDENTITY_PROVIDER }}
       FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
       FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
     steps:
@@ -44,7 +47,7 @@ jobs:
           fi
           keys=()
           if test "$STORE" != firefox; then
-            keys+=(CHROME_EXTENSION_ID CHROME_PUBLISHER_ID CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL CHROME_SERVICE_ACCOUNT_PRIVATE_KEY)
+            keys+=(CHROME_EXTENSION_ID CHROME_PUBLISHER_ID CHROME_SERVICE_ACCOUNT_EMAIL CHROME_WORKLOAD_IDENTITY_PROVIDER)
           fi
           if test "$STORE" != chrome; then
             keys+=(FIREFOX_EXTENSION_ID FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET)
@@ -68,8 +71,22 @@ jobs:
           pattern: extension-*
           merge-multiple: true
           path: .output
+      - name: Obtain short-lived Chrome publishing token
+        if: inputs.store == 'all' || inputs.store == 'chrome'
+        id: chrome-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: ${{ vars.CHROME_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.CHROME_SERVICE_ACCOUNT_EMAIL }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+          access_token_lifetime: 1800s
+          create_credentials_file: false
+          export_environment_variables: false
       - name: Authenticate Chrome without uploading
         if: inputs.store == 'all' || inputs.store == 'chrome'
+        env:
+          CHROME_SERVICE_ACCOUNT_ACCESS_TOKEN: ${{ steps.chrome-auth.outputs.access_token }}
         run: bun scripts/publish-extension.ts chrome --dry-run
       - name: Authenticate Firefox without uploading
         if: inputs.store == 'all' || inputs.store == 'firefox'
@@ -80,6 +97,9 @@ jobs:
     if: ${{ !inputs.dry-run }}
     needs: preflight
     runs-on: ubuntu-26.04
+    permissions:
+      contents: read
+      id-token: write
     environment: stores
     timeout-minutes: 30
     strategy:
@@ -98,13 +118,24 @@ jobs:
         with:
           name: extension-${{ matrix.browser }}
           path: .output
+      - name: Obtain short-lived Chrome publishing token
+        if: matrix.browser == 'chrome'
+        id: chrome-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3
+        with:
+          workload_identity_provider: ${{ vars.CHROME_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.CHROME_SERVICE_ACCOUNT_EMAIL }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/chromewebstore
+          access_token_lifetime: 1800s
+          create_credentials_file: false
+          export_environment_variables: false
       - name: Submit Chrome for review and automatic publication
         if: matrix.browser == 'chrome'
         env:
           CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
           CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
-          CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
-          CHROME_SERVICE_ACCOUNT_PRIVATE_KEY: ${{ secrets.CHROME_SERVICE_ACCOUNT_PRIVATE_KEY }}
+          CHROME_SERVICE_ACCOUNT_ACCESS_TOKEN: ${{ steps.chrome-auth.outputs.access_token }}
         run: bun scripts/publish-extension.ts chrome --publish
       - name: Submit Firefox and reviewer sources
         if: matrix.browser == 'firefox'

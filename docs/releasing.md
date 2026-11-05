@@ -20,11 +20,11 @@ No package bump, manual ZIP build, artwork task, separate `RELEASE_READY` variab
 ## Workflows
 
 - **CI:** PRs, pushes to main, and release calls run strict types, formatting, unit tests and actionlint over all workflows. Builds/checks Chrome and Firefox MV3 archives. Extracts Firefox reviewer sources, installs into a different checkout/cache path and compares all packaged file bytes. Validates committed PNG dimensions and bundles store artwork, listing/privacy copy and editable icon source. Uploads three immutable run artifacts: `extension-chrome`, `extension-firefox`, `extension-store-assets`. Require **CI complete** in main's rules.
-- **CD:** preflight checks both store configurations, then authenticates both through WXT dry-runs before either can upload. Live jobs use the exact tested archives from that run. WXT owns store authentication/options. Chrome API v2 uses a dedicated service account; Firefox uses an AMO API issuer/secret. No review bypass or cancellation of another pending review is requested.
+- **CD:** preflight checks both store configurations, then authenticates both through WXT dry-runs before either can upload. Live jobs use the exact tested archives from that run. WXT owns store authentication/options. Chrome API v2 uses GitHub OIDC and Workload Identity Federation through a dedicated service account; Firefox uses an AMO API issuer/secret. No review bypass or cancellation of another pending review is requested.
 - **Store check:** manual dispatch on the default branch runs CI and authentication-only preflight for the selected store (chrome, firefox or all). Chrome can be completed and verified before Firefox credentials exist. Real releases always authenticate and publish both stores. It uploads no version, consumes no version number, and creates no release. It works with the development sentinel. Existing listings are required for WXT's current authentication checks.
 - **Release:** a `v*` push must pass strict vX.Y.Z validation first. After CI and both store submissions succeed, it creates/reuses a draft GitHub release, uploads the four tag-versioned ZIPs and SHA-256 checksums, then publishes automatically. The fourth ZIP is `read-aloud-X.Y.Z-store-assets.zip`. The Firefox ZIP is unsigned; users install Firefox from AMO. A signed XPI is not currently fetched.
 
-All jobs use Ubuntu 26.04. Actions are pinned to complete hashes and Dependabot maintains Bun dependencies and GitHub Actions. Bun's toolchain version comes from packageManager; installs use the frozen text lockfile. Tokens are read-only except the final release job's contents:write permission. Checkout retains no Git credentials; publishing secrets never enter PR jobs. Every job has a timeout. Release submissions are serialized and never automatically cancelled. GitHub concurrency retains only one running and one pending run, so avoid pushing a burst of release tags.
+All jobs use Ubuntu 26.04. Actions are pinned to complete hashes and Dependabot maintains Bun dependencies and GitHub Actions. Bun's toolchain version comes from packageManager; installs use the frozen text lockfile. Repository contents access is read-only except the final release job's contents:write permission. Only CD jobs and their reusable-workflow callers receive id-token:write for federated authentication. Checkout retains no Git credentials; publishing secrets never enter PR jobs. Every job has a timeout. Release submissions are serialized and never automatically cancelled. GitHub concurrency retains only one running and one pending run, so avoid pushing a burst of release tags.
 
 ## Agent-owned store package
 
@@ -43,12 +43,12 @@ Use the permanent Firefox ID `read-aloud@fidasek009.github.io` (the default in W
 | Repository variable | `CHROME_EXTENSION_ID` | Existing Chrome store item ID |
 | Repository variable | `CHROME_PUBLISHER_ID` | Publisher ID from Publisher → Settings |
 | Repository variable | `FIREFOX_EXTENSION_ID` | Permanent manifest/AMO ID; use the default above for first submission |
-| `stores` environment secret | `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL` | Dedicated authorized service-account email |
-| `stores` environment secret | `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY` | Decoded PEM private key, preserving real line breaks |
+| Repository variable | `CHROME_SERVICE_ACCOUNT_EMAIL` | Dedicated authorized service-account email |
+| Repository variable | `CHROME_WORKLOAD_IDENTITY_PROVIDER` | Full projects/NUMBER/locations/global/workloadIdentityPools/POOL/providers/PROVIDER resource name |
 | `stores` environment secret | `FIREFOX_JWT_ISSUER` | AMO API issuer/key |
 | `stores` environment secret | `FIREFOX_JWT_SECRET` | AMO API secret |
 
-Create/enable the Chrome Web Store API in a Google Cloud project, create a service account and link its email under the Chrome dashboard's Account section. No broad Google Cloud project role is needed merely to authorize Web Store publishing. The API credentials flow uses the service-account JSON key's client_email/private_key, not retired v1.1 refresh-token instructions. Secrets are entered through GitHub/private input, never committed or printed. The source archive uses an explicit allowlist and excludes .env files.
+Follow [Chrome federation setup](chrome-publishing-setup.md) to authorize GitHub through the service account linked in the Chrome dashboard. No downloaded Google private key, Chrome secret, OAuth client or saved access token is needed. Each Chrome preflight/publication job obtains its own 30-minute Web Store-scoped access token immediately before using WXT. The auth action creates no credential file and exports no global credentials. Firefox secrets are entered through GitHub, never committed or printed. The source archive uses an explicit allowlist and excludes .env files. These workflow changes must reach main before using Store check; no authentication or publication has been run to validate the external configuration.
 
 First submission consumes a version just as an automated upload does. Complete that initial store integration with the agent's tag-versioned packages, then use a higher tag for the next update. Do not reuse a version already uploaded manually. Accounts, initial review, and store-required publisher metadata are not bypassed by having a CI pipeline.
 
@@ -67,6 +67,8 @@ The GitHub release job is independently retryable. It reuses an existing draft, 
 - [WXT publishing and first-time limitations](https://wxt.dev/guide/essentials/publishing.html)
 - [WXT version template semantics](https://wxt.dev/guide/resources/upgrading)
 - [Chrome service-account integration](https://developer.chrome.com/docs/webstore/service-accounts)
+- [Google federation setup for deployment pipelines](https://docs.cloud.google.com/iam/docs/workload-identity-federation-with-deployment-pipelines)
+- [Open-source extension pipeline comparison, checked 2026-11-05](release-pipeline-references.md)
 - [Chrome store imagery](https://developer.chrome.com/docs/webstore/images)
 - [Chrome manifest version constraints](https://developer.chrome.com/docs/extensions/reference/manifest/version)
 - [Firefox submissions and reviewer sources](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/)
