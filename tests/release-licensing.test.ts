@@ -75,3 +75,16 @@ test("standalone live publishers reject an unresolved fixture before invoking pu
 		}
 	})
 })
+
+test("supplier recipe fingerprints cannot be omitted from an otherwise satisfied review", async () => {
+	await withReviewFixture(async (directory, record) => {
+		const sources = await Bun.file("vendor/source/remote-sources.json").json()
+		const recipe = sources.preservedRecipes[0]
+		delete record.inputs[recipe.path]
+		await Bun.write(join(directory, "release/licensing.json"), JSON.stringify(record))
+		expect((await inspectReleaseLicensing(directory)).stale).toContain(
+			`Missing or inconsistent reviewed supplier recipe: ${recipe.path}`,
+		)
+		await expect(assertReleaseLicensing(directory)).rejects.toThrow()
+	})
+})

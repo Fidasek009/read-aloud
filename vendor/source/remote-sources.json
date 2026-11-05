@@ -1,0 +1,611 @@
+{
+	"schemaVersion": 1,
+	"reviewedAt": "2026-11-05",
+	"scope": "Pinned public preferred-source access and preserved supplier build material for shipped inference/PDF code. These mappings are evidence, not a legal-proof machine, native rebuild certification, or a claim that every library in umbrella notices is linked.",
+	"sourceDelivery": {
+		"mechanism": "GPLv3 section 6(d): equivalent source access, including named third-party servers. This repository provides our application source, modified packaging scripts and pinned supplier archives; the URLs below provide additional preferred source. No fee or store reviewer account is needed. Maintainers remain responsible for availability for as long as recipients must be able to obtain corresponding source.",
+		"directions": "vendor/source/SOURCE-ACCESS.md",
+		"license": "https://www.gnu.org/licenses/gpl-3.0.html#section6"
+	},
+	"onnxRuntime": {
+		"version": "1.31.1",
+		"commit": "6af1a932e2286d5c58166085d24c68783033edee",
+		"tree": "https://github.com/microsoft/onnxruntime/tree/6af1a932e2286d5c58166085d24c68783033edee",
+		"archive": "https://codeload.github.com/microsoft/onnxruntime/tar.gz/6af1a932e2286d5c58166085d24c68783033edee",
+		"registryPackageIntegrity": "sha512-5GeH+bWQ+HxM10z7erGlsWqryrwMbSvm/1tkIsKTT48g0fI19VXVVC435t4t7VsPdSQeS7NmuZPXrQ73k82URw==",
+		"provenance": "Version/source-tag relationship and supplier checked-in build recipes; no independently verified registry-to-native-build attestation or native rebuild claimed.",
+		"bundledInputs": [
+			{
+				"path": "node_modules/onnxruntime-web/dist/ort.wasm.min.mjs",
+				"sha256": "c21d9c326d453a4a61398270c804d5979e118540597cb0c07f7b3d64e6098234"
+			},
+			{
+				"path": "node_modules/onnxruntime-web/dist/ort.webgpu.min.mjs",
+				"sha256": "329cd956772397a1aedd668e911195d39afefb182f6fc14aafa4f08ac8d8f379"
+			},
+			{
+				"path": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.mjs",
+				"sha256": "30ed0b5cd1182ede931fea448afb567d4dc705ec957af09f108a2be5f770dac3"
+			},
+			{
+				"path": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
+				"sha256": "4b884c203b0fa48d057be3332c65513ff85aa3c5bddd6946acc0fab7ecda001d"
+			},
+			{
+				"path": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.mjs",
+				"sha256": "59cf781530e1a16df2a291d78798e3ec1152467edaec402d6f9599d85047c302"
+			},
+			{
+				"path": "node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.asyncify.wasm",
+				"sha256": "ca319e9539cd0f1e291cf56074760121eaf39650f5dbf84b6e52c07f4b2944ec"
+			}
+		],
+		"preferredSourcePaths": [
+			"js/web/lib",
+			"js/common/lib",
+			"js/web/script/build.ts",
+			"onnxruntime/wasm",
+			"onnxruntime/core",
+			"include",
+			"cmake",
+			"tools/ci_build"
+		],
+		"selectedBackends": {
+			"cpu": "ort.wasm JS build plus simd/threaded WASM; onnxruntime_webassembly target links ORT core/CPU providers/MLAS, ONNX/protobuf/flatbuffers/re2 and configured headers.",
+			"gpu": "ort.webgpu JS build with JSEP disabled plus simd/threaded asyncify WASM; supplier build adds --use_webgpu --use_webnn and reduced_types.config. Emscripten links Dawn's emdawnwebgpu C/C++ bridge/generated interfaces, not desktop Dawn GPU drivers.",
+			"sourceOfFlags": "tools/ci_build/github/azure-pipelines/templates/linux-wasm-ci.yml and cmake/onnxruntime_webassembly.cmake at the pinned source; all local changes are in scripts/prepare-runtime.ts."
+		},
+		"nativeFetchContent": [
+			{
+				"name": "abseil_cpp",
+				"url": "https://github.com/abseil/abseil-cpp/archive/refs/tags/20250814.0.zip",
+				"sha1": "a9eb1d648cbca4d4d788737e971a6a7a63726b07"
+			},
+			{
+				"name": "date",
+				"url": "https://github.com/HowardHinnant/date/archive/refs/tags/v3.0.1.zip",
+				"sha1": "2dac0c81dc54ebdd8f8d073a75c053b04b56e159"
+			},
+			{
+				"name": "eigen",
+				"url": "https://github.com/eigen-mirror/eigen/archive/1d8b82b0740839c0de7f1242a3585e3390ff5f33/eigen-1d8b82b0740839c0de7f1242a3585e3390ff5f33.zip",
+				"sha1": "05b19b49e6fbb91246be711d801160528c135e34"
+			},
+			{
+				"name": "flatbuffers",
+				"url": "https://github.com/google/flatbuffers/archive/refs/tags/v23.5.26.zip",
+				"sha1": "59422c3b5e573dd192fead2834d25951f1c1670c"
+			},
+			{
+				"name": "microsoft_gsl",
+				"url": "https://github.com/microsoft/GSL/archive/refs/tags/v4.2.1.zip",
+				"sha1": "1094e3bb7a8af763dcb136ccd676e6e75e614eec"
+			},
+			{
+				"name": "onnx",
+				"url": "https://github.com/onnx/onnx/archive/refs/tags/v1.22.0.zip",
+				"sha1": "2b2cd58ac7a26df5371266149e0c76776330cdf1"
+			},
+			{
+				"name": "protobuf",
+				"url": "https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz",
+				"sha1": "051fee744fcca04dab37eb009d49aa3e9546acda"
+			},
+			{
+				"name": "re2",
+				"url": "https://github.com/google/re2/archive/refs/tags/2024-07-02.zip",
+				"sha1": "646e1728269cde7fcef990bf4a8e87b047882e88"
+			},
+			{
+				"name": "safeint",
+				"url": "https://github.com/dcleblanc/SafeInt/archive/refs/tags/3.0.28.zip",
+				"sha1": "23f252040ff6cb9f1fd18575b32fa8fb5928daac"
+			},
+			{
+				"name": "json",
+				"url": "https://github.com/nlohmann/json/archive/refs/tags/v3.11.3.zip",
+				"sha1": "5e88795165cc8590138d1f47ce94ee567b85b4d6"
+			},
+			{
+				"name": "mp11",
+				"url": "https://github.com/boostorg/mp11/archive/refs/tags/boost-1.82.0.zip",
+				"sha1": "9bc9e01dffb64d9e0773b2e44d2f22c51aace063"
+			},
+			{
+				"name": "dawn",
+				"url": "https://github.com/google/dawn/archive/refs/tags/v20260916.214021.zip",
+				"sha1": "514e914f23a0787213c89eed879f74b5e275690d"
+			}
+		],
+		"dependencyRules": "cmake/deps.txt contains supplier SHA-1 archive pins; cmake/external/onnxruntime_external_deps.cmake controls conditional selection and applies preserved date/GSL/ONNX patches. The full dependency file is supplied, so conditional branches remain obtainable without assuming all are linked. Native flatbuffers 23.5.26 differs from JS flatbuffers 25.9.23.",
+		"submodules": [
+			{
+				"path": "cmake/external/emsdk",
+				"commit": "c0bb220cb6e6f4e0fabb6f6db9efd53390ef5e56",
+				"tree": "https://github.com/emscripten-core/emsdk/tree/c0bb220cb6e6f4e0fabb6f6db9efd53390ef5e56",
+				"archive": "https://codeload.github.com/emscripten-core/emsdk/tar.gz/c0bb220cb6e6f4e0fabb6f6db9efd53390ef5e56",
+				"role": "Toolchain instructions; supplier pipeline selects SDK 4.0.23."
+			},
+			{
+				"path": "cmake/external/onnx",
+				"commit": "2bb50465112feca9003e1ed654d77f01ff1415ca",
+				"tree": "https://github.com/onnx/onnx/tree/2bb50465112feca9003e1ed654d77f01ff1415ca",
+				"archive": "https://codeload.github.com/onnx/onnx/tar.gz/2bb50465112feca9003e1ed654d77f01ff1415ca",
+				"role": "Legacy gitlink retained for completeness; default FetchContent build selects ONNX 1.22.0 from deps.txt, not automatically this gitlink."
+			},
+			{
+				"path": "cmake/external/libprotobuf-mutator",
+				"commit": "7a2ed51a6b682a83e345ff49fc4cfd7ca47550db",
+				"tree": "https://github.com/google/libprotobuf-mutator/tree/7a2ed51a6b682a83e345ff49fc4cfd7ca47550db",
+				"archive": "https://codeload.github.com/google/libprotobuf-mutator/tar.gz/7a2ed51a6b682a83e345ff49fc4cfd7ca47550db",
+				"role": "Fuzz/build-only source; not asserted part of selected shipped WASM."
+			}
+		],
+		"javascriptDependencies": [
+			{
+				"name": "flatbuffers",
+				"version": "25.9.23",
+				"sourcePackage": "https://registry.npmjs.org/flatbuffers/-/flatbuffers-25.9.23.tgz",
+				"integrity": "sha512-MI1qs7Lo4Syw0EOzUl0xjs2lsoeqFku44KpngfIduHBYvzm8h2+7K8YMQh1JtVVVrUvhLpNwqVi4DERegUJhPQ=="
+			},
+			{
+				"name": "protobufjs",
+				"version": "7.6.3",
+				"sourcePackage": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.3.tgz",
+				"integrity": "sha512-+k0vdJKNdW+Vu+dYe8tZA/VvQb6XKNWexC6URwBFXxNnjLJz9nQJCemGyNgRAWD+B7+nGNc9qMPGwcD7s4nzUw=="
+			},
+			{
+				"name": "long",
+				"version": "5.3.2",
+				"sourcePackage": "https://registry.npmjs.org/long/-/long-5.3.2.tgz",
+				"integrity": "sha512-mNAgZ1GmyNhD7AuqnTG3/VQ26o760+ZYBPKjPvugO8+nLbYfX6TVpJPseBvopbdY+qpZ/lKUnmEc1LeZYS3QAA=="
+			},
+			{
+				"name": "platform",
+				"version": "1.3.6",
+				"sourcePackage": "https://registry.npmjs.org/platform/-/platform-1.3.6.tgz",
+				"integrity": "sha512-fnWVljUchTro6RiCFvCXBbNhJc2NijN7oIQxbwsyL0buWJPG85v81ehlHI9fXrJsMNgTofEoWIQeClKpgxFLrg=="
+			},
+			{
+				"name": "guid-typescript",
+				"version": "1.0.9",
+				"sourcePackage": "https://registry.npmjs.org/guid-typescript/-/guid-typescript-1.0.9.tgz",
+				"integrity": "sha512-Y8T4vYhEfwJOTbouREvG+3XDsjr8E3kIr7uf+JZ0BYloFsttiHU0WfvANVsR7TxNUJa/WpCnw/Ino/p+DeBhBQ=="
+			}
+		],
+		"javascriptSourceDirections": "Full ORT source includes publisher package locks/build scripts. Resolved packages above retain the supplier's JS-runtime source; FlatBuffers preferred TypeScript source is https://github.com/google/flatbuffers/tree/v25.9.23/ts (full archive https://codeload.github.com/google/flatbuffers/tar.gz/refs/tags/v25.9.23). Do not substitute our installed transitive dependency version for code already compiled into the supplier's minified JS.",
+		"embeddedRuntime": {
+			"version": "4.0.23",
+			"commit": "7a5d93b50f6a3a35e85a0d2fc9e667b8498e6aed",
+			"tree": "https://github.com/emscripten-core/emscripten/tree/7a5d93b50f6a3a35e85a0d2fc9e667b8498e6aed",
+			"archive": "https://codeload.github.com/emscripten-core/emscripten/tar.gz/7a5d93b50f6a3a35e85a0d2fc9e667b8498e6aed",
+			"paths": ["src", "system/lib", "system/include"],
+			"role": "Source for generated JS and linked C/C++ runtime support, including musl/libc++/libc++abi where retained. General-purpose compiler/tool executables are not automatically corresponding-source components."
+		}
+	},
+	"pdfJs": {
+		"version": "6.5.438",
+		"commit": "0a4153349dc473ba950fc17941c5ca7eda43c1de",
+		"tree": "https://github.com/mozilla/pdf.js/tree/0a4153349dc473ba950fc17941c5ca7eda43c1de",
+		"archive": "https://codeload.github.com/mozilla/pdf.js/tar.gz/0a4153349dc473ba950fc17941c5ca7eda43c1de",
+		"provenance": "npm pdfjs-dist gitHead points to this commit; installed decoder WASM SHA-256 values were compared to external/* bytes at this exact source revision. No cryptographic registry-attestation verification claimed.",
+		"preferredSourcePaths": ["src", "web", "gulpfile.mjs", "external", "package-lock.json"],
+		"decoders": [
+			{
+				"id": "openjpeg",
+				"artifact": {
+					"path": "node_modules/pdfjs-dist/wasm/openjpeg.wasm",
+					"sha256": "7ea4b2b04613370ad4e9c1162da750cc88b4b176eac0d0c164b3caff23fc0a46"
+				},
+				"pdfSourcePath": "external/openjpeg/openjpeg.wasm",
+				"pdfUpdateCommit": "0d5441e67d5a4606eab311ec9aa72053496432a3",
+				"wrapper": {
+					"commit": "d5f16ba380391d4e32b51834e2e0afa796e402d8",
+					"tree": "https://github.com/mozilla/pdf.js.openjpeg/tree/d5f16ba380391d4e32b51834e2e0afa796e402d8",
+					"archive": "https://codeload.github.com/mozilla/pdf.js.openjpeg/tar.gz/d5f16ba380391d4e32b51834e2e0afa796e402d8",
+					"basis": "Latest wrapper revision before PDF binary update, matching pixel-packing/fallback change. This wrapper revision is an evidence-based timeline inference, not a supplier-attested hash-to-build statement."
+				},
+				"native": {
+					"commit": "8314119b067c0fc77834731168daaebd379fdb12",
+					"tree": "https://github.com/uclouvain/openjpeg/tree/8314119b067c0fc77834731168daaebd379fdb12",
+					"archive": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/8314119b067c0fc77834731168daaebd379fdb12",
+					"basis": "Pinned in wrapper Dockerfile; apply preserved buffer-stream patch, then compile_lib.sh and compile.sh with src/decoder.c,pixels.c,pixels.h,myjs.js."
+				}
+			},
+			{
+				"id": "jbig2",
+				"artifact": {
+					"path": "node_modules/pdfjs-dist/wasm/jbig2.wasm",
+					"sha256": "466f45c2a61a698152fb5400c27e56ff2ceb73dcb71fde3fc366a502308eaab0"
+				},
+				"pdfSourcePath": "external/jbig2/jbig2.wasm",
+				"pdfUpdateCommit": "c3a2798726365a6a36f7dd78bcaa51dc298395f6",
+				"wrapper": {
+					"commit": "15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a",
+					"tree": "https://github.com/mozilla/pdf.js.jbig2/tree/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a",
+					"archive": "https://codeload.github.com/mozilla/pdf.js.jbig2/tar.gz/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a",
+					"basis": "Wrapper update and PDF commit both explicitly name PDFium bb1f9f71."
+				},
+				"native": {
+					"commit": "bb1f9f71e7b15afdd5937adf8cfe5807522b882f",
+					"tree": "https://pdfium.googlesource.com/pdfium/+/bb1f9f71e7b15afdd5937adf8cfe5807522b882f/",
+					"archive": "https://pdfium.googlesource.com/pdfium/+archive/bb1f9f71e7b15afdd5937adf8cfe5807522b882f.tar.gz",
+					"paths": [
+						"core/fxcodec/jbig2",
+						"core/fxcodec/fax",
+						"core/fxcodec/scanlinedecoder.cpp",
+						"core/fxcrt",
+						"core/fxge/calculate_pitch.cpp"
+					],
+					"basis": "Exact translation units listed in preserved compile.sh; wrapper supplies src/decoder.cpp,myjs.js and build/build*.h."
+				}
+			},
+			{
+				"id": "qcms",
+				"artifact": {
+					"path": "node_modules/pdfjs-dist/wasm/qcms_bg.wasm",
+					"sha256": "663d86126d5f5fcb1c61490f94353e2a8375660b8c5498ab3ebab5a34b08800e"
+				},
+				"pdfSourcePath": "external/qcms/qcms_bg.wasm",
+				"pdfUpdateCommit": "e7acffcef36eec7e77ade4f77e5e8ca0639c44d2",
+				"wrapper": {
+					"commit": "2ae4ee72334782928210ba4050e3e77d9b2d35be",
+					"tree": "https://github.com/mozilla/pdf.js.qcms/tree/2ae4ee72334782928210ba4050e3e77d9b2d35be",
+					"archive": "https://codeload.github.com/mozilla/pdf.js.qcms/tar.gz/2ae4ee72334782928210ba4050e3e77d9b2d35be",
+					"basis": "PDF binary-update commit explicitly links this wrapper revision."
+				},
+				"native": {
+					"version": "0.3.0",
+					"archive": "https://static.crates.io/crates/qcms/qcms-0.3.0.crate",
+					"sha256": "edecfcd5d755a5e5d98e24cf43113e7cdaec5a070edd0f6b250c03a573da30fa",
+					"basis": "Supplier lock and embedded WASM registry paths both identify qcms 0.3.0."
+				},
+				"embeddedRuntime": [
+					{
+						"name": "wasm-bindgen",
+						"version": "0.2.126",
+						"commit": "21ac804a96c0c5c5d6459084686a9a17a8a3c865",
+						"tree": "https://github.com/wasm-bindgen/wasm-bindgen/tree/21ac804a96c0c5c5d6459084686a9a17a8a3c865",
+						"archive": "https://codeload.github.com/wasm-bindgen/wasm-bindgen/tar.gz/21ac804a96c0c5c5d6459084686a9a17a8a3c865"
+					},
+					{
+						"name": "Rust standard/alloc libraries",
+						"version": "1.97.1",
+						"commit": "8bab26f4f68e0e26f0bb7960be334d5b520ea452",
+						"tree": "https://github.com/rust-lang/rust/tree/8bab26f4f68e0e26f0bb7960be334d5b520ea452",
+						"archive": "https://codeload.github.com/rust-lang/rust/tar.gz/8bab26f4f68e0e26f0bb7960be334d5b520ea452",
+						"paths": ["library", "library/Cargo.lock", "REUSE.toml", "license-metadata.json"],
+						"directions": "library/Cargo.lock provides exact standard-library registry archive/checksum directions (distinct from the compiler's root lock); obtain any git submodules recursively at pinned gitlinks if rebuilding enabled branches."
+					},
+					{
+						"name": "dlmalloc",
+						"version": "0.2.13",
+						"archive": "https://static.crates.io/crates/dlmalloc/dlmalloc-0.2.13.crate",
+						"sha256": "9f5b01c17f85ee988d832c40e549a64bd89ab2c9f8d8a613bdf5122ae507e294"
+					}
+				],
+				"buildLimit": "The preserved wrapper Cargo.lock has wasm-bindgen 0.2.100, but Dockerfile runs cargo update. Shipped WASM producer metadata/paths identify wasm-bindgen 0.2.126, Rust 1.97.1/full commit, and dlmalloc 0.2.13. Use those source versions for shipped runtime code. No exact updated cargo lock or compiler-output reproduction is claimed. walrus 0.26.4 is a transformation tool, not by itself linked runtime source."
+			},
+			{
+				"id": "quickjs",
+				"artifact": {
+					"path": "node_modules/pdfjs-dist/wasm/quickjs-eval.wasm",
+					"sha256": "7bcacc9f22cacf7e9b23866d2a6d1639693d40c7f144e41b7c69ed37ba9cbe8f"
+				},
+				"pdfSourcePath": "external/quickjs/quickjs-eval.wasm",
+				"pdfUpdateCommit": "7a7e4fd382481a76f55c6d735873f635c9178db1",
+				"wrapper": {
+					"commit": "1b37671f1b529f887673f33ba4c5f00981a8065b",
+					"tree": "https://github.com/mozilla/pdf.js.quickjs/tree/1b37671f1b529f887673f33ba4c5f00981a8065b",
+					"archive": "https://codeload.github.com/mozilla/pdf.js.quickjs/tar.gz/1b37671f1b529f887673f33ba4c5f00981a8065b",
+					"basis": "Latest wrapper revision before PDF update; Dockerfile pins same engine explicitly identified by PDF update. Timeline inference for wrapper revision, explicit engine pin."
+				},
+				"native": {
+					"commit": "3d5e064e9dd67c70f7962836505a7fa067bf0a4e",
+					"tree": "https://github.com/bellard/quickjs/tree/3d5e064e9dd67c70f7962836505a7fa067bf0a4e",
+					"archive": "https://codeload.github.com/bellard/quickjs/tar.gz/3d5e064e9dd67c70f7962836505a7fa067bf0a4e",
+					"basis": "PDF update and wrapper Dockerfile identify engine; apply preserved patch and use compile.sh with exports.c,quickjs_extra.c,myjs.js."
+				}
+			}
+		],
+		"compilerRuntime": "OpenJPEG/JBIG2/QuickJS Dockerfiles use emscripten/emsdk:latest rather than a digest. Original build scripts are preserved, but the exact compiler version for those PDF decoder binaries is not attested. Their generated JS/library code can be studied with the Emscripten source families linked here; this is a supplier reproducibility limitation, not an invented requirement for bit-identical GPL output.",
+		"runtimeNotices": "Pinned wasm-bindgen, Rust, Unicode, dlmalloc and compiler-builtins/libm license/holder texts are preserved in recipes/qcms-runtime and copied alongside shipped PDF assets; source metadata identifies scope without claiming every standard-library feature or compiler tool is linked."
+	},
+	"preservedRecipes": [
+		{
+			"path": "vendor/source/recipes/onnxruntime/gitmodules.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/.gitmodules",
+			"sha256": "88baf1a643d03b2c6c4ef4caf3463ac9eefdbd150c5e9054b1df23578eb4a160"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/cmake/deps.txt.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/deps.txt",
+			"sha256": "ff3ae70274f3f4e1c8dec41acde16fffa2b904965e390795f771100b20646c2c"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/cmake/onnxruntime_webassembly.cmake.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/onnxruntime_webassembly.cmake",
+			"sha256": "64a89543e84c1249630a5d12e3561a5c6adcf4191c2a3e2c7cbe47a3cbd8f1fc"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/cmake/onnxruntime_providers_webgpu.cmake.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/onnxruntime_providers_webgpu.cmake",
+			"sha256": "a31260646272ab7c06282da0cb96b1d6804a1731b3c2a896c857a11accb57546"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/cmake/external/onnxruntime_external_deps.cmake.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/external/onnxruntime_external_deps.cmake",
+			"sha256": "26d989b2a30d4de6010dc3aa89e080d6365fc65ba1577c325e85d96a863bebb5"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/tools/ci_build/github/azure-pipelines/templates/linux-wasm-ci.yml.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/tools/ci_build/github/azure-pipelines/templates/linux-wasm-ci.yml",
+			"sha256": "39b2df48dd1975bf68e5422f8d5320c244f93277a236ec59ddd42ec2559378d8"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/js/web/script/build.ts.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/js/web/script/build.ts",
+			"sha256": "910cc498998ab4f122d4a9ce2501e9e4b8607986559b08143279eacfc51cc15d"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/compile.sh.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/compile.sh",
+			"sha256": "b65e1dd7517ade03f756db9214cb7553a85b69881d4d5302c512f6190cde6a43"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/0001-Add-support-for-buffer-based-stream-see-https-github.patch.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/0001-Add-support-for-buffer-based-stream-see-https-github.patch",
+			"sha256": "dd61d5e30e257d34178dbae8b0b2d0a7258fbf3b6341c08c90b408d99b7aeedb"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/build.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/build.js",
+			"sha256": "f468c6b564f8cebcd0d1f1b1eff35aaf381e776f8a8590dd99acfce57b64af30"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/Dockerfile.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/Dockerfile",
+			"sha256": "23dc93a4b05fa96a3b8de208f05f46138c86a395bf89a30acc0411d80f35caa7"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/compile_lib.sh.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/compile_lib.sh",
+			"sha256": "553344767d35c80497015df4fa7bfb1ead3f169786e6bdc23d8bdba5541da7c6"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/src/decoder.c.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/decoder.c",
+			"sha256": "04a6e1c1e270dc684caaf3665dbb18b2c2803b95225b1ff1b308870151f55f43"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/src/pixels.h.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/pixels.h",
+			"sha256": "7b265c6065bedb1529a5351100fa857f7382a7620cf1b60454fac8953a720437"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/src/pixels.c.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/pixels.c",
+			"sha256": "a4c73a7a0c59f48612ada9b81da1fa9ce6022a070ff53f3eff77434cdb7346cd"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/src/myjs.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/myjs.js",
+			"sha256": "d83b0d549a5b81d6b466c80e5c134af208bddb7c5e5093a2cd36a1a52ad0932f"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/compile.sh.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/compile.sh",
+			"sha256": "3fbad7fffd3e2b9b62bf7b4f7da931981008c5b71ead1a69e6f6996c08dfaefc"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/build.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/build.js",
+			"sha256": "d56483bc3719db275d610dad92b6f71a955416c45d865156924ffac479f51077"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/Dockerfile.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/Dockerfile",
+			"sha256": "c5bae8b3e40e14511fc2099d3ce20c6b9b03d1f1e351cc81b84d153bd632c4e2"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/src/decoder.cpp.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/src/decoder.cpp",
+			"sha256": "221c9b65866376e8045611345deaef3b12323ef061b6b2eed2a867fc2919ed9d"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/src/myjs.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/src/myjs.js",
+			"sha256": "f9d403999e2df3ee62eb57c4039698b8dfcfb31d51feadd15e0d94b0071d4693"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/compile.sh.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/compile.sh",
+			"sha256": "5d2f03bfc30b19cf266c317b083f7c6cdfe6c65236334575a1b65566599514c6"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/build.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/build.js",
+			"sha256": "f80f4d4417c1f27d9d3780ab0c65745b9a145a2ab0e9971606a3ab162c7ca1d8"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/Cargo.toml.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/Cargo.toml",
+			"sha256": "4a1cf45bc8766952065a04040a8ce903aac1a64ccb9050d5c8790731bebddb10"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/Dockerfile.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/Dockerfile",
+			"sha256": "55461aa0f2760c6ebdf91eaf76229a458239a1e3981b95395cc815481c8dd207"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/Cargo.lock.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/Cargo.lock",
+			"sha256": "d53151af4e26518b2ad15329467faf02840f9597f35f1a134fcf1563a66408ad"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/src/lib.rs.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/src/lib.rs",
+			"sha256": "5dfd2ef4b23bccd8c85f79afd5cf154cedbf8c8d2c9ea34fb46966c60bd7cb93"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/js/qcms_utils.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/js/qcms_utils.js",
+			"sha256": "75e5909894052843cccd40880a804f41e9a99e13dbfdb0720428820728e70f0b"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-quickjs/compile.sh.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/compile.sh",
+			"sha256": "d6dfaec2192f9f88df2a6e48d6887c3c60fe5719256b0331e7d0986648be5522"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-quickjs/0001-Extra-stuff-for-use-with-PDF.js.patch.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/0001-Extra-stuff-for-use-with-PDF.js.patch",
+			"sha256": "002cc939251a803e99eea8a672e61e5ef991dab5c6278b75503ce89680424cf6"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-quickjs/build.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/build.js",
+			"sha256": "393bd173003f4619a3516f794b9190287efdcdb046d578a23798e377bee826b9"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-quickjs/Dockerfile.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/Dockerfile",
+			"sha256": "a940489952df70cb14710a1e0ff2d059344026e7ed5a17ed6c85a83bb8da406a"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-quickjs/src/exports.c.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/src/exports.c",
+			"sha256": "be00045b1b6d0e50574f4756d50586850789d370a2dd7c66e9c9c6fdbcb7af1c"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-quickjs/src/quickjs_extra.c.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/src/quickjs_extra.c",
+			"sha256": "1e3b4315910bcb913d48b717c87bada7c75cea5aaa4b3aba02cbe8d571a7544f"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-quickjs/src/myjs.js.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/src/myjs.js",
+			"sha256": "68d7e220f09f9a0a0ac8a048deb6012fadf6ee8ab289cd59da9592b9d39baa66"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/LICENSE.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/LICENSE",
+			"sha256": "2f07c72751aed99790b8a4869cf2311df85a860b22ded05fa22803587a48922c"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/js/web/package-lock.json.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/js/web/package-lock.json",
+			"sha256": "983b7a9b324fb00bf1831cfd4b81535a5fe9e7e5b9da63860dbbb2f51476c0c2"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/js/common/package-lock.json.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/js/common/package-lock.json",
+			"sha256": "e108a00da56d8911d7a8bfac88a9c5a382af6803607cb8bb348a8b0ec9a9b4c6"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/cmake/patches/date/date.patch.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/patches/date/date.patch",
+			"sha256": "19fa16e45c7fa52373f922f47ea66591eec52d48d5c9bb7bc5302f0dcacd70de"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/cmake/patches/gsl/1213.patch.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/patches/gsl/1213.patch",
+			"sha256": "5e5c5870214ef47099b70390e409599a7139416a2108c8255d8bc7a301d9754b"
+		},
+		{
+			"path": "vendor/source/recipes/onnxruntime/cmake/patches/onnx/onnx.patch.txt",
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/patches/onnx/onnx.patch",
+			"sha256": "18194802bccd5cad6dab5e28f36c39f09910df99ec5b0c27ffa6615f42acb50e"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-openjpeg/LICENSE.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/LICENSE",
+			"sha256": "717fc62da03292dbb4dd0c8280bd4ce7bb8550dcf31d772bc93455fb50313425"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/LICENSE.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/LICENSE",
+			"sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/build/build_config.h.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/build/build_config.h",
+			"sha256": "14ce6d5c00c6fc7f6a167d627a38f7be672a37e1a1f552869532de88390bdc41"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-jbig2/build/buildflag.h.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/build/buildflag.h",
+			"sha256": "40538acaa9b39d0f68e895503752bde340f8ea1cdb67a87bfaee865dba54c5cd"
+		},
+		{
+			"path": "vendor/source/recipes/pdfjs-qcms/LICENSE.txt",
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/LICENSE",
+			"sha256": "508a77d2e7b51d98adeed32648ad124b7b30241a8e70b2e72c99f92d8e5874d1"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/wasm-bindgen-LICENSE-MIT.txt",
+			"url": "https://raw.githubusercontent.com/wasm-bindgen/wasm-bindgen/21ac804a96c0c5c5d6459084686a9a17a8a3c865/LICENSE-MIT",
+			"sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-LICENSE-MIT.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/LICENSE-MIT",
+			"sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-COPYRIGHT.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/COPYRIGHT",
+			"sha256": "172020dbfd5b53a226dfde77616190a48dcff519b0bc0e6deb91a8450782c4af"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-Unicode-3.0.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/LICENSES/Unicode-3.0.txt",
+			"sha256": "f5062c9a188d81dfe66b56db4182dcf9e4b17c0d9b0d311a8e20b3a1b075c443"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-library-Cargo.lock.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/Cargo.lock",
+			"sha256": "02120dd57c4c5fd70c81fd92472681c8de5cc2dd78258276da37bb2253666061"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-library-std-Cargo.toml.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/std/Cargo.toml",
+			"sha256": "ff5272b18cb16a9e67256a1045dc35d9d08ae38916a218f684a2ae2f4360f078"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-library-alloc-Cargo.toml.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/alloc/Cargo.toml",
+			"sha256": "3a0273fc73bd77700c12cacb61a751cffd3ab24d26899af33d5d7109b252f6f4"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-REUSE.toml.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/REUSE.toml",
+			"sha256": "6d9f80349a29388841413ecb3d20473b6440768c2fdfa06d0456eb56d516daf3"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-license-metadata.json.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/license-metadata.json",
+			"sha256": "03018f1893ab6446dfb220b9b953de78929ad63e9a4606591b05af142ce91cdd"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-compiler-builtins-LICENSE.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/compiler-builtins/LICENSE.txt",
+			"sha256": "ab6eec6caf0fa5775e411c7a8bc6a45c4ef2956b0980b157ab74fc5cd62a928b"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/rust-libm-LICENSE.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/rust/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/compiler-builtins/libm/LICENSE.txt",
+			"sha256": "3823dda7cf046602f4b4e77ec8e227863dc4736037cc85bb33d9f19febe16bb7"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/dlmalloc-LICENSE-MIT.txt",
+			"url": "https://static.crates.io/crates/dlmalloc/dlmalloc-0.2.13.crate#dlmalloc-0.2.13/LICENSE-MIT",
+			"sha256": "378f5840b258e2779c39418f3f2d7b2ba96f1c7917dd6be0713f88305dbda397"
+		},
+		{
+			"path": "vendor/source/recipes/qcms-runtime/llvm-compiler-rt-CREDITS.txt",
+			"url": "https://raw.githubusercontent.com/rust-lang/llvm-project/7738295178045041669876bf32b0543ec8319a5c/compiler-rt/CREDITS.TXT",
+			"sha256": "a9901f47a089da41e4690682d00ce4cedaa2baf41fedbe79beee366d43ac2461"
+		}
+	]
+}

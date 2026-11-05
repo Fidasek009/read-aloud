@@ -5,3 +5,4 @@
 vendor/** -text
 vendor/emscripten/LICENSE -whitespace
 vendor/espeak-ng/licenses/FILE-NOTICES.txt -whitespace
+vendor/source/recipes/** -whitespace

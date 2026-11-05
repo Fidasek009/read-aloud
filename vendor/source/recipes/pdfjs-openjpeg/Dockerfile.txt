@@ -1,0 +1,27 @@
+FROM emscripten/emsdk:latest
+WORKDIR /tmp
+
+ENV OPENJPEG_GIT_HASH=8314119b067c0fc77834731168daaebd379fdb12
+ADD *.patch .
+
+RUN git config --global user.email "you@example.com" && \
+    git config --global user.name "Your Name" && \
+    git clone https://github.com/uclouvain/openjpeg && \
+    cd openjpeg && \
+    git checkout -b extra ${OPENJPEG_GIT_HASH} && \
+    git am ../0001-Add-support-for-buffer-based-stream-see-https-github.patch && \
+    cd ..
+
+ENV OUTPUT=/js
+ENV OPENJPEG=/tmp/openjpeg
+ENV INPUT=/code/src
+
+ADD compile_lib.sh .
+
+ENV BUILD_TYPE=wasm
+RUN ./compile_lib.sh
+
+ENV BUILD_TYPE=js
+RUN ./compile_lib.sh
+
+CMD ["/bin/sh", "-c", "/code/compile.sh"]

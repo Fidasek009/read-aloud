@@ -1,0 +1,570 @@
+{
+	"reviewedAt": "2026-11-05",
+	"scope": "Public-source access and selected native-runtime mapping, separate from model/preview/account/product acceptance. Availability checks are point-in-time evidence, not a promise that an upstream server cannot disappear.",
+	"ledger": "vendor/source/remote-sources.json",
+	"directions": "vendor/source/SOURCE-ACCESS.md",
+	"preservedRecipeCount": 59,
+	"pdfExactSourceByteChecks": [
+		{
+			"id": "openjpeg",
+			"installedPath": "node_modules/pdfjs-dist/wasm/openjpeg.wasm",
+			"sourceUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/0a4153349dc473ba950fc17941c5ca7eda43c1de/external/openjpeg/openjpeg.wasm",
+			"sha256": "7ea4b2b04613370ad4e9c1162da750cc88b4b176eac0d0c164b3caff23fc0a46",
+			"match": true
+		},
+		{
+			"id": "jbig2",
+			"installedPath": "node_modules/pdfjs-dist/wasm/jbig2.wasm",
+			"sourceUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/0a4153349dc473ba950fc17941c5ca7eda43c1de/external/jbig2/jbig2.wasm",
+			"sha256": "466f45c2a61a698152fb5400c27e56ff2ceb73dcb71fde3fc366a502308eaab0",
+			"match": true
+		},
+		{
+			"id": "qcms",
+			"installedPath": "node_modules/pdfjs-dist/wasm/qcms_bg.wasm",
+			"sourceUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/0a4153349dc473ba950fc17941c5ca7eda43c1de/external/qcms/qcms_bg.wasm",
+			"sha256": "663d86126d5f5fcb1c61490f94353e2a8375660b8c5498ab3ebab5a34b08800e",
+			"match": true
+		},
+		{
+			"id": "quickjs",
+			"installedPath": "node_modules/pdfjs-dist/wasm/quickjs-eval.wasm",
+			"sourceUrl": "https://raw.githubusercontent.com/mozilla/pdf.js/0a4153349dc473ba950fc17941c5ca7eda43c1de/external/quickjs/quickjs-eval.wasm",
+			"sha256": "7bcacc9f22cacf7e9b23866d2a6d1639693d40c7f144e41b7c69ed37ba9cbe8f",
+			"match": true
+		}
+	],
+	"crateSourceChecks": [
+		{
+			"url": "https://static.crates.io/crates/qcms/qcms-0.3.0.crate",
+			"sha256": "edecfcd5d755a5e5d98e24cf43113e7cdaec5a070edd0f6b250c03a573da30fa"
+		},
+		{
+			"url": "https://static.crates.io/crates/dlmalloc/dlmalloc-0.2.13.crate",
+			"sha256": "9f5b01c17f85ee988d832c40e549a64bd89ab2c9f8d8a613bdf5122ae507e294"
+		}
+	],
+	"publicRepository": {
+		"url": "https://api.github.com/repos/Fidasek009/read-aloud",
+		"status": 200,
+		"private": false,
+		"publicFiles": [
+			{
+				"url": "https://raw.githubusercontent.com/Fidasek009/read-aloud/main/vendor/source/README.md",
+				"status": 200
+			},
+			{
+				"url": "https://raw.githubusercontent.com/Fidasek009/read-aloud/main/NOTICE.md",
+				"status": 200
+			}
+		]
+	},
+	"linkChecks": [
+		{
+			"url": "https://www.gnu.org/licenses/gpl-3.0.html#section6",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/microsoft/onnxruntime/tree/6af1a932e2286d5c58166085d24c68783033edee",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/microsoft/onnxruntime/tar.gz/6af1a932e2286d5c58166085d24c68783033edee",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/abseil/abseil-cpp/archive/refs/tags/20250814.0.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/HowardHinnant/date/archive/refs/tags/v3.0.1.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/eigen-mirror/eigen/archive/1d8b82b0740839c0de7f1242a3585e3390ff5f33/eigen-1d8b82b0740839c0de7f1242a3585e3390ff5f33.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/google/flatbuffers/archive/refs/tags/v23.5.26.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/microsoft/GSL/archive/refs/tags/v4.2.1.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/onnx/onnx/archive/refs/tags/v1.22.0.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/protocolbuffers/protobuf/releases/download/v33.6/protobuf-33.6.tar.gz",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/google/re2/archive/refs/tags/2024-07-02.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/dcleblanc/SafeInt/archive/refs/tags/3.0.28.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/nlohmann/json/archive/refs/tags/v3.11.3.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/boostorg/mp11/archive/refs/tags/boost-1.82.0.zip",
+			"status": 500,
+			"checkedAt": "2026-11-05",
+			"retryStatus": 200
+		},
+		{
+			"url": "https://github.com/google/dawn/archive/refs/tags/v20260916.214021.zip",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/emscripten-core/emsdk/tree/c0bb220cb6e6f4e0fabb6f6db9efd53390ef5e56",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/emscripten-core/emsdk/tar.gz/c0bb220cb6e6f4e0fabb6f6db9efd53390ef5e56",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/onnx/onnx/tree/2bb50465112feca9003e1ed654d77f01ff1415ca",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/onnx/onnx/tar.gz/2bb50465112feca9003e1ed654d77f01ff1415ca",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/google/libprotobuf-mutator/tree/7a2ed51a6b682a83e345ff49fc4cfd7ca47550db",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/google/libprotobuf-mutator/tar.gz/7a2ed51a6b682a83e345ff49fc4cfd7ca47550db",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://registry.npmjs.org/flatbuffers/-/flatbuffers-25.9.23.tgz",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://registry.npmjs.org/protobufjs/-/protobufjs-7.6.3.tgz",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://registry.npmjs.org/long/-/long-5.3.2.tgz",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://registry.npmjs.org/platform/-/platform-1.3.6.tgz",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://registry.npmjs.org/guid-typescript/-/guid-typescript-1.0.9.tgz",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/emscripten-core/emscripten/tree/7a5d93b50f6a3a35e85a0d2fc9e667b8498e6aed",
+			"status": 504,
+			"checkedAt": "2026-11-05",
+			"retryStatus": 200
+		},
+		{
+			"url": "https://codeload.github.com/emscripten-core/emscripten/tar.gz/7a5d93b50f6a3a35e85a0d2fc9e667b8498e6aed",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/mozilla/pdf.js/tree/0a4153349dc473ba950fc17941c5ca7eda43c1de",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/mozilla/pdf.js/tar.gz/0a4153349dc473ba950fc17941c5ca7eda43c1de",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/mozilla/pdf.js.openjpeg/tree/d5f16ba380391d4e32b51834e2e0afa796e402d8",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/mozilla/pdf.js.openjpeg/tar.gz/d5f16ba380391d4e32b51834e2e0afa796e402d8",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/uclouvain/openjpeg/tree/8314119b067c0fc77834731168daaebd379fdb12",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/uclouvain/openjpeg/tar.gz/8314119b067c0fc77834731168daaebd379fdb12",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/mozilla/pdf.js.jbig2/tree/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a",
+			"status": 504,
+			"checkedAt": "2026-11-05",
+			"retryStatus": 200
+		},
+		{
+			"url": "https://codeload.github.com/mozilla/pdf.js.jbig2/tar.gz/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://pdfium.googlesource.com/pdfium/+/bb1f9f71e7b15afdd5937adf8cfe5807522b882f/",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://pdfium.googlesource.com/pdfium/+archive/bb1f9f71e7b15afdd5937adf8cfe5807522b882f.tar.gz",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/mozilla/pdf.js.qcms/tree/2ae4ee72334782928210ba4050e3e77d9b2d35be",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/mozilla/pdf.js.qcms/tar.gz/2ae4ee72334782928210ba4050e3e77d9b2d35be",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://static.crates.io/crates/qcms/qcms-0.3.0.crate",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/wasm-bindgen/wasm-bindgen/tree/21ac804a96c0c5c5d6459084686a9a17a8a3c865",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/wasm-bindgen/wasm-bindgen/tar.gz/21ac804a96c0c5c5d6459084686a9a17a8a3c865",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/rust-lang/rust/tree/8bab26f4f68e0e26f0bb7960be334d5b520ea452",
+			"status": 504,
+			"checkedAt": "2026-11-05",
+			"retryStatus": 200
+		},
+		{
+			"url": "https://codeload.github.com/rust-lang/rust/tar.gz/8bab26f4f68e0e26f0bb7960be334d5b520ea452",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://static.crates.io/crates/dlmalloc/dlmalloc-0.2.13.crate",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/mozilla/pdf.js.quickjs/tree/1b37671f1b529f887673f33ba4c5f00981a8065b",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/mozilla/pdf.js.quickjs/tar.gz/1b37671f1b529f887673f33ba4c5f00981a8065b",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://github.com/bellard/quickjs/tree/3d5e064e9dd67c70f7962836505a7fa067bf0a4e",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://codeload.github.com/bellard/quickjs/tar.gz/3d5e064e9dd67c70f7962836505a7fa067bf0a4e",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/.gitmodules",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/deps.txt",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/onnxruntime_webassembly.cmake",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/onnxruntime_providers_webgpu.cmake",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/external/onnxruntime_external_deps.cmake",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/tools/ci_build/github/azure-pipelines/templates/linux-wasm-ci.yml",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/js/web/script/build.ts",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/compile.sh",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/0001-Add-support-for-buffer-based-stream-see-https-github.patch",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/build.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/Dockerfile",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/compile_lib.sh",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/decoder.c",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/pixels.h",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/pixels.c",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/src/myjs.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/compile.sh",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/build.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/Dockerfile",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/src/decoder.cpp",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/src/myjs.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/compile.sh",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/build.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/Cargo.toml",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/Dockerfile",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/Cargo.lock",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/src/lib.rs",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/js/qcms_utils.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/compile.sh",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/0001-Extra-stuff-for-use-with-PDF.js.patch",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/build.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/Dockerfile",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/src/exports.c",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/src/quickjs_extra.c",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.quickjs/1b37671f1b529f887673f33ba4c5f00981a8065b/src/myjs.js",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/LICENSE",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/js/web/package-lock.json",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/js/common/package-lock.json",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/patches/date/date.patch",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/patches/gsl/1213.patch",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/microsoft/onnxruntime/6af1a932e2286d5c58166085d24c68783033edee/cmake/patches/onnx/onnx.patch",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.openjpeg/d5f16ba380391d4e32b51834e2e0afa796e402d8/LICENSE",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/LICENSE",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/build/build_config.h",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.jbig2/15f6f9357c5e5e30285eb83aa08e5fe1a16ab77a/build/buildflag.h",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		},
+		{
+			"url": "https://raw.githubusercontent.com/mozilla/pdf.js.qcms/2ae4ee72334782928210ba4050e3e77d9b2d35be/LICENSE",
+			"status": 200,
+			"checkedAt": "2026-11-05"
+		}
+	],
+	"limitations": [
+		"ORT source-tag/recipe relationship is recorded without an independently verified native-build attestation.",
+		"OpenJPEG/QuickJS wrapper revisions rely on matching latest-before-update history, while their native revisions are explicit Dockerfile pins.",
+		"PDF Emscripten Docker images use latest, not a digest; qcms updating build's committed lock differs from its identifiable shipped runtime versions. These supplier provenance/reproducibility limits are not themselves a requirement for compiler-output hash parity.",
+		"Equivalent-source-access through named third-party servers requires maintainer follow-through if upstream URLs stop working. Newly prepared source directions must be published with the tagged repository before binary distribution.",
+		"Actual store publisher identity/listing entry/review and model/audio integration assessments are separate; no store compliance or universal legal certainty claim."
+	],
+	"embeddedRuntimeEvidence": {
+		"artifact": "node_modules/pdfjs-dist/wasm/qcms_bg.wasm",
+		"sourcePaths": [
+			"/usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/qcms-0.3.0/src/chain.rs",
+			"/usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/wasm-bindgen-0.2.126/src/externref.rs",
+			"/rustc/8bab26f4f68e0e26f0bb7960be334d5b520ea452/library/std/src/sys/thread_local/no_threads.rs",
+			"/rust/deps/dlmalloc-0.2.13/src/dlmalloc.rs"
+		],
+		"producerMetadata": {
+			"rustc": "1.97.1 (8bab26f4f 2026-07-14)",
+			"wasmBindgen": "0.2.126",
+			"walrus": "0.26.4"
+		},
+		"notices": "Eight additional pinned license/copyright/credit files copied by scripts/prepare-runtime.ts under pdf-runtime/wasm. Their original supplier source bytes/checksums are listed in the ledger; Rust library/Cargo.lock maps standard-library registry dependencies."
+	}
+}

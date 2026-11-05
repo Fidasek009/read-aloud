@@ -15,6 +15,8 @@ const requiredInputs = [
 	"public/notices.html",
 	"NOTICE.md",
 	"vendor/source/provenance.json",
+	"vendor/source/remote-sources.json",
+	"vendor/source/SOURCE-ACCESS.md",
 	"vendor/espeak-ng/licenses/COPYING",
 	"vendor/espeak-ng/licenses/COPYING.APACHE",
 	"vendor/espeak-ng/licenses/COPYING.BSD2",
@@ -72,6 +74,19 @@ export async function inspectReleaseLicensing(root = process.cwd()): Promise<Lic
 			throw new Error(`Missing pinned source archive: ${id}`)
 		const path = `vendor/source/${source.archive}`
 		if (record.inputs[path] !== source.sha256) stale.push(`Missing or inconsistent reviewed source archive: ${path}`)
+	}
+	const remoteSources = await Bun.file(join(root, "vendor/source/remote-sources.json")).json()
+	if (!Array.isArray(remoteSources.preservedRecipes) || remoteSources.preservedRecipes.length === 0)
+		throw new Error("Missing pinned supplier build recipes")
+	for (const recipe of remoteSources.preservedRecipes) {
+		if (
+			typeof recipe.path !== "string" ||
+			!recipe.path.startsWith("vendor/source/recipes/") ||
+			!/^[a-f0-9]{64}$/.test(recipe.sha256)
+		)
+			throw new Error("Invalid pinned supplier build recipe")
+		if (record.inputs[recipe.path] !== recipe.sha256)
+			stale.push(`Missing or inconsistent reviewed supplier recipe: ${recipe.path}`)
 	}
 	for (const [path, expected] of Object.entries(record.inputs)) {
 		if (path.startsWith("/") || path.includes("..") || !/^[a-f0-9]{64}$/.test(expected))

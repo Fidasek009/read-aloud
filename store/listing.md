@@ -22,7 +22,9 @@ Choose your voice before you download it. English and Czech are available alongs
 
 There is no account, subscription, advertising or telemetry. Speech runs inside the extension without a separately installed helper application. Once provisioned, the speech engine runs locally; opening online documents and streaming previews still requires the network. Browser restrictions and optional site/file permissions can affect PDF access.
 
-Original application source is open source under MIT; runtime components, voices and previews have separate licenses. Source code, notices and support: https://github.com/Fidasek009/read-aloud
+Original application source is open source under MIT; the combined application includes GPL-covered runtime code, and voices/previews have separate terms. Source code, license notices and support: https://github.com/Fidasek009/read-aloud
+
+Corresponding-source download/build directions for the release, including third-party source: https://github.com/Fidasek009/read-aloud/blob/main/vendor/source/SOURCE-ACCESS.md. Select the tag matching your installed version for the exact source snapshot. Source access is public and free; a store reviewer account is not required.
 
 ## Links
 
@@ -54,4 +56,4 @@ The original code's MIT license is not a blanket license for the bundled package
 
 ## Current release licensing state (2026-11-05)
 
-Public distribution is blocked by the agent-owned evidence gate in `release/licensing.json`; these materials are not permission to submit the prototype. The repository now includes pinned full Spellophone/eSpeak source archives, build/patch provenance and expanded copyright/license notices for recipient access, beyond a private reviewer ZIP. Complete combined-source/notice and scoped model/sample assessments remain open. Kasandra medium has an owner-issued CC BY 4.0 grant tied to our exact checkpoint (Ondřej Šimek; Piper PR #93), and LJSpeech medium an original-trainer public-domain grant. Preserve the former attribution/source/license and local graph-change notices; do not declare all Czech choices or previews cleared by association.
+Public distribution is blocked by the agent-owned evidence gate in `release/licensing.json`; these materials are not permission to submit the prototype. The repository now includes pinned full Spellophone/eSpeak source archives, build/patch provenance and expanded copyright/license notices for recipient access, beyond a private reviewer ZIP. Pinned ORT/PDF native-wrapper/runtime source access and supplier recipes are now documented alongside those archives; scoped model/sample assessments remain open. Kasandra medium has an owner-issued CC BY 4.0 grant tied to our exact checkpoint (Ondřej Šimek; Piper PR #93), and LJSpeech medium an original-trainer public-domain grant. Preserve the former attribution/source/license and local graph-change notices; do not declare all Czech choices or previews cleared by association.

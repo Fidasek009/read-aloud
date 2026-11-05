@@ -103,12 +103,17 @@
 		"version": "1.31.1",
 		"commit": "6af1a932e2286d5c58166085d24c68783033edee",
 		"sourceUrl": "https://github.com/microsoft/onnxruntime/tree/6af1a932e2286d5c58166085d24c68783033edee",
-		"status": "Specific native/submodule build-source mapping still under review; source access URL alone is not a completed combined-source assessment."
+		"status": "Selected Web/WASM backends, dependency/submodule/native source and build recipes mapped in remote-sources.json; GPL6(d) source-access directions in SOURCE-ACCESS.md. Supplier native rebuild/attestation not claimed."
 	},
 	"pdfJs": {
 		"version": "6.5.438",
 		"commit": "0a4153349dc473ba950fc17941c5ca7eda43c1de",
 		"sourceUrl": "https://github.com/mozilla/pdf.js/tree/0a4153349dc473ba950fc17941c5ca7eda43c1de",
-		"status": "Separate decoder build-source mapping for the copied OpenJPEG/JBIG2/qcms/QuickJS assets still under review."
+		"status": "Copied decoder hashes matched exact PDF source-tree bytes. Wrapper/native/runtime source and supplier build limits mapped in remote-sources.json; recipient directions in SOURCE-ACCESS.md."
+	},
+	"sourceAccess": {
+		"directions": "SOURCE-ACCESS.md",
+		"ledger": "remote-sources.json",
+		"mechanism": "GPLv3 section 6(d), including named third-party source servers; continued source availability remains the distributor's responsibility."
 	}
 }

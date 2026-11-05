@@ -105,6 +105,18 @@ const pdfOut = `${root}/public/pdf-runtime`
 await copyAsset(`${pdf}/LICENSE`, `${pdfOut}/LICENSE`, pdfOut)
 for (const folder of ["cmaps", "standard_fonts", "wasm", "iccs"])
 	await copyDirectory(`${pdf}/${folder}`, `${pdfOut}/${folder}`, pdfOut)
+// PDF's decoder notices do not include the embedded Rust/binding runtime.
+for (const [source, target] of [
+	["wasm-bindgen-LICENSE-MIT.txt", "LICENSE_WASM_BINDGEN"],
+	["rust-LICENSE-MIT.txt", "LICENSE_RUST"],
+	["rust-COPYRIGHT.txt", "COPYRIGHT_RUST"],
+	["rust-Unicode-3.0.txt", "LICENSE_RUST_UNICODE"],
+	["dlmalloc-LICENSE-MIT.txt", "LICENSE_DLMALLOC"],
+	["rust-compiler-builtins-LICENSE.txt", "LICENSE_RUST_COMPILER_BUILTINS"],
+	["rust-libm-LICENSE.txt", "LICENSE_RUST_LIBM"],
+	["llvm-compiler-rt-CREDITS.txt", "CREDITS_LLVM_COMPILER_RT"],
+] as const)
+	await copyAsset(`${root}/vendor/source/recipes/qcms-runtime/${source}`, `${pdfOut}/wasm/${target}`, pdfOut)
 await removeStaleAssets(out)
 await removeStaleAssets(pdfOut)
 console.log(`Prepared local runtimes: ${copied} assets copied, ${reused} unchanged. No voice models were downloaded.`)
