@@ -44,13 +44,13 @@ In Google Cloud, open **IAM & Admin → Workload Identity Federation**, then **C
 ```text
 attribute.repository_id == '1438871817' &&
 attribute.repository_owner_id == '102549834' &&
-google.subject == 'repo:Fidasek009/read-aloud:environment:stores' &&
+google.subject == 'repo:Fidasek009@102549834/read-aloud@1438871817:environment:stores' &&
 attribute.job_workflow_ref == 'Fidasek009/read-aloud/.github/workflows/cd.yml@' + attribute.ref &&
 ((attribute.event_name == 'workflow_dispatch' && attribute.ref == 'refs/heads/main') ||
  (attribute.event_name == 'push' && attribute.ref.startsWith('refs/tags/v')))
 ```
 
-7. Save the pool/provider. The numeric IDs were read from GitHub for this repository and owner; they protect against a deleted repository/account name being reused. The condition permits only our reusable CD workflow in the `stores` environment, called by a manual main-branch check or a version-tag push. Strict stable SemVer is additionally enforced by the release workflow.
+7. Save the pool/provider. The numeric IDs were read from GitHub for this repository and owner; they protect against a deleted repository/account name being reused. This repository's OIDC settings API reports `use_immutable_subject: true` and prefix `repo:Fidasek009@102549834/read-aloud@1438871817`. The subject must include those IDs; the older names-only subject will be rejected. See [GitHub's immutable subject documentation](https://docs.github.com/en/actions/reference/security/oidc#immutable-subject-claims). The condition permits only our reusable CD workflow in the `stores` environment, called by a manual main-branch check or a version-tag push. Strict stable SemVer is additionally enforced by the release workflow.
 
 ## 4. Allow the identity to use the service account
 
