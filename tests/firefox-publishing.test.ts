@@ -40,7 +40,7 @@ interface MockState {
 	exists?: boolean
 	profileStatus?: number
 	listingStatus?: number
-	agreed?: boolean
+	agreement?: unknown
 	privateAccess?: boolean
 	valid?: boolean
 	sourceFailure?: boolean
@@ -93,7 +93,10 @@ async function withAmo(
 			).toBe(true)
 			if (path === "accounts/profile/")
 				return Response.json(
-					{ id: 123, read_dev_agreement: state.agreed ?? true },
+					{
+						id: 123,
+						read_dev_agreement: Object.hasOwn(state, "agreement") ? state.agreement : "2026-11-05T12:00:00Z",
+					},
 					{ status: state.profileStatus ?? 200 },
 				)
 			const addon = `addons/addon/${extensionId}/`
@@ -192,17 +195,23 @@ test.each([false, true])("Mozilla client creates/updates listing=%s and submits 
 	})
 })
 
-test.each([{ profileStatus: 401 }, { agreed: false }, { listingStatus: 503 }, { exists: true, privateAccess: false }])(
-	"Firefox preflight fails closed before uploads: %j",
-	async (state) => {
-		await withAmo(state, async ({ root, base, requests }) => {
-			await expect(
-				publishFirefox({ version: "0.1.0", dryRun: true, extensionId, issuer, secret, root }, base),
-			).rejects.toThrow()
-			expect(requests.every((item) => item.startsWith("GET "))).toBe(true)
-		})
-	},
-)
+test.each([
+	{ profileStatus: 401 },
+	{ agreement: null },
+	{ agreement: false },
+	{ agreement: undefined },
+	{ agreement: "" },
+	{ agreement: "invalid timestamp" },
+	{ listingStatus: 503 },
+	{ exists: true, privateAccess: false },
+])("Firefox preflight fails closed before uploads: %j", async (state) => {
+	await withAmo(state, async ({ root, base, requests }) => {
+		await expect(
+			publishFirefox({ version: "0.1.0", dryRun: true, extensionId, issuer, secret, root }, base),
+		).rejects.toThrow()
+		expect(requests.every((item) => item.startsWith("GET "))).toBe(true)
+	})
+})
 
 test("invalid AMO validation stops before creating a version", async () => {
 	await withAmo({ valid: false }, async ({ root, base, requests }) => {

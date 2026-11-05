@@ -63,7 +63,10 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 	const profileResponse = await request("accounts/profile/")
 	if (!profileResponse.ok) throw new Error("AMO account profile was not found")
 	const profile = await profileResponse.json()
-	if (!Number.isInteger(profile.id) || profile.read_dev_agreement !== true)
+	// AMO serializes its nullable DateTimeField as an ISO timestamp. Its account
+	// documentation still describes this as a boolean; check the actual contract.
+	const acceptedAt = profile.read_dev_agreement
+	if (!Number.isInteger(profile.id) || typeof acceptedAt !== "string" || !Number.isFinite(Date.parse(acceptedAt)))
 		throw new Error("Complete AMO account setup and accept Mozilla's developer agreement first")
 	const addonPath = `addons/addon/${encodeURIComponent(extensionId)}/`
 	const detail = await request(addonPath)

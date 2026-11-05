@@ -23,6 +23,8 @@ When credential setup is complete, **Actions → Store check → Run workflow �
 
 The check also verifies the local package's version/GUID, source ZIP presence and prepared listing materials. It neither uploads an extension nor creates a listing, submits a review, consumes a version, or publishes a GitHub release. Server-side package validation happens only during a real submission. Run the check only when requested; credential setup itself starts no workflow.
 
+AMO currently returns `read_dev_agreement` as an acceptance timestamp or null, matching its nullable DateTimeField, although its account API documentation describes a boolean. The preflight validates the timestamp without printing account details. See Mozilla's [account serializer](https://github.com/mozilla/addons-server/blob/master/src/olympia/accounts/serializers.py) and [user model](https://github.com/mozilla/addons-server/blob/master/src/olympia/users/models.py).
+
 ## Automatic publication
 
 Once the existing license/product acceptance work is complete, a pushed `vX.Y.Z` tag runs CI and both stores' preflight checks before live uploads. Firefox uses AMO V5's **PUT by permanent GUID** to create the first listing or add a new version to the same listing. It supplies the tag-versioned package, listing description/categories, reviewer instructions and license terms, and attaches matching reviewer sources. It then updates listing/privacy copy and icon and fills missing screenshot positions from committed artwork. There is no package-version bump or manual first Firefox release.
