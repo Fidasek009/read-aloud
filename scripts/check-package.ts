@@ -1,10 +1,10 @@
 import { isDeepStrictEqual } from "node:util"
 
-import { parseVersion } from "./release-version"
+import { buildVersion, parseVersion } from "./release-version"
 
 const browser = process.env.TARGET_BROWSER
 if (browser !== "chrome" && browser !== "firefox") throw new Error("Invalid TARGET_BROWSER")
-const { version } = await Bun.file("package.json").json()
+const version = buildVersion()
 parseVersion(version)
 const manifest = await Bun.file(`.output/${browser}-mv3/manifest.json`).json()
 if (manifest.manifest_version !== 3 || manifest.version !== version) throw new Error("Manifest/version mismatch")

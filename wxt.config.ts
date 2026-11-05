@@ -1,10 +1,14 @@
 import { $ } from "bun"
 import { defineConfig } from "wxt"
 
+import { buildVersion } from "./scripts/release-version"
+
 export default defineConfig({
 	srcDir: "src",
 	manifestVersion: 3,
 	zip: {
+		artifactTemplate: "{{name}}-{{version}}-{{browser}}{{modeSuffix}}.zip",
+		sourcesTemplate: "{{name}}-{{version}}-sources{{modeSuffix}}.zip",
 		includeSources: [
 			"src/**",
 			"scripts/**",
@@ -36,6 +40,14 @@ export default defineConfig({
 	},
 	manifest: ({ browser }) => ({
 		name: "Read Aloud",
+		version: buildVersion(),
+		icons: {
+			16: "icons/icon-16.png",
+			32: "icons/icon-32.png",
+			48: "icons/icon-48.png",
+			96: "icons/icon-96.png",
+			128: "icons/icon-128.png",
+		},
 		description: "Read pages and selected text aloud on your device.",
 		permissions: [
 			"activeTab",
@@ -67,7 +79,7 @@ export default defineConfig({
 			? {
 					browser_specific_settings: {
 						gecko: {
-							id: process.env.FIREFOX_EXTENSION_ID || "read-aloud@local.invalid",
+							id: process.env.FIREFOX_EXTENSION_ID || "read-aloud@fidasek009.github.io",
 							strict_min_version: "140.0",
 							data_collection_permissions: { required: ["none"] },
 						},

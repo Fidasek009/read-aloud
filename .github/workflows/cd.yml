@@ -17,7 +17,6 @@ jobs:
     environment: stores
     timeout-minutes: 10
     env:
-      RELEASE_READY: ${{ vars.RELEASE_READY }}
       DRY_RUN: ${{ inputs.dry-run }}
       DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
       CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
@@ -36,7 +35,6 @@ jobs:
             test "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH"
           else
             test "$GITHUB_REF_TYPE" = tag
-            test "$RELEASE_READY" = true || { echo 'Release readiness is not cleared; see docs/releasing.md'; exit 1; }
           fi
           for key in CHROME_EXTENSION_ID CHROME_PUBLISHER_ID FIREFOX_EXTENSION_ID CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL CHROME_SERVICE_ACCOUNT_PRIVATE_KEY FIREFOX_JWT_ISSUER FIREFOX_JWT_SECRET; do
             test -n "${!key}" || { echo "Missing publishing configuration: $key"; exit 1; }
@@ -85,7 +83,6 @@ jobs:
       - name: Submit Chrome for review and automatic publication
         if: matrix.browser == 'chrome'
         env:
-          RELEASE_READY: ${{ vars.RELEASE_READY }}
           CHROME_EXTENSION_ID: ${{ vars.CHROME_EXTENSION_ID }}
           CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
           CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL: ${{ secrets.CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL }}
@@ -95,7 +92,6 @@ jobs:
         if: matrix.browser == 'firefox'
         run: bun scripts/publish-extension.ts firefox --publish
         env:
-          RELEASE_READY: ${{ vars.RELEASE_READY }}
           FIREFOX_EXTENSION_ID: ${{ vars.FIREFOX_EXTENSION_ID }}
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
           FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}

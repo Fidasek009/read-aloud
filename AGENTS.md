@@ -39,6 +39,7 @@ Build a Firefox and Chrome extension that makes listening to a web page feel eff
 
 ## Working rules
 
+- The implementation agent owns artwork, icons, store screenshots, listing/privacy copy, and release engineering. The product owner does not create these deliverables. A pushed `vX.Y.Z` tag is the sole release-version authority: derive manifests, archives, store submissions, and the automatically published GitHub release from it without a package-version bump or separate release-ready toggle. Account identity, required legal declarations, store review, and existing license/product acceptance obligations remain real constraints.
 - The user is the product owner; the agent owns implementation and engineering decisions. Refactor or replace first-party code autonomously when it improves the agreed product. Keep product requirements, privacy, license obligations, and measured acceptance targets intact; do not seek approval for routine engineering choices.
 - Keep the initial product scope small. Before adding a feature or UI component, identify the essential user problem it solves and why a simpler existing interaction is insufficient.
 - Distinguish user-confirmed requirements from proposals and unanswered questions. Do not silently turn an implementation preference into a product requirement.

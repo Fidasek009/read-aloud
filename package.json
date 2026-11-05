@@ -28,7 +28,9 @@
 		"probe:previews": "bun scripts/probe-previews.ts",
 		"probe:pdf:speech": "PDF_CHECK_SPEECH=1 bun scripts/probe-pdf.ts",
 		"lint:workflows": "bun scripts/lint-workflows.ts",
-		"check:source-rebuild": "bun scripts/check-source-rebuild.ts"
+		"check:source-rebuild": "bun scripts/check-source-rebuild.ts",
+		"assets:store": "bun scripts/generate-store-assets.ts",
+		"package:store": "bun scripts/package-store.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "1.4.4",

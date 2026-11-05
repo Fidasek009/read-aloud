@@ -6,11 +6,12 @@ From the extracted source directory:
 
 ```sh
 bun install --frozen-lockfile
+export RELEASE_VERSION='the-version-in-the-submitted-manifest'
 export FIREFOX_EXTENSION_ID='the-permanent-ID-in-the-submitted-manifest'
 bun run zip:firefox
 ```
 
-Replace the example ID with `browser_specific_settings.gecko.id` from the submitted manifest. Build output is `.output/firefox-mv3/`; the extension archive is `.output/read-aloud-<package-version>-firefox.zip`. For Chrome, run `bun run zip` instead.
+The pushed Git tag sets the release version. For a standalone reviewer rebuild, replace RELEASE_VERSION with manifest.version from the submitted extension (for example 0.1.0), not package.json's development placeholder. Replace the example ID with `browser_specific_settings.gecko.id` from the submitted manifest. Build output is `.output/firefox-mv3/`; the extension archive is `.output/read-aloud-<release-version>-firefox.zip`. For Chrome, run `bun run zip` instead.
 
 The source package includes `bun.lock`, build scripts, strict TypeScript configuration, first-party source, bundled static files and vendored provenance/notices. Installation downloads the pinned build/runtime dependencies from the package registry. WXT invokes `scripts/prepare-runtime.ts`, which bundles the speech workers and copies runtime WASM/data and PDF assets from those dependencies. No executable code is fetched by the installed extension. Voice-model and prerecorded-preview network behavior is described in `README.md` and `docs/licensing.md`.
 

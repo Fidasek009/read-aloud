@@ -1,75 +1,74 @@
 # CI and releases
 
-Verified against the linked official documentation on **2026-11-04**. These workflows implement release automation, not product acceptance or license clearance.
+Updated **2026-11-05**. The implementation agent owns release engineering, icons, promotional artwork, screenshots, listing/privacy copy, and the submission package. The product owner supplies product decisions and only the account/identity/credential actions that cannot be performed without their access. They are not assigned design, copywriting, building, or routine publishing work.
 
-## Workflow
+## Version authority and automatic publishing
 
-- `CI` runs on PRs and pushes to `main`. It validates stable version syntax, runs the complete type/format/test gates, builds both Manifest V3 targets, checks the ZIP manifests, rebuilds Firefox from its reviewer archive in a separate directory and Bun cache, compares every packaged file byte-for-byte, and retains installable packages plus Firefox reviewer sources for 14 days. It also runs `bun run lint:workflows` against every workflow, including CD and release paths, using the pinned, SHA-256-verified actionlint binary and `.github/actionlint.yaml`. Require **CI complete** in branch rules. CI uses no publishing credentials, including for fork PRs.
-- `CD` is a reusable workflow called after CI by `Release` for publication or by the manually dispatched `Store check` workflow for authentication-only validation. A preflight checks configuration and runs WXT authentication-only dry-runs for both stores before either uploads. Manual Store check ends after this preflight; only real releases run publishing jobs. Each store job downloads the artifacts from that same run and invokes WXT's submission CLI without rebuilding. The local wrapper handles only safety gates and arguments; WXT owns submission options and credential handling, with no direct publishing-library dependency. Chrome uses Web Store API **v2** service-account authentication; the retired v1.1 OAuth flow is not used. Firefox submits to the **listed** channel with reviewer sources. Neither job bypasses review or cancels pending reviews.
-- `Release` runs on pushed `v*` tags, rejects anything except exact `vX.Y.Z`, runs CI, then CD, then creates a draft GitHub release with generated release notes, uploads both browser ZIPs, reviewer source ZIP and SHA-256 checksums, and publishes it only after all uploads succeed. GitHub release creation requires both store submissions to succeed. Store approval is asynchronous: success means submitted for review/publication, not already available to users. The Firefox ZIP is **unsigned**; users should install through AMO. This workflow does not fetch a signed XPI.
+The pushed **`vX.Y.Z` Git tag is the sole release-version authority**. `package.json` may retain its development placeholder; no package-version edit is required or used for a release. `scripts/release-version.ts` validates and strips the tag prefix. WXT writes that version into both browser manifests and uses it in every artifact filename. Publishing resolves that same tag, and GitHub release creation rejects artifacts named for another version. Untagged development builds use `0.0.0`; explicit `RELEASE_VERSION` is available only for local/source-review reproduction. In a tag build an override contradicting the tag fails.
 
-All jobs use Ubuntu 26.04 runners. Actions are pinned to full commit hashes and Dependabot proposes weekly GitHub Actions and Bun dependency updates, maintaining package.json and the text-based bun.lock. The Bun runtime remains pinned through packageManager and should be updated together with engines.bun and @types/bun. Bun is selected from `packageManager`; dependency installation uses the frozen lockfile. Jobs have explicit timeouts, read-only tokens by default, and checkout does not retain Git credentials. Only GitHub release creation receives `contents: write`. GitHub-hosted action implementations use GitHub's managed runtimes; all project scripts/builds run under Bun, without a Node installation step.
+Use stable SemVer: major for incompatible product-contract changes, minor for compatible features, patch for compatible fixes; 0.y.z denotes initial development. Exact three-component versions with no leading zeroes, prerelease/build suffixes or components above 65535 are supported by the stable store pipeline. All-zero versions cannot be released. The workflow checks the tag is newer than previous stable tags and its commit is on the default branch. Reviewers assess the meaning of the bump; automation cannot infer compatibility from source diffs.
 
-Release runs share a non-cancelling concurrency group to prevent overlapping store submissions. GitHub concurrency retains at most one running and one pending run; do not push multiple release tags in quick succession because a newer pending run can replace an older pending run.
+Once store accounts/listings and credentials are provisioned and the documented acceptance work is complete, the entire release instruction is:
 
-## First publication and repository setup
+```sh
+git tag -a v0.1.0 -m 'Release 0.1.0'
+git push origin v0.1.0
+```
 
-First-time listings must be created manually. No credentials are committed or requested by a workflow in chat.
+No package bump, manual ZIP build, artwork task, separate `RELEASE_READY` variable or manual GitHub release creation is required. The tag triggers **CI → CD → published GitHub release**. Chrome is submitted with default automatic publication after approval; Firefox uses AMO's listed channel. The stores retain control of review timing and decisions. GitHub release notes state that submission success is not a claim of store approval.
 
-1. Resolve the gates in [licensing](licensing.md) and [acceptance status](feasibility-status.md), including corresponding source/build provenance for bundled GPL components. The WXT reviewer ZIP contains application source and build instructions; it does **not** establish complete GPL corresponding source. Finish the corresponding-source distribution before enabling publication. The workflows do not claim CPU/GPU quality, latency, or browser behavior acceptance from unit tests/builds.
-2. Choose the permanent Firefox add-on ID and set repository variable `FIREFOX_EXTENSION_ID` before building the first published package. WXT uses this value; the development fallback `read-aloud@local.invalid` is rejected by CD. Keep the same ID forever after first publication. Also export it when building manually for store upload.
-3. Set a valid initial version (for example `0.1.0`) in `package.json` through a PR. Download that PR's CI packages and create the initial Chrome Web Store and Firefox AMO listings manually, completing privacy, permission, license, reviewer and store metadata. Supply Firefox reviewer sources and `SOURCE_CODE_REVIEW.md`. Complete account verification and initial review as required by each store. First publication is a bootstrap exception to automated CD; subsequent versions use tags. Do not tag a version already uploaded manually as though it were a new update.
-4. Configure the variables and secrets below. Create a GitHub environment named `stores`; allow deployment from the protected default branch for dry-runs and protected version tags for publication. All nonsecret variables must be **repository** variables because CI and release preflight need them. Put publishing secrets in the `stores` environment. The preflight and publishing jobs both use that environment. Required reviewers are optional; configuring them makes releases wait for those approvals.
-5. Protect `main`: PRs required, **CI complete** required, no force pushes/deletion, and appropriate review requirements for repository ownership. Protect `v*` tags with a repository ruleset: restrict creation to release maintainers and prohibit updates/deletion. Give workflow-file changes particular review attention. Release validation checks that the tagged commit is reachable from the default branch; repository rules enforce who can change that branch and tags. These server-side settings are not installed by adding workflow files.
-6. From Actions, manually run **Store check** on the default branch. It runs CI, then invokes WXT with `--dry-run true` for both stores. It authenticates and reads existing listing metadata without uploading, submitting, or reserving a version; `0.0.0` and an unset `RELEASE_READY` are allowed in this mode. Existing store listings are still required. This checks credentials/read access, not upload permissions, review acceptance or production readiness. It creates no GitHub release. All non-dry publication paths still enforce the release tag and readiness gate.
-7. Set repository variable `RELEASE_READY` to the exact string `true` only once the documented release gates and initial store setup are complete. Until then PR CI works but CD fails closed. Keep readiness evidence current with each release; the variable is an operational assertion, not an automated audit.
+## Workflows
+
+- **CI:** PRs, pushes to main, and release calls run strict types, formatting, unit tests and actionlint over all workflows. Builds/checks Chrome and Firefox MV3 archives. Extracts Firefox reviewer sources, installs into a different checkout/cache path and compares all packaged file bytes. Validates committed PNG dimensions and bundles store artwork, listing/privacy copy and editable icon source. Uploads three immutable run artifacts: `extension-chrome`, `extension-firefox`, `extension-store-assets`. Require **CI complete** in main's rules.
+- **CD:** preflight checks both store configurations, then authenticates both through WXT dry-runs before either can upload. Live jobs use the exact tested archives from that run. WXT owns store authentication/options. Chrome API v2 uses a dedicated service account; Firefox uses an AMO API issuer/secret. No review bypass or cancellation of another pending review is requested.
+- **Store check:** manual dispatch on the default branch runs CI and authentication-only preflight. It uploads no version, consumes no version number, and creates no release. It works with the development sentinel. Existing listings are required for WXT's current authentication checks.
+- **Release:** a `v*` push must pass strict vX.Y.Z validation first. After CI and both store submissions succeed, it creates/reuses a draft GitHub release, uploads the four tag-versioned ZIPs and SHA-256 checksums, then publishes automatically. The fourth ZIP is `read-aloud-X.Y.Z-store-assets.zip`. The Firefox ZIP is unsigned; users install Firefox from AMO. A signed XPI is not currently fetched.
+
+All jobs use Ubuntu 26.04. Actions are pinned to complete hashes and Dependabot maintains Bun dependencies and GitHub Actions. Bun's toolchain version comes from packageManager; installs use the frozen text lockfile. Tokens are read-only except the final release job's contents:write permission. Checkout retains no Git credentials; publishing secrets never enter PR jobs. Every job has a timeout. Release submissions are serialized and never automatically cancelled. GitHub concurrency retains only one running and one pending run, so avoid pushing a burst of release tags.
+
+## Agent-owned store package
+
+The repository contains the completed original vector identity in `assets/brand/read-aloud.svg`, toolbar/store PNGs in `public/icons/` and `store/assets/`, promotional tiles and actual English/Czech voice-page screenshots. `store/listing.md` contains the listing description, permission explanations, links and reviewer notes; `PRIVACY.md` supplies the public policy. `bun run package:store` validates dimensions and bundles these materials; CI and every successful release attach this package automatically. Assets do not include unlicensed third-party imagery, downloaded voice models, or bundled previews.
+
+The agent regenerates artwork/screenshots when needed with `bun run assets:store` after a Chrome build. The script renders original SVG/HTML and captures the actual unmodified extension UI using an isolated Chromium profile. It does not fabricate playback, stream samples, or download models. Only toolbar icons are shipped in the installed extension. Promotional assets remain in the separate store package. The agent owns keeping screenshots and claims consistent with the product.
+
+## One-time account integration
+
+The current repository has no store listings or publishing credentials. Initial listings cannot be created by WXT's update adapter. The agent prepares all upload materials and handles available automation; account registration, publisher verification, terms acceptance and authenticated account access cannot be fabricated. If no authenticated store session is available, that access is the remaining external blocker, not a product-owner artwork/build task.
+
+Use the permanent Firefox ID `read-aloud@fidasek009.github.io` (the default in WXT). Keep this ID for the initial AMO submission and every update; an existing registered ID may instead be supplied through repository variable FIREFOX_EXTENSION_ID. Protect main with required CI/review rules and protect v* tags against updates/deletion, allowing creation only by release maintainers. The `stores` environment must allow the protected default branch for dry-runs and version tags for publication. Required environment reviewers are optional, not built-in release steps.
 
 | Scope | Name | Value |
 | --- | --- | --- |
-| Repository variable | `FIREFOX_EXTENSION_ID` | Permanent manifest/AMO add-on ID |
-| Repository variable | `CHROME_EXTENSION_ID` | Chrome Web Store item ID |
-| Repository variable | `CHROME_PUBLISHER_ID` | Web Store publisher ID |
-| Repository variable | `RELEASE_READY` | `true` after gates above are satisfied |
-| `stores` environment secret | `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL` | Google service account authorized for this publisher |
-| `stores` environment secret | `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY` | Its PEM private key, including real newlines |
-| `stores` environment secret | `FIREFOX_JWT_ISSUER` | AMO API key/issuer |
+| Repository variable | `CHROME_EXTENSION_ID` | Existing Chrome store item ID |
+| Repository variable | `CHROME_PUBLISHER_ID` | Publisher ID from Publisher → Settings |
+| Repository variable | `FIREFOX_EXTENSION_ID` | Permanent manifest/AMO ID; use the default above for first submission |
+| `stores` environment secret | `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL` | Dedicated authorized service-account email |
+| `stores` environment secret | `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY` | Decoded PEM private key, preserving real line breaks |
+| `stores` environment secret | `FIREFOX_JWT_ISSUER` | AMO API issuer/key |
 | `stores` environment secret | `FIREFOX_JWT_SECRET` | AMO API secret |
 
-Use a dedicated least-privilege store identity, enable the Chrome Web Store API, and authorize the service account in the publisher dashboard. Rotate credentials and limit repository/environment access. Do not place keys in `.env.submit` inside build artifacts; `.env*` is ignored and reviewer source packaging uses an explicit file allowlist.
+Create/enable the Chrome Web Store API in a Google Cloud project, create a service account and link its email under the Chrome dashboard's Account section. No broad Google Cloud project role is needed merely to authorize Web Store publishing. The API credentials flow uses the service-account JSON key's client_email/private_key, not retired v1.1 refresh-token instructions. Secrets are entered through GitHub/private input, never committed or printed. The source archive uses an explicit allowlist and excludes .env files.
 
-## Versioning and normal release
+First submission consumes a version just as an automated upload does. Complete that initial store integration with the agent's tag-versioned packages, then use a higher tag for the next update. Do not reuse a version already uploaded manually. Accounts, initial review, and store-required publisher metadata are not bypassed by having a CI pipeline.
 
-`package.json` is the single source of the extension version; WXT supplies it to both manifests. `0.0.0` remains the current development placeholder and is rejected for release. Stable versions must have exactly three components, no leading zeroes, and each component at most 65535 to fit Chrome's manifest constraints. Prerelease/build suffixes are intentionally unsupported by this stable store pipeline.
+## Acceptance and retries
 
-Follow [SemVer 2.0.0](https://semver.org/): major for incompatible changes to the supported product contract, minor for compatible features, patch for compatible fixes; `0.y.z` denotes initial development. The workflow enforces syntax, tag/package agreement, and increasing versions relative to existing stable tags. It cannot infer compatibility from source diffs; reviewers must validate the appropriate bump. A version bump is not required for every PR.
+Removing a redundant manual ready switch does not declare the current prototype ready or clear its separate licenses. The agent must resolve the existing release gates in `docs/licensing.md`, `NOTICE.md` and `docs/feasibility-status.md` before initiating real publication. Full corresponding source/build provenance for bundled GPL components and model/preview clearance are still unresolved. The reviewer ZIP is not a claim of complete GPL corresponding source. Latency, Windows, GPU/CPU and real-browser acceptance are separate from unit/packaging checks. Do not push a real release tag merely to test credentials: use Store check.
 
-1. Review the changes and acceptance evidence; update `package.json` to the intended next version, then merge the PR after CI passes. No version is rewritten during release.
-2. From the merged commit on the default branch, create an annotated tag and push it:
+Stores and GitHub cannot commit an atomic transaction. If one store accepts and the other fails, the accepted submission remains; GitHub release publication is withheld. Inspect state and rerun only failed jobs, never blindly repeat a successful upload. If a request timed out after acceptance, reconcile the store state before retrying. Code fixes get a higher tag; existing tags and published artifacts stay immutable.
 
-   ```sh
-   git tag -a v0.1.1 -m 'Release 0.1.1'
-   git push origin v0.1.1
-   ```
+The GitHub release job is independently retryable. It reuses an existing draft, replaces draft assets and publishes last. If publication succeeded despite a lost response, a retry compares existing public asset bytes and adds only missing assets. It never overwrites different published bytes or regenerates notes on every retry. Tests simulate draft/upload/publication-response failures and preservation of immutable public assets.
 
-3. Observe Actions and both store dashboards. The GitHub release appears only after successful submissions; review rejection must be handled separately. No automatic polling waits for approval. Release notes explicitly state this distinction.
+## Verification and primary references
 
-Both stores and GitHub cannot participate in an atomic transaction. If one store succeeds and the other fails, the GitHub release is withheld, but the successful submission remains. Inspect store state, fix credentials/configuration as needed, then use GitHub's **Re-run failed jobs** to retry only the failed job. Never blindly rerun successful publishing jobs: duplicate-version uploads may fail. If submission succeeded remotely but the job timed out, reconcile in the dashboard before retrying. Do not move/reuse an existing release tag or edit released artifacts; ship a higher version for code fixes. A GitHub release job failure can be retried without rerunning CI/CD: an existing draft is reused, draft assets are uploaded with replacement, and publication happens last. If publication succeeded but its response was lost, the retry verifies existing public asset bytes and adds only missing assets. It refuses to overwrite differing published assets. Generated notes are created with the draft and retained on retries. Tags and uploaded versions must remain immutable.
+`bun run typecheck`, `bun run format:check`, `bun run test`, `bun run lint:workflows`, both ZIP builds, `bun run check:source-rebuild`, and `bun run package:store` are the relevant checks. Workflow linting downloads a pinned, SHA-256-verified actionlint release on Linux x64. Reviewer reproduction exports the version shown in the submitted manifest; see `SOURCE_CODE_REVIEW.md`. File bytes, not ZIP timestamps/compression metadata, are compared. No live store authentication/submission has succeeded yet because accounts/listings/credentials are absent.
 
-## Verification limits
-
-The automated CI gates cover deterministic unit behavior and packaging for both browsers. Existing real-browser probes require an audio/browser/voice fixture setup and are not run on hosted CI. Windows/Linux CPU-only, GPU, selection/PDF, lifecycle and performance acceptance remain the separate documented release checks. No live store authentication or submission has been tested without real listings and credentials. Retry tests simulate failures after draft creation, partial upload and a lost publication response; they do not create actual GitHub releases. Validate the first automated update in both dashboards before treating CD as operational.
-
-## Primary references
-
-- [WXT publishing and first-time setup](https://wxt.dev/guide/essentials/publishing.html)
-- [Publishing adapter options](https://github.com/aklinker1/publish-browser-extension/blob/main/docs/config-reference.md)
-- [Chrome Web Store API](https://developer.chrome.com/docs/webstore/using-api/)
-- [Chrome version constraints](https://developer.chrome.com/docs/extensions/reference/manifest/version)
-- [Firefox submitting an add-on](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/)
-- [Firefox source code submission](https://extensionworkshop.com/documentation/publish/source-code-submission/)
-- [GitHub reusable workflows](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows)
+- [WXT publishing and first-time limitations](https://wxt.dev/guide/essentials/publishing.html)
+- [WXT version template semantics](https://wxt.dev/guide/resources/upgrading)
+- [Chrome service-account integration](https://developer.chrome.com/docs/webstore/service-accounts)
+- [Chrome store imagery](https://developer.chrome.com/docs/webstore/images)
+- [Chrome manifest version constraints](https://developer.chrome.com/docs/extensions/reference/manifest/version)
+- [Firefox submissions and reviewer sources](https://extensionworkshop.com/documentation/publish/submitting-an-add-on/)
 - [GitHub Actions security](https://docs.github.com/en/actions/reference/security/secure-use)
-
-For local workflow validation on Linux x64, run `bun run lint:workflows`. It downloads actionlint 1.7.12 only from its pinned upstream release and verifies the committed checksum before execution. For raw WXT dry-run/status options use `bun --bun run wxt submit --help` and `bun --bun run wxt submit status --help`. The safety wrapper requires an explicit `--dry-run` or `--publish` argument.
-
-Build-path independence uses [Bun whitespace minification](https://bun.com/docs/bundler/minifier), which removes module-path comments and retains important license comments. CI compares extracted file contents, not ZIP timestamps or compression metadata.
+- [Bun comment-preserving whitespace minification](https://bun.com/docs/bundler/minifier)

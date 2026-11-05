@@ -1,4 +1,4 @@
-// Stable SemVer is also the manifest version: no lossy prerelease mapping.
+// Stable SemVer maps directly to both browsers' manifest version fields.
 export function parseVersion(version: string, release = false): number[] {
 	if (/^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.exec(version)?.[0] !== version)
 		throw new Error(`Expected stable semantic version X.Y.Z, received ${version}`)
@@ -8,9 +8,29 @@ export function parseVersion(version: string, release = false): number[] {
 	return parts
 }
 
-export function validateRelease(version: string, tag: string, previousTags: string[]) {
+export function versionFromTag(tag: string): string {
+	if (!tag.startsWith("v")) throw new Error("Release tags must use vX.Y.Z")
+	const version = tag.slice(1)
+	parseVersion(version, true)
+	return version
+}
+
+export function buildVersion(env: Record<string, string | undefined> = process.env): string {
+	if (env.GITHUB_REF_TYPE === "tag") {
+		const version = versionFromTag(env.GITHUB_REF_NAME ?? "")
+		if (env.RELEASE_VERSION && env.RELEASE_VERSION !== version) throw new Error("Build version contradicts release tag")
+		return version
+	}
+	// Explicit build input is for source review/local reproduction. Package version
+	// is deliberately irrelevant; untagged development builds use a fixed sentinel.
+	const version = env.RELEASE_VERSION || "0.0.0"
+	parseVersion(version)
+	return version
+}
+
+export function validateRelease(tag: string, previousTags: string[]): string {
+	const version = versionFromTag(tag)
 	const current = parseVersion(version, true)
-	if (tag !== `v${version}`) throw new Error("Release tag must exactly match package.json version")
 	for (const previousTag of previousTags) {
 		if (previousTag === tag || !/^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)$/.test(previousTag)) continue
 		const previous = parseVersion(previousTag.slice(1))
@@ -18,19 +38,20 @@ export function validateRelease(version: string, tag: string, previousTags: stri
 		if (difference < 0 || current[difference]! < previous[difference]!)
 			throw new Error(`Release ${tag} must be newer than ${previousTag}`)
 	}
+	return version
 }
 
 if (import.meta.main) {
-	const { version } = await Bun.file("package.json").json()
-	parseVersion(version)
+	const version = buildVersion()
 	if (process.argv[2] === "--release") {
 		const tag = process.env.GITHUB_REF_NAME ?? ""
 		const tags = await Bun.$`git tag --list`.text()
-		validateRelease(version, tag, tags.trim().split("\n"))
-		// Only release commits already on the protected default branch.
+		validateRelease(tag, tags.trim().split("\n"))
 		const branch = process.env.DEFAULT_BRANCH
 		if (!branch) throw new Error("DEFAULT_BRANCH is required")
 		await Bun.$`git merge-base --is-ancestor HEAD ${`origin/${branch}`}`.quiet()
 	}
-	console.log(`Validated version ${version}`)
+	console.log(
+		`Validated ${process.env.GITHUB_REF_TYPE === "tag" ? "tag-derived release" : "development"} version ${version}`,
+	)
 }

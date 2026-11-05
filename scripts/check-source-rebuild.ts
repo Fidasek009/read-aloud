@@ -2,8 +2,10 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join, resolve } from "node:path"
 
+import { buildVersion } from "./release-version"
+
 // Different checkout AND install/cache paths expose machine-dependent bundle output.
-const { version } = await Bun.file("package.json").json()
+const version = buildVersion()
 const original = resolve(`.output/read-aloud-${version}-firefox.zip`)
 const sources = resolve(`.output/read-aloud-${version}-sources.zip`)
 const manifest = JSON.parse(await Bun.$`unzip -p ${original} manifest.json`.text())
@@ -15,6 +17,10 @@ try {
 	await Bun.$`unzip -q ${original} -d ${extracted}`.quiet()
 	const env = {
 		...process.env,
+		// Reviewers do not have the originating Actions/tag environment.
+		GITHUB_REF_TYPE: undefined,
+		GITHUB_REF_NAME: undefined,
+		RELEASE_VERSION: manifest.version,
 		BUN_INSTALL_CACHE_DIR: join(temp, "bun-cache"),
 		FIREFOX_EXTENSION_ID: manifest.browser_specific_settings.gecko.id,
 	}

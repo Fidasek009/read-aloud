@@ -2,6 +2,8 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { basename, join } from "node:path"
 
+import { versionFromTag } from "./release-version"
+
 interface Result {
 	exitCode: number
 	stdout: string
@@ -53,11 +55,16 @@ export async function publishRelease(tag: string, files: string[], notes: string
 
 if (import.meta.main) {
 	const tag = process.env.RELEASE_TAG
-	if (!tag || !/^v\d+\.\d+\.\d+$/.test(tag)) throw new Error("RELEASE_TAG is required")
+	if (!tag) throw new Error("RELEASE_TAG is required")
+	const version = versionFromTag(tag)
 	const zips = (await Array.fromAsync(new Bun.Glob("*.zip").scan({ cwd: "artifacts" })))
 		.sort()
 		.map((file) => `artifacts/${file}`)
-	if (zips.length !== 3) throw new Error("Expected Chrome, Firefox and reviewer source archives")
+	const expected = ["chrome", "firefox", "sources", "store-assets"]
+		.map((kind) => `artifacts/read-aloud-${version}-${kind}.zip`)
+		.sort()
+	if (JSON.stringify(zips) !== JSON.stringify(expected))
+		throw new Error("Release artifacts do not match the tag version")
 	const checksums = []
 	for (const file of zips)
 		checksums.push(

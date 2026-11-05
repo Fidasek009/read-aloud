@@ -1,6 +1,6 @@
 # Product brief
 
-Started **2026-10-29**, updated **2026-11-02**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
+Started **2026-10-29**, updated **2026-11-05**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
 
 ## Confirmed experience
 
@@ -30,7 +30,7 @@ The latest clarification is authoritative: **continue on tab switch; stop on sou
 - Optional GPU: 4 GB VRAM. CPU-only operation must be usable.
 - Original application source: MIT, open source. Audit third-party executable code, model weights, datasets, and preview assets independently before distribution.
 - Separately licensed dependencies may be considered; explain their obligations before choosing them. Do not represent bundled GPL code or separately licensed model weights as MIT.
-- Public store distribution versus personal/unlisted distribution remains unanswered. No monetization or account system is requested.
+- Public Chrome Web Store and listed Firefox AMO distribution are confirmed (2026-11-05). No monetization or account system is requested.
 
 ## Confirmed engineering direction
 
@@ -64,7 +64,7 @@ The user likes the idea of multiple workers. Treat this as architectural interes
 1. What extraction behavior is expected for captions, citations, headers/footers, bibliography, tables, and formulas in the thesis PDF? Correct reading order and no dropped prose remain fundamental.
 2. What playback-speed range does the user actually need? Performance must be measured at those speeds.
 3. Should model deletion stop an active reading session using that model? The current implementation invalidates the loaded model.
-4. Public Chrome Web Store/Firefox AMO release, or personal/unlisted distribution initially? Should private browsing be supported initially?
+4. Public Chrome Web Store/listed AMO distribution is confirmed; private-browsing behavior remains open.
 5. Is offline reading after deliberate provisioning sufficient, or must models also be provisionable without internet access?
 
 Previously asked questions on setup, reading scope, hardware, downloads, Piper's UX, languages, original-source licensing, playback controls, highlighting, auto-scroll, session continuity, and sentence clicking are answered and should not be repeated.
@@ -112,3 +112,7 @@ Preserve meaningful dots in domains such as `consensus.app`, where “dot” sho
 - Speed and volume should use consistent floating adjustments, keeping the playback bar compact. Download/delete completion needs no separate success message anywhere: the card's button/progress is the feedback. Keep failures beside the affected card. A failed or closed reader must accept a fresh selection without reloading the source page.
 - Join explicitly line-hyphenated words such as `in-\nfrastructure`, preserving real compounds such as `pre-exascale` and domain dots. Highlight all printed fragments of the spoken word.
 - Prevent avoidable phonemizer annotation failures. For source-specific pronunciation failures, isolate the problematic passage, preserve usable speech, and tell the user if any text was skipped. Cancellation and runtime failures must remain distinguishable from content failures.
+
+## Release ownership confirmed 2026-11-05
+
+The product owner does not create artwork, screenshots, listing copy, privacy materials or build packages. The implementation agent owns these and routine release engineering. A pushed vX.Y.Z tag is the sole release-version authority and triggers automated CI, store publication submissions and GitHub release publication. No package-version bump or separate manual ready toggle is required. Public Chrome Web Store and listed Firefox AMO distribution are selected. Account/credential access, store review and the recorded product/license acceptance obligations remain external constraints; the agent must report their actual state without shifting design or engineering tasks back to the product owner.
