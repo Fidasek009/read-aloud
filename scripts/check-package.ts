@@ -16,6 +16,10 @@ if (
 	throw new Error("Firefox identity mismatch")
 const zip = `.output/read-aloud-${version}-${browser}.zip`
 await Bun.$`unzip -tq ${zip}`.quiet()
+const entries = (await Bun.$`unzip -Z1 ${zip}`.text()).split("\n")
+const manifests = entries.filter((file) => /(^|\/)manifest\.json$/i.test(file))
+if (manifests.length !== 1 || manifests[0] !== "manifest.json")
+	throw new Error(`Package must have exactly one root manifest.json; found: ${manifests.join(", ")}`)
 const packaged = JSON.parse(await Bun.$`unzip -p ${zip} manifest.json`.text())
 if (!isDeepStrictEqual(packaged, manifest)) throw new Error("ZIP manifest differs from build")
 if (browser === "firefox") {

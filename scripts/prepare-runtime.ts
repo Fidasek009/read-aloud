@@ -22,9 +22,9 @@ async function copyAsset(source: string, target: string, directory: string) {
 	copied++
 }
 
-async function copyDirectory(source: string, target: string, directory: string) {
+async function copyDirectory(source: string, target: string, directory: string, rename = (file: string) => file) {
 	for await (const file of new Bun.Glob("**/*").scan({ cwd: source, onlyFiles: true, dot: true }))
-		await copyAsset(`${source}/${file}`, `${target}/${file}`, directory)
+		await copyAsset(`${source}/${file}`, `${target}/${rename(file)}`, directory)
 }
 
 async function removeStaleAssets(directory: string) {
@@ -77,7 +77,11 @@ for (const [directory, backend, runtime] of [
 		)
 }
 const phonemizer = `${root}/node_modules/@spelling-creator/spellophone`
-await copyDirectory(`${phonemizer}/espeak-ng-data`, `${out}/espeak-ng-data`, out)
+// Chrome rejects a second manifest.json anywhere in the extension archive.
+// The speech loader maps its inventory request to this packaged filename.
+await copyDirectory(`${phonemizer}/espeak-ng-data`, `${out}/espeak-ng-data`, out, (file) =>
+	file === "manifest.json" ? "data-index.json" : file,
+)
 await copyAsset(`${phonemizer}/wasm/espeak-ng.wasm`, `${out}/espeak-ng.wasm`, out)
 for (const [source, target] of [
 	[`${phonemizer}/LICENSE`, "spellophone-GPL-3.0.txt"],

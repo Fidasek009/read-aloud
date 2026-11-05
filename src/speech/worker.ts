@@ -4,6 +4,7 @@ import * as ort from "onnxruntime-web"
 import type { WorkerTimings } from "./diagnostics.ts"
 import type { VoiceConfig } from "./voice-config.ts"
 
+import { speechDataFetch } from "./data-fetch.ts"
 import { SpeechTextError } from "./errors.ts"
 import { alignWords, tokenizeEvents, tokenizeText } from "./phonemes.ts"
 import { isWorkerRequest, type WorkerResponse } from "./worker-protocol.ts"
@@ -60,6 +61,7 @@ self.onmessage = async ({ data }: MessageEvent<unknown>) => {
 				const began = performance.now()
 				phonemizer ??= await createEspeak({
 					dataUrl: new URL("espeak-ng-data/", base),
+					fetch: speechDataFetch(new URL("espeak-ng-data/", base)),
 					wasmUrl: new URL("espeak-ng.wasm", base),
 					languages: [],
 					phonemeEvents: "ipa",
