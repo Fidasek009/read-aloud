@@ -19,8 +19,6 @@ let previewRequest = 0
 let renderRevision = 0
 const installed = new Set<string>()
 const rows = new Map<string, HTMLElement>()
-const orphanRows = new Map<string, HTMLElement>()
-const knownIds = new Set(voices.map((voice) => voice.id))
 const deleting = new Set<string>()
 const downloads = new Map<string, { controller: AbortController; fraction: number }>()
 const notices = new Map<string, { message: string; error: boolean }>()
@@ -102,10 +100,6 @@ function updateRow(row: HTMLElement, voice: (typeof voices)[number]) {
 }
 function render() {
 	const query = search.value.toLocaleLowerCase().trim()
-	const orphans = [...installed].filter((id) => !knownIds.has(id))
-	const shownOrphans = orphans.filter(
-		(id) => !language.value && !qualityFilter.value && id.toLocaleLowerCase().includes(query),
-	)
 	const shown = sorted.filter(
 		(voice) =>
 			(!language.value || voice.locale === language.value) &&
@@ -114,57 +108,10 @@ function render() {
 				.toLocaleLowerCase()
 				.includes(query),
 	)
-	const resultCount =
-		shown.length + shownOrphans.length
-			? `${shown.length + shownOrphans.length} of ${voices.length + orphans.length} models · ${installed.size} downloaded`
-			: "No models match these filters."
+	const resultCount = shown.length
+		? `${shown.length} of ${voices.length} models · ${installed.size} downloaded`
+		: "No models match these filters."
 	if (count.textContent !== resultCount) count.textContent = resultCount
-	for (const [id, row] of orphanRows) {
-		if (!installed.has(id)) {
-			row.remove()
-			orphanRows.delete(id)
-		} else row.hidden = !shownOrphans.includes(id)
-	}
-	for (const id of shownOrphans) {
-		if (orphanRows.has(id)) continue
-		const row = document.createElement("section")
-		row.dataset.voice = id
-		const description = document.createElement("div")
-		const title = document.createElement("h2")
-		title.textContent = "Unavailable voice"
-		const detail = document.createElement("p")
-		detail.textContent = id
-		description.append(title, detail)
-		const action = document.createElement("button")
-		action.className = "danger"
-		action.dataset.action = "delete-unavailable"
-		action.textContent = "Delete"
-		action.setAttribute("aria-label", `Delete unavailable voice ${id}`)
-		const notice = document.createElement("p")
-		notice.className = "download-status error"
-		notice.setAttribute("role", "status")
-		notice.hidden = true
-		action.onclick = async () => {
-			deleting.add(id)
-			action.disabled = true
-			notice.hidden = true
-			try {
-				await deleteVoice(id, () =>
-					browser.storage.local.set({ [localKeys.voiceChange]: { id, deleted: true, revision: crypto.randomUUID() } }),
-				)
-			} catch {
-				notice.textContent = "The voice could not be deleted. Please try again."
-				notice.hidden = false
-				action.disabled = false
-			} finally {
-				deleting.delete(id)
-			}
-			await refreshInstalled()
-		}
-		row.append(description, action, notice)
-		orphanRows.set(id, row)
-		list.prepend(row)
-	}
 	const shownIds = new Set(shown.map((voice) => voice.id))
 	for (const [id, row] of rows) row.hidden = !shownIds.has(id)
 	for (const voice of shown) {
@@ -289,14 +236,12 @@ function render() {
 			} catch (error) {
 				const cancelled =
 					task.controller.signal.aborted || (error instanceof DOMException && error.name === "AbortError")
-				const message = task.controller.signal.aborted
+				const message = cancelled
 					? "Download cancelled."
 					: error instanceof DOMException && error.name === "QuotaExceededError"
 						? "Not enough storage. Delete a downloaded voice and try again."
 						: error instanceof Error
-							? /network|fetch/iu.test(error.message)
-								? "Download failed. Check your connection and try again."
-								: error.message
+							? error.message
 							: "Download failed."
 				downloadNotice(voice.id, message, !cancelled)
 			} finally {

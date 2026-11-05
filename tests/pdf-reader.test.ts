@@ -18,9 +18,10 @@ test("PDF discovery matches the extension document and its source rather than UR
 	expect(isPdfReaderUrl("invalid", root)).toBe(false)
 })
 
-test("PDF discovery accepts older source-less tabs but rejects another tab or embedded frame", () => {
-	const legacy = `${root}pdf.html?src=${encodeURIComponent(source)}`
-	expect(isPdfReaderUrl(legacy, root, source, 7)).toBe(true)
+test("PDF discovery rejects a reader without its source tab, another tab, or an embedded frame", () => {
+	const lackingSource = `${root}pdf.html?src=${encodeURIComponent(source)}`
+	expect(isPdfReaderUrl(lackingSource, root)).toBe(false)
+	expect(isPdfReaderUrl(lackingSource, root, source, 7)).toBe(false)
 	expect(isPdfReaderContext({ tabId: 3, frameId: 0, documentUrl: reader }, 3, root, source, 7)).toBe(true)
 	expect(isPdfReaderContext({ tabId: 3, frameId: 2, documentUrl: reader }, 3, root, source, 7)).toBe(false)
 	expect(isPdfReaderContext({ tabId: 4, frameId: 0, documentUrl: reader }, 3, root, source, 7)).toBe(false)

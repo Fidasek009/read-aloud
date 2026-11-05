@@ -42,7 +42,7 @@ try {
 	if (result.exceptionDetails) throw new Error(result.exceptionDetails.text)
 	console.log("Two real speakers, one loaded model:", JSON.stringify(result.result.value))
 	await Bun.write(
-		`${projectRoot}/docs/evidence/speaker-switch-2026-11-02.json`,
+		`${projectRoot}/.cache/evidence/speaker-switch.json`,
 		JSON.stringify(
 			{
 				recordedAt: new Date().toISOString(),

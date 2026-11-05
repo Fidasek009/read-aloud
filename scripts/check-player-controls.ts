@@ -3,7 +3,7 @@ import type { browser } from "wxt/browser"
 interface AudioObservation {
 	sources: number
 	stops: number
-	starts: { when: number; duration: number; requestedAt: number }[]
+	starts: { requestedAt: number }[]
 	lastStop: number
 	elements: HTMLMediaElement[]
 	mediaActions: Map<MediaSessionAction, MediaSessionActionHandler | null>
@@ -67,12 +67,7 @@ function installAudioObservation() {
 		element.play = async () => {
 			const wasPaused = element.paused
 			await play()
-			if (wasPaused)
-				audio.starts.push({
-					when: performance.now() / 1000,
-					duration: element.duration,
-					requestedAt: performance.now(),
-				})
+			if (wasPaused) audio.starts.push({ requestedAt: performance.now() })
 		}
 		return element
 	} as unknown as typeof Audio

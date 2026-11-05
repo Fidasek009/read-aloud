@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test"
 
-import config from "../src/speech/configs/en_US-ljspeech-medium.json"
 import { isWorkerRequest, isWorkerResponse } from "../src/speech/worker-protocol.ts"
+import config from "./fixtures/en_US-ljspeech-medium.json"
 
 test("worker accepts a validated model and rejects corrupted configuration and speaker IDs", () => {
 	const load = { id: 1, type: "load", voice: "en_US-ljspeech-medium", speaker: 0, config, model: new ArrayBuffer(1) }

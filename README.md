@@ -4,7 +4,7 @@ A Firefox and Chrome extension in development: local speech, mandatory US Englis
 
 The current extension is a **development prototype** with explicit voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. It is not release-ready: native-entry autoplay, cold startup, PDF acceptance, model provenance, and GPU/Windows acceptance remain open. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for the latest confirmed requirements, including all three mandatory reading benchmarks.
 
-See [known issues](docs/known-issues.md) for user-facing limitations and [the current review tracker](docs/review-tracker-2026-11-04.md) for verified fixes and remaining acceptance work.
+See [known issues](docs/known-issues.md) for user-facing limitations and [acceptance status](docs/feasibility-status.md) for remaining work.
 
 ## Development
 
@@ -23,13 +23,13 @@ For development, use `bun run dev` or `bun run dev:firefox`. Generated browser p
 
 Bun is development tooling; the finished extension must not require users to install Bun or a companion application. Model downloads must be deliberate user actions, never a side effect of opening or installing the extension.
 
-## Technical experiments
+## Technical notes
 
-[Earlier speech experiments](docs/archive/speech-lab/README.md) are preserved in Git alongside their provenance and historical evidence. The prototype uses a separate Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) track evidence and outstanding gates.
+The prototype uses a Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) describe the chosen approach and outstanding gates.
 
 ## License
 
-Original project code is [MIT](LICENSE). Third-party reference code, runtime files, model weights, and voice/preview assets retain their own licenses. The lab records and preserves their notices. The prototype bundles GPL-3.0-or-later Spellophone/eSpeak NG with MIT ONNX Runtime. Original source files remain MIT; the combined bundle has GPL distribution obligations. See [NOTICE.md](NOTICE.md) and the [licensing inventory](docs/licensing.md). Public distribution remains gated.
+Original project code is [MIT](LICENSE). Third-party runtime files, model weights, and voice/preview assets retain their own licenses. The prototype bundles GPL-3.0-or-later Spellophone/eSpeak NG with MIT ONNX Runtime. Original source files remain MIT; the combined bundle has GPL distribution obligations. See [NOTICE.md](NOTICE.md) and the [licensing inventory](docs/licensing.md). Public distribution remains gated.
 
 ## Browser checks
 
@@ -51,7 +51,7 @@ After updating a development package, reload the extension **and existing source
 
 ## Local diagnostics
 
-Local timing/backend diagnostics are available from the extension page's developer console with `await browser.storage.local.get("lastSpeechPerformance")` (use `chrome` in Chrome). They contain no reading text. Cold initialization is still over the acceptance budget; see the evidence/status documents before interpreting one VM run as a benchmark.
+Local timing/backend diagnostics are available from the extension page's developer console with `await browser.storage.local.get("lastSpeechPerformance")` (use `chrome` in Chrome). They contain no reading text. Cold initialization is still over the acceptance budget; do not interpret one VM run as a benchmark.
 
 ## CI and publishing
 

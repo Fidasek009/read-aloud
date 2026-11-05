@@ -153,7 +153,7 @@ try {
 	if (fixtureServer) {
 		await view.evaluate(`(async()=>{
 			const {writeStoredVoice}=await import('./voice-fixtures.js');
-			await writeStoredVoice({id:'en_US-ljspeech-medium',sourceHash:${JSON.stringify(new Bun.CryptoHasher("sha256").update(await Bun.file(fixture).arrayBuffer()).digest("hex"))},model:await(await fetch(${JSON.stringify(fixtureServer.url.href)})).arrayBuffer(),config:${JSON.stringify(fixtureConfig)},installedAt:Date.now()});
+			await writeStoredVoice({id:'en_US-ljspeech-medium',sourceHash:${JSON.stringify(new Bun.CryptoHasher("sha256").update(await Bun.file(fixture).arrayBuffer()).digest("hex"))},model:await(await fetch(${JSON.stringify(fixtureServer.url.href)})).arrayBuffer(),config:${JSON.stringify(fixtureConfig)}});
 		})()`)
 		const speech = await view.evaluate<{ ok: boolean; samples: number; words: number; backend: string }>(`(async()=>{
 			const port=window.__hostFixture.port;
@@ -215,7 +215,7 @@ try {
 	await waitFor(hostTarget, (target) => !target, leaseMs / 1000 + 15)
 	console.log("An unused preparation lease expired and its empty document closed.")
 	await Bun.write(
-		`${projectRoot}/docs/evidence/host-lifecycle-2026-11-03.json`,
+		`${projectRoot}/.cache/evidence/host-lifecycle.json`,
 		JSON.stringify(
 			{
 				recordedAt: new Date().toISOString(),

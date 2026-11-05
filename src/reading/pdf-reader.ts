@@ -21,9 +21,8 @@ export function isPdfReaderUrl(
 			if (actualSource.href !== expectedSource.href) return false
 		}
 		const originalTab = url.searchParams.get("source")
-		// Older reader tabs and test fixtures may not carry a source-tab parameter.
-		if (sourceTab !== undefined && originalTab !== null && originalTab !== String(sourceTab)) return false
-		return true
+		if (!originalTab || !/^(?:0|[1-9]\d*)$/u.test(originalTab)) return false
+		return sourceTab === undefined || originalTab === String(sourceTab)
 	} catch {
 		return false
 	}

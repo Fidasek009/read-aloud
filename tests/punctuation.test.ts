@@ -1,8 +1,8 @@
 import { createEspeak } from "@spelling-creator/spellophone/browser"
 import { expect, test } from "bun:test"
 
-import voice from "../src/speech/configs/en_US-ljspeech-medium.json"
 import { tokenizeEvents } from "../src/speech/phonemes.ts"
+import voice from "./fixtures/en_US-ljspeech-medium.json"
 
 test("domain dots remain spoken phonemes while sentence-ending periods remain pauses", async () => {
 	const files = new URL("../node_modules/@spelling-creator/spellophone/", import.meta.url)

@@ -31,17 +31,10 @@ await Promise.all(
 			const path = Object.keys(voice.files).find((path) => path.endsWith(".onnx"))!
 			const file = files.get(path)
 			if (!file?.lfs?.oid || !/^[a-f0-9]{64}$/.test(file.lfs.oid)) throw new Error(`Missing SHA-256: ${path}`)
-			const [configResponse, cardResponse] = await Promise.all([
-				fetch(`${base}/${path}.json`),
-				fetch(`${base}/${path.replace(/[^/]+$/, "MODEL_CARD")}`),
-			])
-			if (!configResponse.ok || !cardResponse.ok) throw new Error(`Missing configuration/card: ${voice.key}`)
+			const configResponse = await fetch(`${base}/${path}.json`)
+			if (!configResponse.ok) throw new Error(`Missing configuration: ${voice.key}`)
 			const configBytes = await configResponse.arrayBuffer()
 			const config = JSON.parse(new TextDecoder().decode(configBytes))
-			const card = await cardResponse.text()
-			const licenses = [...card.matchAll(/License:\s*([^\n]+)/gi)].map((match) =>
-				match[1]!.replaceAll(/[*`]/g, "").trim(),
-			)
 			const samplePath = `samples/${path.replace(/[^/]+$/, "speaker_0.mp3")}`
 			const phonemeType = config.phoneme_type ?? "espeak"
 			const language = voice.language
@@ -57,9 +50,6 @@ await Promise.all(
 				path,
 				configHash: new Bun.CryptoHasher("sha256").update(configBytes).digest("hex"),
 				previewPath: samplePaths.has(samplePath) ? samplePath : null,
-				license: licenses.length ? [...new Set(licenses)].join("; ") : "See model terms",
-				inheritedTerms: /finetuned|fine.tuned/i.test(card),
-				phonemeType,
 				unsupported: ["espeak", "text"].includes(phonemeType)
 					? null
 					: `Requires the ${phonemeType} pronunciation engine`,

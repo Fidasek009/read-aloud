@@ -5,11 +5,10 @@ export class ReaderSession<T> {
 	source: T | undefined
 
 	replace(source: T) {
-		const reused = !!this.id
 		this.id ||= crypto.randomUUID()
 		this.source = source
 		this.revision++
-		return { session: this.id, reused }
+		return { session: this.id }
 	}
 
 	/** A later request or close always wins, even if earlier preparation finishes later. */

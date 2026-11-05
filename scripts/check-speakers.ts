@@ -19,7 +19,7 @@ export async function checkSpeakers(base: string) {
 	config.inference.noise_scale = 0
 	config.inference.noise_w = 0
 	const model = instrumentModel(bytes).buffer
-	await writeStoredVoice({ id: voice.id, sourceHash: hash, config, model, installedAt: Date.now() })
+	await writeStoredVoice({ id: voice.id, sourceHash: hash, config, model })
 	const engine = new SpeechEngine()
 	try {
 		await engine.load(voice.id)

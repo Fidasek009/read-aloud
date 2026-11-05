@@ -14,11 +14,8 @@ export interface Voice {
 	configUrl: string
 	configHash: string
 	previewUrl: string | null
-	license: string
 	termsUrl: string
-	inheritedTerms: boolean
 	unsupported: string | null
-	phonemeType: string
 	speakers: number
 	speakerNames: Record<string, number> | undefined
 }

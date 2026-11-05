@@ -2,15 +2,13 @@ import { browser } from "wxt/browser"
 
 import { localKeys } from "../extension/storage.ts"
 import { getVoice } from "./catalog.ts"
-import legacyCzech from "./configs/cs_CZ-jirka-medium.json"
-import legacyEnglish from "./configs/en_US-ljspeech-medium.json"
 import { cancelVoiceDownloads, voiceDownloadCancellation } from "./download-cancellation.ts"
 import { downloadBytes } from "./download.ts"
 import { SpeechVoiceError } from "./errors.ts"
 import { instrumentInWorker } from "./instrument-client.ts"
 import { isVoiceChange } from "./protocol.ts"
 import { validateConfig, type VoiceConfig } from "./voice-config.ts"
-import { type StoredVoice, voiceLock, voiceOperation, voiceStore } from "./voice-store.ts"
+import { type StoredVoice, voiceLock, voiceOperation } from "./voice-store.ts"
 
 export async function installedVoices(): Promise<string[]> {
 	return (await voiceOperation("readonly", (store) => store.getAllKeys())).map(String)
@@ -20,14 +18,8 @@ export async function readVoice(id: string): Promise<{ model: ArrayBuffer; confi
 	const stored = await voiceOperation<StoredVoice | undefined>("readonly", (store) => store.get(id))
 	if (!stored || stored.sourceHash !== getVoice(id).sha256)
 		throw new SpeechVoiceError("Stored voice is missing or outdated")
-	// Existing prototype downloads used this same format before it had a version field.
-	if ((stored.formatVersion ?? 1) !== voiceStore.formatVersion)
-		throw new SpeechVoiceError("Stored voice format is incompatible")
-	const config =
-		stored.config ??
-		(id === "en_US-ljspeech-medium" ? legacyEnglish : id === "cs_CZ-jirka-medium" ? legacyCzech : undefined)
 	try {
-		return { model: stored.model, config: validateConfig(config) }
+		return { model: stored.model, config: validateConfig(stored.config) }
 	} catch {
 		throw new SpeechVoiceError("Stored voice configuration is invalid")
 	}
@@ -43,8 +35,6 @@ export function onVoicesChanged(callback: (id: string, deleted: boolean) => void
 }
 
 export async function deleteVoice(id: string, committed: () => Promise<void>): Promise<void> {
-	// Stored voices can outlive their catalog entries. Deletion must still work
-	// for those records, using the same lock and notifications as known voices.
 	// A deletion request cancels concurrent downloads, but is not a committed
 	// change and must not invalidate a model still used by a reader.
 	cancelVoiceDownloads(id)
@@ -95,14 +85,7 @@ export async function downloadVoice(
 			)
 			abort.throwIfAborted()
 			await voiceOperation("readwrite", (store) =>
-				store.put({
-					id,
-					sourceHash: digest,
-					model,
-					config,
-					installedAt: Date.now(),
-					formatVersion: voiceStore.formatVersion,
-				} satisfies StoredVoice),
+				store.put({ id, sourceHash: digest, model, config } satisfies StoredVoice),
 			)
 			await committed()
 		})

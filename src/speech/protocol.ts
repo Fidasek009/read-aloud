@@ -42,7 +42,6 @@ export type SpeechRequest = { id: number } & (
 export interface SpeechResponse {
 	id: number
 	ok: boolean
-	error?: string
 	code?: SpeechFailureCode
 	diagnostics?: SpeechDiagnostics
 	clip?: { pcm: string | Float32Array<ArrayBuffer>; sampleRate: number; words: WordTiming[]; skippedText?: boolean }

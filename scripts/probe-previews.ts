@@ -33,23 +33,6 @@ try {
 	await view.navigate(`chrome-extension://${id}/voices.html`)
 	await view.cdp("Page.bringToFront")
 	await waitFor("String(document.querySelectorAll('section').length)", (value) => value === String(catalog.length))
-	const orphanId = "legacy-unlisted-voice"
-	await view.evaluate(
-		`import("./voice-fixtures.js").then(module => module.addOrphanVoice(${JSON.stringify(orphanId)}))`,
-	)
-	const orphanSelector = `[data-voice="${orphanId}"] [data-action="delete-unavailable"]`
-	await waitFor(
-		`document.querySelector(${JSON.stringify(orphanSelector)})?.textContent ?? ''`,
-		(value) => value === "Delete",
-	)
-	await view.evaluate(`document.querySelector(${JSON.stringify(orphanSelector)}).click()`)
-	await waitFor(`String(!!document.querySelector(${JSON.stringify(orphanSelector)}))`, (value) => value === "false")
-	const orphanChange = await view.evaluate<{ id?: string; deleted?: boolean }>(
-		"chrome.storage.local.get('voiceChange').then(value => value.voiceChange)",
-	)
-	if (orphanChange?.id !== orphanId || orphanChange.deleted !== true)
-		throw new Error("Deleting an unavailable voice did not notify the inference host")
-	await Bun.sleep(300)
 	if (requests.length) throw new Error(`Unexpected request before Listen: ${requests.join(", ")}`)
 	for (const voice of voices) {
 		const selector = `[data-voice="${voice.id}"] [data-action="preview"]`

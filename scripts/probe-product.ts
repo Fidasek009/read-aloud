@@ -1,6 +1,5 @@
 import { readingChunks, sentenceTarget } from "../src/reading/chunks.ts"
 import { voices } from "../src/speech/catalog.ts"
-import { voiceStore } from "../src/speech/voice-store.ts"
 import { checkSpeedFocus, checkSpeedPanel, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
 import { checkAbortedVoiceDeletion } from "./check-voice-deletion.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
@@ -207,10 +206,6 @@ try {
 		"Download added a page-level success notice",
 	)
 	console.log("Explicit download passed integrity check and persisted.")
-	const installedFormat = await view.evaluate<number>(
-		`import('./voice-fixtures.js').then(module => module.readStoredVoice('en_US-ljspeech-medium')).then(record => record?.formatVersion)`,
-	)
-	assert(installedFormat === voiceStore.formatVersion, "Downloaded voice format version was not stored")
 
 	await waitFor(
 		() => player("document.querySelector('#bar')?.dataset.view"),
@@ -523,7 +518,7 @@ try {
 				"Navigation failure:",
 				word,
 				await player(
-					"({status:document.querySelector('#status').textContent,play:document.querySelector('#play').getAttribute('aria-label'),disabled:document.querySelector('#play').disabled,context:window.__probeAudio.gain.context.state,sources:window.__probeAudio.sources,highlights:probeHighlights.slice(-10)})",
+					"({status:document.querySelector('#status').textContent,play:document.querySelector('#play').getAttribute('aria-label'),disabled:document.querySelector('#play').disabled,sources:window.__probeAudio.sources,elements:window.__probeAudio.elements.map(e=>({paused:e.paused,time:e.currentTime,ready:e.readyState})),highlights:probeHighlights.slice(-10)})",
 				),
 			)
 			throw error
@@ -683,7 +678,7 @@ try {
 	await mdControl("document.querySelector('#close').click()")
 	console.log("Pause, close, and voice deletion passed.")
 	await Bun.write(
-		`${root}/docs/evidence/chrome-product-2026-10-30.json`,
+		`${root}/.cache/evidence/chrome-product.json`,
 		JSON.stringify(
 			{
 				recordedAt: new Date().toISOString(),

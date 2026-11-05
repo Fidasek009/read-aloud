@@ -4,9 +4,7 @@ export interface StoredVoice {
 	id: string
 	sourceHash: string
 	model: ArrayBuffer
-	installedAt: number
-	formatVersion?: number
-	config?: VoiceConfig
+	config: VoiceConfig
 }
 
 export const voiceStore = {
@@ -14,7 +12,6 @@ export const voiceStore = {
 	databaseVersion: 1,
 	store: "voices",
 	keyPath: "id",
-	formatVersion: 1,
 } as const
 
 export const voiceLock = (id: string) => `voice:${id}`

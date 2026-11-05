@@ -9,7 +9,6 @@ export const readingMessages = {
 
 export type ReaderMessage = ReaderRequest & { type: typeof readingMessages.reader }
 export type StartReadingMessage = { type: typeof readingMessages.start; mode: "article" | "selection"; reveal: boolean }
-export type StopReadingMessage = { type: typeof readingMessages.stop }
 
 export function readerMessage(request: ReaderRequest): ReaderMessage {
 	return { type: readingMessages.reader, ...request }

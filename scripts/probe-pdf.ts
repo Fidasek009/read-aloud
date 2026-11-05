@@ -184,7 +184,7 @@ async function probe() {
 		if (speechCheck) console.log("Cross-page neural speech:", JSON.stringify(speech))
 		if (speechCheck)
 			await view.evaluate(
-				`import(chrome.runtime.getURL('check-pdf-speech.js')).then(async m=>{await m.provisionVoice(${JSON.stringify(server.url.href)});await m.checkVoiceFormat()})`,
+				`import(chrome.runtime.getURL('check-pdf-speech.js')).then(m=>m.provisionVoice(${JSON.stringify(server.url.href)}))`,
 			)
 		const articleChecksElapsedMs = performance.now() - started
 		const initialText = crossPage ?? "Their day-to-day use is nev-\nertheless constrained by four limitations"
@@ -249,9 +249,9 @@ async function probe() {
 				? "Test-only host grant, cached MUNI PDF and pinned cached English model; actual CPU worker PCM and word timing validation across the acknowledgement/abstract page boundary. Does not validate physical audio quality, hardware GPU behavior, or target-device latency."
 				: "Checks missing-permission recovery, privileged fetch without CORS, rendering, text mapping, and the installed context-menu handler's close/reopen path with Tab.url omitted. Uses a test-only origin grant; native menu UI, activeTab grant, permission dialog, and speech are not covered.",
 		}
-		await $`mkdir -p ${root + "/docs/evidence"}`.quiet()
+		await $`mkdir -p ${root + "/.cache/evidence"}`.quiet()
 		await Bun.write(
-			`${root}/docs/evidence/${speechCheck ? "pdf-cross-page-speech-2026-11-01" : "pdf-rendering-2026-10-30"}.json`,
+			`${root}/.cache/evidence/${speechCheck ? "pdf-cross-page-speech" : "pdf-rendering"}.json`,
 			JSON.stringify(record, null, 2) + "\n",
 		)
 		console.log(JSON.stringify(record, null, 2))

@@ -19,18 +19,6 @@ await copyProbeExtension("firefox", out)
 await $`mkdir -p ${root + "/.cache/product-probe/profiles"}`.quiet()
 await observePlayerAudio(out)
 await observeContextMenu(out)
-if (Bun.env.DIRECT_READER_PROBE === "1") {
-	const audio = Bun.file(`${out}/probe-audio.js`)
-	await Bun.write(
-		audio,
-		`${await audio.text()}\n(globalThis.browser??chrome).runtime.onConnect?.addListener(port=>{if(port.name==='direct-reader-probe')port.onMessage.addListener(()=>{document.body.dataset.directReaderProbe='connected'})});`,
-	)
-	const reader = Bun.file(`${out}/content-scripts/reader.js`)
-	await Bun.write(
-		reader,
-		`${await reader.text()}\n;(globalThis.browser??chrome).runtime.onMessage.addListener(message=>{if(message?.type==='probe-direct-reader'){const port=(globalThis.browser??chrome).runtime.connect({name:'direct-reader-probe'});port.postMessage({probe:true});return Promise.resolve({ok:true})}});`,
-	)
-}
 const speakerModel = Bun.file(`${root}/.cache/speaker-fixture/model.onnx`)
 const speakerConfig = Bun.file(`${root}/.cache/speaker-fixture/config.json`)
 const hasSpeakerFixture = (await speakerModel.exists()) && (await speakerConfig.exists())
@@ -88,7 +76,6 @@ const driver = Bun.spawn(
 let log = "",
 	endpoint = "",
 	session = ""
-let directReaderProbe: { connected: boolean; onConnectAvailable: boolean; directAttempt: unknown } | undefined
 const consume = async (stream: ReadableStream<Uint8Array>) => {
 	const decoder = new TextDecoder()
 	for await (const chunk of stream) log += decoder.decode(chunk, { stream: true })
@@ -210,23 +197,6 @@ try {
 			),
 		)
 		throw error
-	}
-	if (Bun.env.DIRECT_READER_PROBE === "1") {
-		await run("/window", { handle: voicesHandle })
-		const directAttempt = await script(`browser.tabs.sendMessage(${tab.id},{type:'probe-direct-reader'},{frameId:0})`)
-		await run("/window", { handle: sourceHandle })
-		await run("/frame", { id: frame })
-		let connected = false
-		try {
-			connected = await waitFor(
-				() => script<boolean>("document.body.dataset.directReaderProbe==='connected'"),
-				Boolean,
-				5,
-			)
-		} catch {}
-		const onConnectAvailable = await script<boolean>("!!browser.runtime.onConnect")
-		directReaderProbe = { connected, onConnectAvailable, directAttempt }
-		console.log("Firefox direct content-to-player port:", JSON.stringify(directReaderProbe))
 	}
 	assert(
 		await script("document.querySelector('#playback').hidden && !document.querySelector('#setup').hidden"),
@@ -627,7 +597,7 @@ try {
 		console.log("Firefox two-speaker model reused:", JSON.stringify(speakerSwitch))
 	}
 	await Bun.write(
-		`${root}/docs/evidence/firefox-product-2026-10-30.json`,
+		`${root}/.cache/evidence/firefox-product.json`,
 		JSON.stringify(
 			{
 				recordedAt: new Date().toISOString(),
@@ -640,7 +610,6 @@ try {
 				pdfSelectionReadyMs,
 				pdfFirstBufferMs,
 				...(speakerSwitch ? { speakerSwitch } : {}),
-				...(directReaderProbe ? { directReaderProbe } : {}),
 				passed: [
 					"no-voice state hides unusable controls",
 					"live installation recovers a stale preference",

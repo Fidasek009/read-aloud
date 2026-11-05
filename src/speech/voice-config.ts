@@ -5,7 +5,6 @@ export interface VoiceConfig {
 	phoneme_id_map: Record<string, number[]>
 	phoneme_type?: string
 	num_speakers?: number
-	default_speaker_id?: number
 	hop_length?: number
 	phoneme_map?: Record<string, string[]>
 }

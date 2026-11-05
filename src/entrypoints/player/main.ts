@@ -244,9 +244,9 @@ async function refreshVoices(
 	preferencesPromise = browser.storage.local.get([localKeys.voice, localKeys.speed, localKeys.volume]),
 ) {
 	const current = ++voiceRevision
-	const response: unknown = await sendSpeechHost({ type: "installed-voices" })
-	if (!Array.isArray(response) || !response.every((id) => typeof id === "string"))
+	const response = await sendSpeechHost({ type: "installed-voices" }).catch(() => {
 		throw new SpeechVoiceError("Your voices could not be loaded. Open Voices and try again.")
+	})
 	const installed = new Set<string>(response)
 	const preferences = await preferencesPromise
 	if (controller.closed || current !== voiceRevision) return hasVoices

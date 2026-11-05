@@ -2,8 +2,8 @@ import { expect, test } from "bun:test"
 
 import type { WorkerRequest, WorkerResponse } from "../src/speech/worker-protocol.ts"
 
-import config from "../src/speech/configs/en_US-ljspeech-medium.json"
 import { SpeechEngine, type SpeechEngineRuntime, type SpeechWorker } from "../src/speech/engine.ts"
+import config from "./fixtures/en_US-ljspeech-medium.json"
 
 function deferred<T>() {
 	let resolve!: (value: T) => void

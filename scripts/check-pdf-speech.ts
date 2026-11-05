@@ -6,7 +6,7 @@ import type { WorkerCommand } from "../src/speech/worker-protocol.ts"
 import { readingChunks } from "../src/reading/chunks.ts"
 import { getVoice } from "../src/speech/catalog.ts"
 import { instrumentModel } from "../src/speech/instrument.ts"
-import { setStoredVoiceFormat, writeStoredVoice } from "./voice-fixtures.ts"
+import { writeStoredVoice } from "./voice-fixtures.ts"
 
 interface WorkerReply extends SpeechClip {
 	id: number
@@ -22,7 +22,7 @@ export async function provisionVoice(base: string) {
 	if (digest !== voice.sha256) throw Error("Wrong model fixture")
 	const config = await (await fetch(base + "config")).json()
 	const model = instrumentModel(bytes).buffer
-	await writeStoredVoice({ id: voice.id, sourceHash: digest, config, model, installedAt: Date.now() })
+	await writeStoredVoice({ id: voice.id, sourceHash: digest, config, model })
 	await browser.storage.local.set({ voice: voice.id })
 }
 
@@ -82,26 +82,6 @@ export async function checkSpeech(text: string, base: string) {
 		}
 	} finally {
 		worker.terminate()
-	}
-}
-
-/** Exercise compatibility against the actual extension IndexedDB store. */
-export async function checkVoiceFormat() {
-	const id = "en_US-ljspeech-medium"
-	const { readVoice } = await import("../src/speech/vault.ts")
-	await setStoredVoiceFormat(id, undefined)
-	await readVoice(id)
-	try {
-		await setStoredVoiceFormat(id, 999)
-		let rejected = false
-		try {
-			await readVoice(id)
-		} catch (error) {
-			rejected = error instanceof Error && error.name === "SpeechVoiceError"
-		}
-		if (!rejected) throw Error("An incompatible stored voice was accepted")
-	} finally {
-		await setStoredVoiceFormat(id, undefined)
 	}
 }
 

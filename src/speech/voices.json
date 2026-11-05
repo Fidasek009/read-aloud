@@ -14,9 +14,6 @@
 			"path": "ar/ar_JO/kareem/low/ar_JO-kareem-low.onnx",
 			"configHash": "da328e52896826135508f797c1c77b45b35117e967c71befc377d654f100f328",
 			"previewPath": "samples/ar/ar_JO/kareem/low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -32,9 +29,6 @@
 			"path": "ar/ar_JO/kareem/medium/ar_JO-kareem-medium.onnx",
 			"configHash": "ea6d9b9d9076dbdb6bf5c98c6a141ef154959d2359709b37855727964e7d6c4d",
 			"previewPath": "samples/ar/ar_JO/kareem/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -50,9 +44,6 @@
 			"path": "bg/bg_BG/dimitar/medium/bg_BG-dimitar-medium.onnx",
 			"configHash": "ec9a9abdd17384d3db225e83085b2f68b790b112f058417c3a8a2ac58b79e7f0",
 			"previewPath": "samples/bg/bg_BG/dimitar/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -68,9 +59,6 @@
 			"path": "bn/bn_BD/google/medium/bn_BD-google-medium.onnx",
 			"configHash": "bc7e5e39e2a874bdad186620576ce18089b5a06c5645e258bcea3d56fdb11c0a",
 			"previewPath": "samples/bn/bn_BD/google/medium/speaker_0.mp3",
-			"license": "Attribution-ShareAlike 4.0 International; See CMU License below",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 16,
 			"speakerNames": {
@@ -104,9 +92,6 @@
 			"path": "ca/ca_ES/upc_ona/medium/ca_ES-upc_ona-medium.onnx",
 			"configHash": "7f76acc9c06f4eda9e6aef2997b75782d97855aab48d4b401eb956a6e655eddc",
 			"previewPath": "samples/ca/ca_ES/upc_ona/medium/speaker_0.mp3",
-			"license": "CC BY-SA 3.0 ES",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -122,9 +107,6 @@
 			"path": "ca/ca_ES/upc_ona/x_low/ca_ES-upc_ona-x_low.onnx",
 			"configHash": "00e12b206e6ca676e6f992973551b4e068edd9823608144a60365c010dc6bb2f",
 			"previewPath": "samples/ca/ca_ES/upc_ona/x_low/speaker_0.mp3",
-			"license": "CC BY-SA 3.0 ES",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -140,9 +122,6 @@
 			"path": "ca/ca_ES/upc_pau/x_low/ca_ES-upc_pau-x_low.onnx",
 			"configHash": "f3e76f0640c73a0a87482b37e5c85dd93532127f81e37ea2875e0dace28bb1e2",
 			"previewPath": "samples/ca/ca_ES/upc_pau/x_low/speaker_0.mp3",
-			"license": "CC BY-SA 3.0 ES",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -158,9 +137,6 @@
 			"path": "cs/cs_CZ/jirka/low/cs_CZ-jirka-low.onnx",
 			"configHash": "fc32d8cdd23a6461fdd355de422daad6271cbf15033b754343b8a9262cca1f76",
 			"previewPath": "samples/cs/cs_CZ/jirka/low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -176,9 +152,6 @@
 			"path": "cs/cs_CZ/jirka/medium/cs_CZ-jirka-medium.onnx",
 			"configHash": "fb38b1799b7354808227c065efa97b1ffa2b0cde59505babb56a36d35af9c637",
 			"previewPath": "samples/cs/cs_CZ/jirka/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -194,9 +167,6 @@
 			"path": "cs/cs_CZ/kasandra/medium/cs_CZ-kasandra-medium.onnx",
 			"configHash": "5039f9e49def4f4f8438db031868800a13bf4c6246b62afdb0947f4c5478770e",
 			"previewPath": "samples/cs/cs_CZ/kasandra/medium/speaker_0.mp3",
-			"license": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -212,9 +182,6 @@
 			"path": "cy/cy_GB/bu_tts/medium/cy_GB-bu_tts-medium.onnx",
 			"configHash": "c318e3b8700b8eb4ed5deb276872b036dcb67e2882cc8dfb2d59d4a64018b285",
 			"previewPath": "samples/cy/cy_GB/bu_tts/medium/speaker_0.mp3",
-			"license": "CC-BY",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 7,
 			"speakerNames": {
@@ -239,9 +206,6 @@
 			"path": "cy/cy_GB/gwryw_gogleddol/medium/cy_GB-gwryw_gogleddol-medium.onnx",
 			"configHash": "b31d2cfa51cd5709371a2346860b409b24eceec1a290235cb9299cff8a9c34c0",
 			"previewPath": "samples/cy/cy_GB/gwryw_gogleddol/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -257,9 +221,6 @@
 			"path": "da/da_DK/talesyntese/medium/da_DK-talesyntese-medium.onnx",
 			"configHash": "89fe13bd251406cc0088570d103ea7ac35823211d8466faf913268ab8506f41b",
 			"previewPath": "samples/da/da_DK/talesyntese/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -275,9 +236,6 @@
 			"path": "de/de_DE/eva_k/x_low/de_DE-eva_k-x_low.onnx",
 			"configHash": "ef14b3dcb279ab4b18422a7a132877bee7a148821bd91152fb7ae9c4b3d79625",
 			"previewPath": "samples/de/de_DE/eva_k/x_low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -293,9 +251,6 @@
 			"path": "de/de_DE/karlsson/low/de_DE-karlsson-low.onnx",
 			"configHash": "3b2095adbfeede316f22007a0a09d4bfc25514b7189850740b06800a6cfb9838",
 			"previewPath": "samples/de/de_DE/karlsson/low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -311,9 +266,6 @@
 			"path": "de/de_DE/kerstin/low/de_DE-kerstin-low.onnx",
 			"configHash": "56e708556b7b9b7a53c4f8957e021421e69f11a600962bba554cffbe72cf2d47",
 			"previewPath": "samples/de/de_DE/kerstin/low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -329,9 +281,6 @@
 			"path": "de/de_DE/mls/medium/de_DE-mls-medium.onnx",
 			"configHash": "b0af1c89ddfdc72d32e015729b0e89b99eec13c2c8caa1db7488d98e9e570b40",
 			"previewPath": "samples/de/de_DE/mls/medium/speaker_0.mp3",
-			"license": "CC-BY 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 236,
 			"speakerNames": {
@@ -585,9 +534,6 @@
 			"path": "de/de_DE/pavoque/low/de_DE-pavoque-low.onnx",
 			"configHash": "07d43d8946e869209a12d9b4fd780e3f277fe9afb305c21491a68bd97e01b74f",
 			"previewPath": "samples/de/de_DE/pavoque/low/speaker_0.mp3",
-			"license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -603,9 +549,6 @@
 			"path": "de/de_DE/ramona/low/de_DE-ramona-low.onnx",
 			"configHash": "64906ab7a050ac685fa3dcea044baa798f67ed77be164f9c668a69298c6487d2",
 			"previewPath": "samples/de/de_DE/ramona/low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -621,9 +564,6 @@
 			"path": "de/de_DE/thorsten/high/de_DE-thorsten-high.onnx",
 			"configHash": "6de734444e4c3f9e33b7ebe2746dbc19b71e85f613e79c65acf623200b99a76a",
 			"previewPath": "samples/de/de_DE/thorsten/high/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -639,9 +579,6 @@
 			"path": "de/de_DE/thorsten/low/de_DE-thorsten-low.onnx",
 			"configHash": "df38e892ed949f62d0c40978bc666de0b341c5f7921840ae7c72f4df8e8ffa05",
 			"previewPath": "samples/de/de_DE/thorsten/low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -657,9 +594,6 @@
 			"path": "de/de_DE/thorsten/medium/de_DE-thorsten-medium.onnx",
 			"configHash": "974adee790533adb273a1ac88f49027d2a1b8f0f2cf4905954a4791e79264e85",
 			"previewPath": "samples/de/de_DE/thorsten/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -675,9 +609,6 @@
 			"path": "de/de_DE/thorsten_emotional/medium/de_DE-thorsten_emotional-medium.onnx",
 			"configHash": "92895b9e99f7cfc13f4a9879da615c3d6e0baa4d660e26d7b685abdd27a6d1d3",
 			"previewPath": "samples/de/de_DE/thorsten_emotional/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 8,
 			"speakerNames": {
@@ -703,9 +634,6 @@
 			"path": "el/el_GR/joy/medium/el_GR-joy-medium.onnx",
 			"configHash": "451a8885a0ea72e4432fffe22e65a75bbd2e65f6757273d1a5a9ed8a3419852e",
 			"previewPath": "samples/el/el_GR/joy/medium/speaker_0.mp3",
-			"license": "CC BY-NC 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -721,9 +649,6 @@
 			"path": "el/el_GR/rapunzelina/low/el_GR-rapunzelina-low.onnx",
 			"configHash": "24ccc31c1306df4364fd85b56aeb09aba8c185a1fdf7db1367a72d4affe478e4",
 			"previewPath": "samples/el/el_GR/rapunzelina/low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -739,9 +664,6 @@
 			"path": "el/el_GR/rapunzelina/medium/el_GR-rapunzelina-medium.onnx",
 			"configHash": "3a6182ec7c7550e14ef15e5d9badbb18f973a434086ac9658a1b10991fd192f8",
 			"previewPath": "samples/el/el_GR/rapunzelina/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -757,9 +679,6 @@
 			"path": "en/en_GB/alan/low/en_GB-alan-low.onnx",
 			"configHash": "c8164cc04b6ce102c651ce4a1e788e8429fa638501fca0723860718d4b44637e",
 			"previewPath": "samples/en/en_GB/alan/low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -775,9 +694,6 @@
 			"path": "en/en_GB/alan/medium/en_GB-alan-medium.onnx",
 			"configHash": "c0f0d124e5895c00e7c03b35dcc8287f319a6998a365b182deb5c8e752ee8c1e",
 			"previewPath": "samples/en/en_GB/alan/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -793,9 +709,6 @@
 			"path": "en/en_GB/alba/medium/en_GB-alba-medium.onnx",
 			"configHash": "aa965a2f02ecced632c2694e1fc72bbff6d65f265fab567ca945918c73dd89f4",
 			"previewPath": "samples/en/en_GB/alba/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -811,9 +724,6 @@
 			"path": "en/en_GB/aru/medium/en_GB-aru-medium.onnx",
 			"configHash": "00529fabf0e79f29a9cb10fda5b60f9b7cf80671faac2b316e13af20e7816d5e",
 			"previewPath": "samples/en/en_GB/aru/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 12,
 			"speakerNames": {
@@ -843,9 +753,6 @@
 			"path": "en/en_GB/cori/high/en_GB-cori-high.onnx",
 			"configHash": "9e7fb5b5671612c22f3c81cbe46c1ae87b031a4632bcb509e499dad6f1e2adec",
 			"previewPath": "samples/en/en_GB/cori/high/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -861,9 +768,6 @@
 			"path": "en/en_GB/cori/medium/en_GB-cori-medium.onnx",
 			"configHash": "e262c16d7f192f69d4edd6b4ef8a5915379e67495fcc402f1ab15eeb33da3d36",
 			"previewPath": "samples/en/en_GB/cori/medium/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -879,9 +783,6 @@
 			"path": "en/en_GB/jenny_dioco/medium/en_GB-jenny_dioco-medium.onnx",
 			"configHash": "a9a7a93a317c9a3cb6563e37eb057df9ef09c06188a8a4341b0fcb58cba54dd4",
 			"previewPath": "samples/en/en_GB/jenny_dioco/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -897,9 +798,6 @@
 			"path": "en/en_GB/northern_english_male/medium/en_GB-northern_english_male-medium.onnx",
 			"configHash": "69557ed3d974463453e9b0c09dd99a7ed0e52b8b87b64b357dbeeb2540a97d47",
 			"previewPath": "samples/en/en_GB/northern_english_male/medium/speaker_0.mp3",
-			"license": "CC-BY-SA 4.0 International",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -915,9 +813,6 @@
 			"path": "en/en_GB/semaine/medium/en_GB-semaine-medium.onnx",
 			"configHash": "6425dcb878684043b77d772b173ae006d86a583b110303edda48b8438ecee5ee",
 			"previewPath": "samples/en/en_GB/semaine/medium/speaker_0.mp3",
-			"license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 4,
 			"speakerNames": {
@@ -939,9 +834,6 @@
 			"path": "en/en_GB/southern_english_female/low/en_GB-southern_english_female-low.onnx",
 			"configHash": "a1af43310f8756161506e849a2863d342a98b0853af9e2437581d39e9922d0e5",
 			"previewPath": "samples/en/en_GB/southern_english_female/low/speaker_0.mp3",
-			"license": "CC-BY-SA 4.0 International",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -957,9 +849,6 @@
 			"path": "en/en_GB/vctk/medium/en_GB-vctk-medium.onnx",
 			"configHash": "7f85e6391ed0f7f46e4abd19345929a16be931a0c9945086f96692dce2087fa8",
 			"previewPath": "samples/en/en_GB/vctk/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 109,
 			"speakerNames": {
@@ -1086,9 +975,6 @@
 			"path": "en/en_US/amy/low/en_US-amy-low.onnx",
 			"configHash": "2250a9a605b8dc35a116717fadc5056695dd809e34a15d02f72a0f52d53d3ebb",
 			"previewPath": "samples/en/en_US/amy/low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1104,9 +990,6 @@
 			"path": "en/en_US/amy/medium/en_US-amy-medium.onnx",
 			"configHash": "95a23eb4d42909d38df73bb9ac7f45f597dbfcde2d1bf9526fdeaf5466977d77",
 			"previewPath": "samples/en/en_US/amy/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1122,9 +1005,6 @@
 			"path": "en/en_US/arctic/medium/en_US-arctic-medium.onnx",
 			"configHash": "db2ca1a55db01cdd3ce28ae63037ac525133e9e00ca557430dec572643235efe",
 			"previewPath": "samples/en/en_US/arctic/medium/speaker_0.mp3",
-			"license": "See LICENSE file",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 18,
 			"speakerNames": {
@@ -1160,9 +1040,6 @@
 			"path": "en/en_US/bryce/medium/en_US-bryce-medium.onnx",
 			"configHash": "7ceb1bc4af6d4e41b6d1edbb86c67e91e01eaa71f66db4cd0ae92ac704d415be",
 			"previewPath": "samples/en/en_US/bryce/medium/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1178,9 +1055,6 @@
 			"path": "en/en_US/danny/low/en_US-danny-low.onnx",
 			"configHash": "191dea1ba9863199d8ca2e9048f83b219219fb450f62767ee02f1bc4568ce4f4",
 			"previewPath": "samples/en/en_US/danny/low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1196,9 +1070,6 @@
 			"path": "en/en_US/hfc_female/medium/en_US-hfc_female-medium.onnx",
 			"configHash": "03f1fa0622b80463283592d97aca9f6e89aec345a5c56b7257723e0093c58b6c",
 			"previewPath": "samples/en/en_US/hfc_female/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1214,9 +1085,6 @@
 			"path": "en/en_US/hfc_male/medium/en_US-hfc_male-medium.onnx",
 			"configHash": "f66847424aed0bf99ecbb5d7cfde47c0a906f426a0daf7c46f305e7d21afd886",
 			"previewPath": "samples/en/en_US/hfc_male/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1232,9 +1100,6 @@
 			"path": "en/en_US/joe/medium/en_US-joe-medium.onnx",
 			"configHash": "3d6d5410b3795cb1950595247ef8f06190719e6fdbfa3a2356d8ec368e1aad33",
 			"previewPath": "samples/en/en_US/joe/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1250,9 +1115,6 @@
 			"path": "en/en_US/john/medium/en_US-john-medium.onnx",
 			"configHash": "af60f177b6b550f3d7a302720c0fb89e7f94a82b5dca464775ef63b1c69ba09a",
 			"previewPath": "samples/en/en_US/john/medium/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1268,9 +1130,6 @@
 			"path": "en/en_US/kathleen/low/en_US-kathleen-low.onnx",
 			"configHash": "39ebab88416edce0f63781754651788620cb97b9bb73ddf3c01f28e29a648feb",
 			"previewPath": "samples/en/en_US/kathleen/low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1286,9 +1145,6 @@
 			"path": "en/en_US/kristin/medium/en_US-kristin-medium.onnx",
 			"configHash": "5681426d4aead22195de70531eeeeddb46493cfaffc5764b2ea3db73428b651c",
 			"previewPath": "samples/en/en_US/kristin/medium/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1304,9 +1160,6 @@
 			"path": "en/en_US/kusal/medium/en_US-kusal-medium.onnx",
 			"configHash": "ddd3c4dfd8b4f568150c934fb94912dd788d44db87f4f0a328c469d7a6761f41",
 			"previewPath": "samples/en/en_US/kusal/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1322,9 +1175,6 @@
 			"path": "en/en_US/l2arctic/medium/en_US-l2arctic-medium.onnx",
 			"configHash": "a97e2ba653e9efcdc1bdcec64a398c8beb19ae5e8dfdbfe4ad6841983e56c07c",
 			"previewPath": "samples/en/en_US/l2arctic/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 24,
 			"speakerNames": {
@@ -1366,9 +1216,6 @@
 			"path": "en/en_US/lessac/high/en_US-lessac-high.onnx",
 			"configHash": "db42b97d9859f257bc1561b8ed980e7fb2398402050a74ddd6cbec931a92412f",
 			"previewPath": "samples/en/en_US/lessac/high/speaker_0.mp3",
-			"license": "https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1384,9 +1231,6 @@
 			"path": "en/en_US/lessac/low/en_US-lessac-low.onnx",
 			"configHash": "45754dfdebb3b8661c3fc564713772deec6e064feeb5b4e9594857dc7305193a",
 			"previewPath": "samples/en/en_US/lessac/low/speaker_0.mp3",
-			"license": "https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1402,9 +1246,6 @@
 			"path": "en/en_US/lessac/medium/en_US-lessac-medium.onnx",
 			"configHash": "efe19c417bed055f2d69908248c6ba650fa135bc868b0e6abb3da181dab690a0",
 			"previewPath": "samples/en/en_US/lessac/medium/speaker_0.mp3",
-			"license": "https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -1420,9 +1261,6 @@
 			"path": "en/en_US/libritts/high/en_US-libritts-high.onnx",
 			"configHash": "2efdc6d7f954588b8180132cbd9b8001933fdd00932c92bc92fd0d2028a9eb3d",
 			"previewPath": "samples/en/en_US/libritts/high/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 904,
 			"speakerNames": {
@@ -2344,9 +2182,6 @@
 			"path": "en/en_US/libritts_r/medium/en_US-libritts_r-medium.onnx",
 			"configHash": "b471dc60d2d8335e819c393d196d6fbf792817f40051257b269878505bc9afb3",
 			"previewPath": "samples/en/en_US/libritts_r/medium/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 2306,
 			"speakerNames": {
@@ -4670,9 +4505,6 @@
 			"path": "en/en_US/ljspeech/high/en_US-ljspeech-high.onnx",
 			"configHash": "7e1f4634af596d83cca997fb7a931ba80b70f8a316a2655ee69c55365e0ace14",
 			"previewPath": "samples/en/en_US/ljspeech/high/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4688,9 +4520,6 @@
 			"path": "en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx",
 			"configHash": "141d612cc0a95ed7efc1ca936b845c2364967f2e9217c5dbfcf69fc4d6c65860",
 			"previewPath": "samples/en/en_US/ljspeech/medium/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4706,9 +4535,6 @@
 			"path": "en/en_US/mike/medium/en_US-mike-medium.onnx",
 			"configHash": "0a2538c0b1e06a6cab7c46b97c79abd5e6a34a6c05b74b9376874c7099d81dad",
 			"previewPath": "samples/en/en_US/mike/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4724,9 +4550,6 @@
 			"path": "en/en_US/norman/medium/en_US-norman-medium.onnx",
 			"configHash": "6c2db7f558a4a8deb9fe822583c1c5105f6c4e834dd0f9de8ad17a888ee9fe1d",
 			"previewPath": "samples/en/en_US/norman/medium/speaker_0.mp3",
-			"license": "public domain",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4742,9 +4565,6 @@
 			"path": "en/en_US/reza_ibrahim/medium/en_US-reza_ibrahim-medium.onnx",
 			"configHash": "465ddf1702917fe617b7d69ed81301d6a2f39f083a754bd1cf6db8955d09a381",
 			"previewPath": "samples/en/en_US/reza_ibrahim/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4760,9 +4580,6 @@
 			"path": "en/en_US/ryan/high/en_US-ryan-high.onnx",
 			"configHash": "c6d3b98f08315cb4bebf0d49d50fc4ff491b503c64b940cd3d5ca28543b48011",
 			"previewPath": "samples/en/en_US/ryan/high/speaker_0.mp3",
-			"license": "CC BY-NC-SA 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4778,9 +4595,6 @@
 			"path": "en/en_US/ryan/low/en_US-ryan-low.onnx",
 			"configHash": "b27147e56b0525962609f82f58171f4618cbf17c6fb043d7d724ff28cc4aed60",
 			"previewPath": "samples/en/en_US/ryan/low/speaker_0.mp3",
-			"license": "CC BY-NC-SA 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4796,9 +4610,6 @@
 			"path": "en/en_US/ryan/medium/en_US-ryan-medium.onnx",
 			"configHash": "44034c056cb15681b2ad494307c7f3f2e4499d1253c700c711fa0a4607ffe78d",
 			"previewPath": "samples/en/en_US/ryan/medium/speaker_0.mp3",
-			"license": "CC BY-NC-SA 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4814,9 +4625,6 @@
 			"path": "en/en_US/sam/medium/en_US-sam-medium.onnx",
 			"configHash": "8c7fb47f19683b0b81037c5564f9a5ad4699a9da685e0e5da0a72fd3c3f5c1c4",
 			"previewPath": "samples/en/en_US/sam/medium/speaker_0.mp3",
-			"license": "https://www.apache.org/licenses/LICENSE-2.0.txt",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4832,9 +4640,6 @@
 			"path": "es/es_AR/daniela/high/es_AR-daniela-high.onnx",
 			"configHash": "aedbf69647e1d754c62ecf8e0366ca5f16af3e768e3c6b5329af6eb6bde3852b",
 			"previewPath": "samples/es/es_AR/daniela/high/speaker_0.mp3",
-			"license": "Attribution-ShareAlike 4.0 International",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4850,9 +4655,6 @@
 			"path": "es/es_ES/carlfm/x_low/es_ES-carlfm-x_low.onnx",
 			"configHash": "d9bdfa9ff01eb2bc9e62e7d2593939d1e4c4d8eb7cf75f972731539d12399966",
 			"previewPath": "samples/es/es_ES/carlfm/x_low/speaker_0.mp3",
-			"license": "Public domain",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4868,9 +4670,6 @@
 			"path": "es/es_ES/davefx/medium/es_ES-davefx-medium.onnx",
 			"configHash": "0e0dda87c732f6f38771ff274a6380d9252f327dca77aa2963d5fbdf9ec54842",
 			"previewPath": "samples/es/es_ES/davefx/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4886,9 +4685,6 @@
 			"path": "es/es_ES/mls_10246/low/es_ES-mls_10246-low.onnx",
 			"configHash": "a865944d7f6972af347263b0b8152466dabba3b78b8fe5a6985f7d3b19fd06a1",
 			"previewPath": "samples/es/es_ES/mls_10246/low/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4904,9 +4700,6 @@
 			"path": "es/es_ES/mls_9972/low/es_ES-mls_9972-low.onnx",
 			"configHash": "32234a0701c480bb6ba62d4f05d0c03a95369f2133aa655370db1c00b2193340",
 			"previewPath": "samples/es/es_ES/mls_9972/low/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4922,9 +4715,6 @@
 			"path": "es/es_ES/sharvard/medium/es_ES-sharvard-medium.onnx",
 			"configHash": "7438c9b699c72b0c3388dae1b68d3f364dc66a2150fe554a1c11f03372957b2c",
 			"previewPath": "samples/es/es_ES/sharvard/medium/speaker_0.mp3",
-			"license": "http://creativecommons.org/licenses/by/3.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 2,
 			"speakerNames": {
@@ -4944,9 +4734,6 @@
 			"path": "es/es_MX/ald/medium/es_MX-ald-medium.onnx",
 			"configHash": "5a71498158e04afc8099bfd019c7e87c68eb9d042505a2b1a87e5c1ac2b1a61d",
 			"previewPath": "samples/es/es_MX/ald/medium/speaker_0.mp3",
-			"license": "http://unlicense.org",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4962,9 +4749,6 @@
 			"path": "es/es_MX/ald/x_low/es_MX-ald-x_low.onnx",
 			"configHash": "5b372adf1f8c8d8f0610b9057fc2df001ad3f5f42cd9d6f853a78bef3f8b0644",
 			"previewPath": "samples/es/es_MX/ald/x_low/speaker_0.mp3",
-			"license": "See model terms",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4980,9 +4764,6 @@
 			"path": "es/es_MX/claude/high/es_MX-claude-high.onnx",
 			"configHash": "1afc81f703c0e4cb3b4d7c0dca096b8b54a98806807f0170cf5eb5557723c12d",
 			"previewPath": "samples/es/es_MX/claude/high/speaker_0.mp3",
-			"license": "apache-2.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -4998,9 +4779,6 @@
 			"path": "et/et_EE/news/medium/et_EE-news-medium.onnx",
 			"configHash": "2f56bbaf9cd2c44bf4b1e02fb36cfd31876f7ed3f78ca199f2aca6727e96441a",
 			"previewPath": "samples/et/et_EE/news/medium/speaker_0.mp3",
-			"license": "CC-BY (META-SHARE \"Available - Unrestricted Use\")",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 4,
 			"speakerNames": {
@@ -5022,9 +4800,6 @@
 			"path": "eu/eu_ES/antton/medium/eu_ES-antton-medium.onnx",
 			"configHash": "bc26d21295427594330bb8ea579c8b922d1d1f9dde1b51dc9949fbf3f559dcea",
 			"previewPath": "samples/eu/eu_ES/antton/medium/speaker_0.mp3",
-			"license": "Creative Commons Attribution 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5040,9 +4815,6 @@
 			"path": "eu/eu_ES/maider/medium/eu_ES-maider-medium.onnx",
 			"configHash": "d8526770ee8a765bb9bcabc98f1e03d8ab95f1c6ebdaa47e8cbf74e2f9e9bf28",
 			"previewPath": "samples/eu/eu_ES/maider/medium/speaker_0.mp3",
-			"license": "Creative Commons Attribution 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5058,9 +4830,6 @@
 			"path": "fa/fa_IR/amir/medium/fa_IR-amir-medium.onnx",
 			"configHash": "75f918a3bf0f57a9179abe725af529f2a5c79d6c899e2a84aec76c685d5dfb9a",
 			"previewPath": "samples/fa/fa_IR/amir/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5076,9 +4845,6 @@
 			"path": "fa/fa_IR/ganji/medium/fa_IR-ganji-medium.onnx",
 			"configHash": "9d3e0c0cf00156d8bf38fb7f96bdfbcb21911b37e062a328da0632e3c2cbc465",
 			"previewPath": "samples/fa/fa_IR/ganji/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5094,9 +4860,6 @@
 			"path": "fa/fa_IR/ganji_adabi/medium/fa_IR-ganji_adabi-medium.onnx",
 			"configHash": "aa430ceebaa7c96d9cd6b1e73231a393901cabb23a1b7f53e8d85178a5ae70c9",
 			"previewPath": "samples/fa/fa_IR/ganji_adabi/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5112,9 +4875,6 @@
 			"path": "fa/fa_IR/gyro/medium/fa_IR-gyro-medium.onnx",
 			"configHash": "4cd0ca01824b460f490224e284f9b68ecf07f91f3c654ba3bce59d4eb7646082",
 			"previewPath": "samples/fa/fa_IR/gyro/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5130,9 +4890,6 @@
 			"path": "fa/fa_IR/reza_ibrahim/medium/fa_IR-reza_ibrahim-medium.onnx",
 			"configHash": "e9866c88c16245f8b8f4d0eaeaa6eab4f2e193db69a2ab4683d83fe78a30b6ca",
 			"previewPath": "samples/fa/fa_IR/reza_ibrahim/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5148,9 +4905,6 @@
 			"path": "fi/fi_FI/harri/low/fi_FI-harri-low.onnx",
 			"configHash": "1dc3a84f99cc744902dcc89f43c60e3c7158ee66d23c480d105315d795e22915",
 			"previewPath": "samples/fi/fi_FI/harri/low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5166,9 +4920,6 @@
 			"path": "fi/fi_FI/harri/medium/fi_FI-harri-medium.onnx",
 			"configHash": "3f9c9f76f74adf1fbe7279e41eea17d6610757e45effd6808bbea6be74b8916d",
 			"previewPath": "samples/fi/fi_FI/harri/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5184,9 +4935,6 @@
 			"path": "fr/fr_FR/gilles/low/fr_FR-gilles-low.onnx",
 			"configHash": "5a47cc0789e91267d17666bbec842dd92950669271a09023eb6970ee364cf88a",
 			"previewPath": "samples/fr/fr_FR/gilles/low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5202,9 +4950,6 @@
 			"path": "fr/fr_FR/mls/medium/fr_FR-mls-medium.onnx",
 			"configHash": "252b0b0a6e4cc4949e23eccb956f9c779986c32f934f2f7e2191e5fdc2edca61",
 			"previewPath": "samples/fr/fr_FR/mls/medium/speaker_0.mp3",
-			"license": "CC-BY 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 125,
 			"speakerNames": {
@@ -5347,9 +5092,6 @@
 			"path": "fr/fr_FR/mls_1840/low/fr_FR-mls_1840-low.onnx",
 			"configHash": "294a643de0ae6a4a885d841d9b74470263efe35c81e7cf37dd43e2d663fbd8b3",
 			"previewPath": "samples/fr/fr_FR/mls_1840/low/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5365,9 +5107,6 @@
 			"path": "fr/fr_FR/siwis/low/fr_FR-siwis-low.onnx",
 			"configHash": "9722527d748c284f6dd7639c4b4e661853d4f7d4514079571f67d6a97a652b69",
 			"previewPath": "samples/fr/fr_FR/siwis/low/speaker_0.mp3",
-			"license": "CC-BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5383,9 +5122,6 @@
 			"path": "fr/fr_FR/siwis/medium/fr_FR-siwis-medium.onnx",
 			"configHash": "39479916c2db192b5ac9764daddd0c744d83e023ad890c6976c0633ae4df8959",
 			"previewPath": "samples/fr/fr_FR/siwis/medium/speaker_0.mp3",
-			"license": "CC-BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5401,9 +5137,6 @@
 			"path": "fr/fr_FR/tom/medium/fr_FR-tom-medium.onnx",
 			"configHash": "2f7f885ad5a0aad802e3cc24e4f57239febdcb142b4876de5d238094674361cc",
 			"previewPath": "samples/fr/fr_FR/tom/medium/speaker_0.mp3",
-			"license": "AGPLv3",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5419,9 +5152,6 @@
 			"path": "fr/fr_FR/upmc/medium/fr_FR-upmc-medium.onnx",
 			"configHash": "e8636ec15dfd5d72db37a02cb5320a20f2b8d339f2a0e4337da64c58a33a5868",
 			"previewPath": "samples/fr/fr_FR/upmc/medium/speaker_0.mp3",
-			"license": "http://creativecommons.org/licenses/by-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 2,
 			"speakerNames": {
@@ -5441,9 +5171,6 @@
 			"path": "he/he_IL/saspeech/medium/he_IL-saspeech-medium.onnx",
 			"configHash": "e9800a282a6cf2e44b3ad97f640b38e35ed246dfe070458d13bfcf206befc5bf",
 			"previewPath": "samples/he/he_IL/saspeech/medium/speaker_0.mp3",
-			"license": "See dataset URL",
-			"inheritedTerms": true,
-			"phonemeType": "hebrew",
 			"unsupported": "Requires the hebrew pronunciation engine",
 			"speakers": 1
 		},
@@ -5459,9 +5186,6 @@
 			"path": "hi/hi_IN/pratham/medium/hi_IN-pratham-medium.onnx",
 			"configHash": "b68edd2cd7950dd436314013b7cd12e9699e5a3f6fe5af5af94294cf6aa7b9fd",
 			"previewPath": "samples/hi/hi_IN/pratham/medium/speaker_0.mp3",
-			"license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5477,9 +5201,6 @@
 			"path": "hi/hi_IN/priyamvada/medium/hi_IN-priyamvada-medium.onnx",
 			"configHash": "5efc0ccf7529f3528996d46e0fac1f969f681d44a8e55bfa6236ff8841b5d52d",
 			"previewPath": "samples/hi/hi_IN/priyamvada/medium/speaker_0.mp3",
-			"license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5495,9 +5216,6 @@
 			"path": "hi/hi_IN/rohan/medium/hi_IN-rohan-medium.onnx",
 			"configHash": "07b9ae19bd0bac7fbbc99f7ee69c91245eb5470e926632c31fc0c50ba653c817",
 			"previewPath": "samples/hi/hi_IN/rohan/medium/speaker_0.mp3",
-			"license": "https://www.iitm.ac.in/donlab/indictts/downloads/license.pdf",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5513,9 +5231,6 @@
 			"path": "hu/hu_HU/anna/medium/hu_HU-anna-medium.onnx",
 			"configHash": "ccf967d8db8018c9d8ffdb0edc8814ffcb6b75273bb0d84337317240f710283a",
 			"previewPath": "samples/hu/hu_HU/anna/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5531,9 +5246,6 @@
 			"path": "hu/hu_HU/berta/medium/hu_HU-berta-medium.onnx",
 			"configHash": "3fd75422fcb0da86d54391256607a08d1ee4fb70f031941197e4400b9067b603",
 			"previewPath": "samples/hu/hu_HU/berta/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5549,9 +5261,6 @@
 			"path": "hu/hu_HU/imre/medium/hu_HU-imre-medium.onnx",
 			"configHash": "bb9c31dd8429b1414d486e5d52d52f0790949c63bfaf1345075d42e23ad10c83",
 			"previewPath": "samples/hu/hu_HU/imre/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5567,9 +5276,6 @@
 			"path": "hy/hy_AM/gor/medium/hy_AM-gor-medium.onnx",
 			"configHash": "01a8458d4ff226fac1b7dc7b1f619851fdbc8a9bd09d6a604e65e304c9600c2e",
 			"previewPath": "samples/hy/hy_AM/gor/medium/speaker_0.mp3",
-			"license": "GPL 2.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5585,9 +5291,6 @@
 			"path": "id/id_ID/news_tts/medium/id_ID-news_tts-medium.onnx",
 			"configHash": "1ef677072668a5e172e0759b1d3871f129009d1167f093325a17607f7add5ad7",
 			"previewPath": "samples/id/id_ID/news_tts/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5603,9 +5306,6 @@
 			"path": "is/is_IS/bui/medium/is_IS-bui-medium.onnx",
 			"configHash": "3cae728572fbb397713d047f2299247bb76b62639d9dfdcd65b26c578b8aba45",
 			"previewPath": "samples/is/is_IS/bui/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5621,9 +5321,6 @@
 			"path": "is/is_IS/salka/medium/is_IS-salka-medium.onnx",
 			"configHash": "e4290b7c398b956871fec6a5029e5d1511b44be80452511087d0d3b6408c293a",
 			"previewPath": "samples/is/is_IS/salka/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5639,9 +5336,6 @@
 			"path": "is/is_IS/steinn/medium/is_IS-steinn-medium.onnx",
 			"configHash": "28e889a03ad606f2574d196849220fdf76a82713a111a4ee5c120e6c74ecb205",
 			"previewPath": "samples/is/is_IS/steinn/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5657,9 +5351,6 @@
 			"path": "is/is_IS/ugla/medium/is_IS-ugla-medium.onnx",
 			"configHash": "0d7c1b26cdc54042c98a75ccc9d4e3528077178c56ad029b321944b6178f3277",
 			"previewPath": "samples/is/is_IS/ugla/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5675,9 +5366,6 @@
 			"path": "it/it_IT/paola/medium/it_IT-paola-medium.onnx",
 			"configHash": "aea19c0a7fce29fbc359b93f10e7902854401e4c95ae2ea328ae516b15d296cf",
 			"previewPath": "samples/it/it_IT/paola/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5693,9 +5381,6 @@
 			"path": "it/it_IT/riccardo/x_low/it_IT-riccardo-x_low.onnx",
 			"configHash": "146ab9c634afe524e9fb7530f2510df7a42fb1db56b52658ca1fb3d98001a62a",
 			"previewPath": "samples/it/it_IT/riccardo/x_low/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5711,9 +5396,6 @@
 			"path": "it/it_IT/serena/high/it_IT-serena-high.onnx",
 			"configHash": "60597bac737a20766591fe24d1315df9a3811dc3509e69bc394cdee19eccbae7",
 			"previewPath": "samples/it/it_IT/serena/high/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5729,9 +5411,6 @@
 			"path": "it/it_IT/serena/medium/it_IT-serena-medium.onnx",
 			"configHash": "14cb4995874138b2792ae07753b5540942124761af9ae6609f9b520f28837881",
 			"previewPath": "samples/it/it_IT/serena/medium/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5747,9 +5426,6 @@
 			"path": "ja/ja_JP/hi_fi_captain/medium/ja_JP-hi_fi_captain-medium.onnx",
 			"configHash": "fe9aeda38318607ba114926d1d7ee7d56295f9af3774a99a42b36f4354cabf27",
 			"previewPath": "samples/ja/ja_JP/hi_fi_captain/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc-sa/4.0/deed.en",
-			"inheritedTerms": true,
-			"phonemeType": "japanese",
 			"unsupported": "Requires the japanese pronunciation engine",
 			"speakers": 2,
 			"speakerNames": {
@@ -5769,9 +5445,6 @@
 			"path": "ka/ka_GE/natia/medium/ka_GE-natia-medium.onnx",
 			"configHash": "906436d0f8de79fcd65576470b10c7ea937c750f9b6b6dafc72a27cebd4a88f6",
 			"previewPath": "samples/ka/ka_GE/natia/medium/speaker_0.mp3",
-			"license": "See LICENSE file",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5787,9 +5460,6 @@
 			"path": "kk/kk_KZ/iseke/x_low/kk_KZ-iseke-x_low.onnx",
 			"configHash": "7af909edcbec3d595cb8cfb810dbf19ea3d6bed5edc18ed9e5ed80631fd5e3a9",
 			"previewPath": "samples/kk/kk_KZ/iseke/x_low/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5805,9 +5475,6 @@
 			"path": "kk/kk_KZ/issai/high/kk_KZ-issai-high.onnx",
 			"configHash": "eb145ac8712b87beda9f0266e95b98cad76acce89d4626cd8b1408234e9842f0",
 			"previewPath": "samples/kk/kk_KZ/issai/high/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 6,
 			"speakerNames": {
@@ -5831,9 +5498,6 @@
 			"path": "kk/kk_KZ/raya/x_low/kk_KZ-raya-x_low.onnx",
 			"configHash": "b8a239282afd4094e19a1aab0d44623e3bc4c7b4150d57c39ce972193c9e70e3",
 			"previewPath": "samples/kk/kk_KZ/raya/x_low/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5849,9 +5513,6 @@
 			"path": "ko/ko_KR/kss/medium/ko_KR-kss-medium.onnx",
 			"configHash": "153b5619d0580f824a59108d83ca19434de410eb8e4fe80325b58684fdc8a1df",
 			"previewPath": "samples/ko/ko_KR/kss/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5867,9 +5528,6 @@
 			"path": "ku/ku_TR/berfin_renas/medium/ku_TR-berfin_renas-medium.onnx",
 			"configHash": "66d0da87aa8e572c7e6ee67647aa6af6008e85e38819679f17dc9b86e3affca8",
 			"previewPath": "samples/ku/ku_TR/berfin_renas/medium/speaker_0.mp3",
-			"license": "cc-by-nc-4.0; [CC BY-NC 4.0](https://creativecommons.org/licenses/by-nc/4.0/) — free for non-commercial use with attribution; commercial use restricted due to [Blizzard 2013 base model](https://www.cstr.ed.ac.uk/projects/blizzard/2013/lessac_blizzard2013/license.html)",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 2,
 			"speakerNames": {
@@ -5889,9 +5547,6 @@
 			"path": "lb/lb_LU/marylux/medium/lb_LU-marylux-medium.onnx",
 			"configHash": "e5c5dec5433d33ff573e76fa567e80dcf636d05de5dcc817b273963f0733d742",
 			"previewPath": "samples/lb/lb_LU/marylux/medium/speaker_0.mp3",
-			"license": "http://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5907,9 +5562,6 @@
 			"path": "lt/lt_LT/ingute/medium/lt_LT-ingute-medium.onnx",
 			"configHash": "cb6bf9b42cf203a54d4a87ab7ea6a44e49286da78fa813db5f6d6f7de5034602",
 			"previewPath": null,
-			"license": "NewGenLTU Open RAIL-D License 1.0",
-			"inheritedTerms": true,
-			"phonemeType": "lithuanian",
 			"unsupported": "Requires the lithuanian pronunciation engine",
 			"speakers": 1
 		},
@@ -5925,9 +5577,6 @@
 			"path": "lt/lt_LT/reginute1/medium/lt_LT-reginute1-medium.onnx",
 			"configHash": "a0b3634fd41c4d2805a65605980471785b0894e7a8f8ee7597a90ce9dbc7a5a8",
 			"previewPath": "samples/lt/lt_LT/reginute1/medium/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": true,
-			"phonemeType": "lithuanian",
 			"unsupported": "Requires the lithuanian pronunciation engine",
 			"speakers": 1
 		},
@@ -5943,9 +5592,6 @@
 			"path": "lv/lv_LV/aivars/medium/lv_LV-aivars-medium.onnx",
 			"configHash": "08ae2c297be8aa04f15f3f97b7ffeae0146b30b0bd8f7baebcdc46bc2c2f33dc",
 			"previewPath": "samples/lv/lv_LV/aivars/medium/speaker_0.mp3",
-			"license": "CC0 1.0 Universal",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5961,9 +5607,6 @@
 			"path": "ml/ml_IN/arjun/medium/ml_IN-arjun-medium.onnx",
 			"configHash": "2804f070954e56545e88101b70331d444402187899d0a6ff03e5d44bee813245",
 			"previewPath": "samples/ml/ml_IN/arjun/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5979,9 +5622,6 @@
 			"path": "ml/ml_IN/meera/medium/ml_IN-meera-medium.onnx",
 			"configHash": "ad51935143f548d139a84c6ad1702b757cbceb52701167c0c1c98bebda7203e6",
 			"previewPath": "samples/ml/ml_IN/meera/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -5997,9 +5637,6 @@
 			"path": "mr/mr_IN/google/medium/mr_IN-google-medium.onnx",
 			"configHash": "11055302ee1e3c9902e5e96c03cbfc0a9eec29b1b06b91ef52a3c66e9873edbb",
 			"previewPath": "samples/mr/mr_IN/google/medium/speaker_0.mp3",
-			"license": "Attribution-ShareAlike 4.0 International",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 9,
 			"speakerNames": {
@@ -6026,9 +5663,6 @@
 			"path": "ne/ne_NP/chitwan/medium/ne_NP-chitwan-medium.onnx",
 			"configHash": "18d523b03b201422d14e2892cc750a81208d2e45158a9c6a7e4e06a500930dee",
 			"previewPath": "samples/ne/ne_NP/chitwan/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6044,9 +5678,6 @@
 			"path": "ne/ne_NP/google/medium/ne_NP-google-medium.onnx",
 			"configHash": "8c3c364bd2ab369850ae0b5d97b9c7a37ea15fb2eb5b91f8fd10e7ffd85ae4eb",
 			"previewPath": "samples/ne/ne_NP/google/medium/speaker_0.mp3",
-			"license": "CC-BY-SA-4.0 International",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 18,
 			"speakerNames": {
@@ -6082,9 +5713,6 @@
 			"path": "ne/ne_NP/google/x_low/ne_NP-google-x_low.onnx",
 			"configHash": "4013cdd2fc2bea03a2e9a3e5618ee14f61928cee8a0bc7a50a2a16e56de2fdb6",
 			"previewPath": "samples/ne/ne_NP/google/x_low/speaker_0.mp3",
-			"license": "CC-BY-SA-4.0 International",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 18,
 			"speakerNames": {
@@ -6120,9 +5748,6 @@
 			"path": "nl/nl_BE/nathalie/medium/nl_BE-nathalie-medium.onnx",
 			"configHash": "4704af2736022e910a3f32672480d5530dd39da5c2bcc079f315f604166ff0de",
 			"previewPath": "samples/nl/nl_BE/nathalie/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6138,9 +5763,6 @@
 			"path": "nl/nl_BE/nathalie/x_low/nl_BE-nathalie-x_low.onnx",
 			"configHash": "390d21992bd734a49c015fcd7027e4af7b2779f5867ff762e6453e323f554bd8",
 			"previewPath": "samples/nl/nl_BE/nathalie/x_low/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6156,9 +5778,6 @@
 			"path": "nl/nl_BE/rdh/medium/nl_BE-rdh-medium.onnx",
 			"configHash": "65deb256664d22099b0db5bb36d96237a3e32e43885c6ce4ee6811e6c04a8d79",
 			"previewPath": "samples/nl/nl_BE/rdh/medium/speaker_0.mp3",
-			"license": "CC0 1.0 Universal",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6174,9 +5793,6 @@
 			"path": "nl/nl_BE/rdh/x_low/nl_BE-rdh-x_low.onnx",
 			"configHash": "15724b7ef0247d566d9c2bac252c1b0b6ec9ceb7ccbb2c0a0d1ed57bf03b4f5d",
 			"previewPath": "samples/nl/nl_BE/rdh/x_low/speaker_0.mp3",
-			"license": "CC0 1.0 Universal",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6192,9 +5808,6 @@
 			"path": "nl/nl_NL/alex/medium/nl_NL-alex-medium.onnx",
 			"configHash": "9ea643871742c038511b6aaf20e6fc098a78a11968122d2f6ca3e50403423f95",
 			"previewPath": "samples/nl/nl_NL/alex/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6210,9 +5823,6 @@
 			"path": "nl/nl_NL/mls/medium/nl_NL-mls-medium.onnx",
 			"configHash": "6ddb215d38f1392ab935ad45441b82ada1eeae0452a2d6849ed71ea4f2e0aa63",
 			"previewPath": "samples/nl/nl_NL/mls/medium/speaker_0.mp3",
-			"license": "CC-BY 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 52,
 			"speakerNames": {
@@ -6282,9 +5892,6 @@
 			"path": "nl/nl_NL/mls_5809/low/nl_NL-mls_5809-low.onnx",
 			"configHash": "d2192a4ed90b26166243be2cef9d71bcc4fbbbaa9461c413050bac758fafc1c3",
 			"previewPath": "samples/nl/nl_NL/mls_5809/low/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6300,9 +5907,6 @@
 			"path": "nl/nl_NL/mls_7432/low/nl_NL-mls_7432-low.onnx",
 			"configHash": "450d6d809962943e0b88e18da142fba32011ea5e326a627c64a87ec94144185b",
 			"previewPath": "samples/nl/nl_NL/mls_7432/low/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6318,9 +5922,6 @@
 			"path": "nl/nl_NL/pim/medium/nl_NL-pim-medium.onnx",
 			"configHash": "08b58456ca00cf77123826b1712758f99d5fd19ddfb7ec7da8e1a715b047f642",
 			"previewPath": "samples/nl/nl_NL/pim/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6336,9 +5937,6 @@
 			"path": "nl/nl_NL/ronnie/medium/nl_NL-ronnie-medium.onnx",
 			"configHash": "4329a4deb198d119b7f7364173e388afb8efec9eca10e849f9394aa1a92bb7bc",
 			"previewPath": "samples/nl/nl_NL/ronnie/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6354,9 +5952,6 @@
 			"path": "no/no_NO/nvcc/medium/no_NO-nvcc-medium.onnx",
 			"configHash": "98410e911e5a9076ac4677a79b08b20f98c54f550c4388e29978f6bafa32b83d",
 			"previewPath": "samples/no/no_NO/nvcc/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 10,
 			"speakerNames": {
@@ -6384,9 +5979,6 @@
 			"path": "no/no_NO/talesyntese/medium/no_NO-talesyntese-medium.onnx",
 			"configHash": "b0eb0491fc8bf9843d2beac8acf8773b6cf59274316406b36ff579ae8a1909d5",
 			"previewPath": "samples/no/no_NO/talesyntese/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6402,9 +5994,6 @@
 			"path": "pl/pl_PL/bass/high/pl_PL-bass-high.onnx",
 			"configHash": "7bb41aa14fee87a31cc32264119c09e3553335196d3db15b39b1c18790e13c59",
 			"previewPath": "samples/pl/pl_PL/bass/high/speaker_0.mp3",
-			"license": "See model terms",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6420,9 +6009,6 @@
 			"path": "pl/pl_PL/darkman/medium/pl_PL-darkman-medium.onnx",
 			"configHash": "70f999f11fa8ad13d3ef779041ee93c9f38be5abdbacdfad42449712fe91c81b",
 			"previewPath": "samples/pl/pl_PL/darkman/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6438,9 +6024,6 @@
 			"path": "pl/pl_PL/gosia/medium/pl_PL-gosia-medium.onnx",
 			"configHash": "1aefb31a9d53ffe44a8163ff73ec833acb7a6253848f6bb0403d8a66f9c7510d",
 			"previewPath": "samples/pl/pl_PL/gosia/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6456,9 +6039,6 @@
 			"path": "pl/pl_PL/mc_speech/medium/pl_PL-mc_speech-medium.onnx",
 			"configHash": "b8bb11228e15c505219846a88fdc129e93f57e774ed7f9bac263156d1aa3d324",
 			"previewPath": "samples/pl/pl_PL/mc_speech/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6474,9 +6054,6 @@
 			"path": "pl/pl_PL/mls_6892/low/pl_PL-mls_6892-low.onnx",
 			"configHash": "52f7b16a1590277028fce10a259c41d755c3d565c6f4eff9806e1c1d433ea7a2",
 			"previewPath": "samples/pl/pl_PL/mls_6892/low/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6492,9 +6069,6 @@
 			"path": "pt/pt_BR/cadu/medium/pt_BR-cadu-medium.onnx",
 			"configHash": "5fe03aa3d4901880554905b12075713cd552598c8a350455a1ec73f8b4e6be19",
 			"previewPath": "samples/pt/pt_BR/cadu/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6510,9 +6084,6 @@
 			"path": "pt/pt_BR/edresson/low/pt_BR-edresson-low.onnx",
 			"configHash": "f138992d2e777d1e3aa0bbb14c2d324307b0f342c1bcf20978765b3bea506c56",
 			"previewPath": "samples/pt/pt_BR/edresson/low/speaker_0.mp3",
-			"license": "CC BY 4.0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6528,9 +6099,6 @@
 			"path": "pt/pt_BR/faber/medium/pt_BR-faber-medium.onnx",
 			"configHash": "7e694de195ae3fc36dd732c445eb04fb49b649854893cb5506b978f0d50a1d6f",
 			"previewPath": "samples/pt/pt_BR/faber/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6546,9 +6114,6 @@
 			"path": "pt/pt_BR/jeff/medium/pt_BR-jeff-medium.onnx",
 			"configHash": "7bf8145b572b36806f5ce0f1d3322b6711975bc7d0473e8d36fced4a9ec0030d",
 			"previewPath": "samples/pt/pt_BR/jeff/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6564,9 +6129,6 @@
 			"path": "pt/pt_PT/tugão/medium/pt_PT-tugão-medium.onnx",
 			"configHash": "fe0918dfc0f1a89264a6eea4afe8e95d8e9fed3cc6c81b5c2f87fcb2b50c7320",
 			"previewPath": "samples/pt/pt_PT/tugão/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6582,9 +6144,6 @@
 			"path": "ro/ro_RO/mihai/medium/ro_RO-mihai-medium.onnx",
 			"configHash": "8cc0c9f077dc0cec3c25a6a055ec8046db8e40a2510591582f2c9c869f4bc47e",
 			"previewPath": "samples/ro/ro_RO/mihai/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6600,9 +6159,6 @@
 			"path": "ru/ru_RU/denis/medium/ru_RU-denis-medium.onnx",
 			"configHash": "831c860dac0b5073eaa81610a0a638ec23d90a6cf8e5f871b4485c2cec3767c8",
 			"previewPath": "samples/ru/ru_RU/denis/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6618,9 +6174,6 @@
 			"path": "ru/ru_RU/dmitri/medium/ru_RU-dmitri-medium.onnx",
 			"configHash": "667ef3117bc642c2892dff7690d8bdc8ca4228aeaa783b2dc1416df632855e0d",
 			"previewPath": "samples/ru/ru_RU/dmitri/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6636,9 +6189,6 @@
 			"path": "ru/ru_RU/irina/medium/ru_RU-irina-medium.onnx",
 			"configHash": "c2ec28bb38e2b59e93b959b3e40348c1afebbd272f30fed5d41205d08e98a9d7",
 			"previewPath": "samples/ru/ru_RU/irina/medium/speaker_0.mp3",
-			"license": "Unknown",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6654,9 +6204,6 @@
 			"path": "ru/ru_RU/ruslan/medium/ru_RU-ruslan-medium.onnx",
 			"configHash": "706a4fb17bc304abd07809b552deae615e64dcbffbfbd09854ba37ca59e88117",
 			"previewPath": "samples/ru/ru_RU/ruslan/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6672,9 +6219,6 @@
 			"path": "sk/sk_SK/lili/medium/sk_SK-lili-medium.onnx",
 			"configHash": "b7c474eba411913f9feb65b9da322463e8698e7b200d2b757f6e684802951333",
 			"previewPath": "samples/sk/sk_SK/lili/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6690,9 +6234,6 @@
 			"path": "sl/sl_SI/artur/medium/sl_SI-artur-medium.onnx",
 			"configHash": "741283430f1fa2be5c61717c6f1fe795a7b9f537491927340dd12f90f3b3cc04",
 			"previewPath": "samples/sl/sl_SI/artur/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by/4.0/",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6708,9 +6249,6 @@
 			"path": "sq/sq_AL/edon/medium/sq_AL-edon-medium.onnx",
 			"configHash": "e9ee77beea52d8042bca589448bb48033ac0f7c1d86daee84ad1d5692d1270f7",
 			"previewPath": "samples/sq/sq_AL/edon/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6726,9 +6264,6 @@
 			"path": "sr/sr_RS/serbski_institut/medium/sr_RS-serbski_institut-medium.onnx",
 			"configHash": "39ad6531b46ac629c0bed10aa9205dd2431e2dab3808b8535808711db87c2bc0",
 			"previewPath": "samples/sr/sr_RS/serbski_institut/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 2,
 			"speakerNames": {
@@ -6748,9 +6283,6 @@
 			"path": "sv/sv_SE/alma/medium/sv_SE-alma-medium.onnx",
 			"configHash": "6924380892f769afa92fc6b28ff91d558690d7fb4e3ef8cbf821cefadc8f38fe",
 			"previewPath": "samples/sv/sv_SE/alma/medium/speaker_0.mp3",
-			"license": "See model terms",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6766,9 +6298,6 @@
 			"path": "sv/sv_SE/lisa/medium/sv_SE-lisa-medium.onnx",
 			"configHash": "51e48b65d7427aee9e8e736b370ff4fe6e3e45e47a56e5d8819647b7076ffb0a",
 			"previewPath": "samples/sv/sv_SE/lisa/medium/speaker_0.mp3",
-			"license": "See model terms",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6784,9 +6313,6 @@
 			"path": "sv/sv_SE/nst/medium/sv_SE-nst-medium.onnx",
 			"configHash": "d45dd74cbb4eca58694bf04a97e243044092476f28a55ae26424f0653086980a",
 			"previewPath": "samples/sv/sv_SE/nst/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6802,9 +6328,6 @@
 			"path": "sw/sw_CD/lanfrica/medium/sw_CD-lanfrica-medium.onnx",
 			"configHash": "5bd6f6ad659aa8f1f89f414e23a3df84fc753eb9c066e91fe86729da2ad4c1fc",
 			"previewPath": "samples/sw/sw_CD/lanfrica/medium/speaker_0.mp3",
-			"license": "See URL",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6820,9 +6343,6 @@
 			"path": "te/te_IN/maya/medium/te_IN-maya-medium.onnx",
 			"configHash": "c07074aadf0a33e230647611af9041e1fb6609b995d017ee95009586a491508f",
 			"previewPath": "samples/te/te_IN/maya/medium/speaker_0.mp3",
-			"license": "www.iitm.ac.in/donlab/indictts/downloads/license.pdf",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6838,9 +6358,6 @@
 			"path": "te/te_IN/padmavathi/medium/te_IN-padmavathi-medium.onnx",
 			"configHash": "6c86e4ee99d379815f78a75f23cdad62ccf50370062dd915c233d6e22de7109f",
 			"previewPath": "samples/te/te_IN/padmavathi/medium/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6856,9 +6373,6 @@
 			"path": "te/te_IN/venkatesh/medium/te_IN-venkatesh-medium.onnx",
 			"configHash": "59bad556763d1f24b3434201d7bdee275bb1a70db3e1c65d38e6c3d39b224343",
 			"previewPath": "samples/te/te_IN/venkatesh/medium/speaker_0.mp3",
-			"license": "CC-BY-4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6874,9 +6388,6 @@
 			"path": "th/th_TH/tsync2/medium/th_TH-tsync2-medium.onnx",
 			"configHash": "212aff35b8beed828a5f2af33b3cfc7744f4fac3c3dc7e6a2f464692e8257bb7",
 			"previewPath": "samples/th/th_TH/tsync2/medium/speaker_0.mp3",
-			"license": "CC BY-NC-SA 3.0 (non-commercial)",
-			"inheritedTerms": true,
-			"phonemeType": "thai",
 			"unsupported": "Requires the thai pronunciation engine",
 			"speakers": 1
 		},
@@ -6892,9 +6403,6 @@
 			"path": "tr/tr_TR/dfki/medium/tr_TR-dfki-medium.onnx",
 			"configHash": "13ebd7810f1b61b5027583cf3131a0a233b6ea81c38f2200ebc4ff41c3cca039",
 			"previewPath": "samples/tr/tr_TR/dfki/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6910,9 +6418,6 @@
 			"path": "uk/uk_UA/lada/x_low/uk_UA-lada-x_low.onnx",
 			"configHash": "2df74b622e78930e8a62432d1cc8380f79f34f02c8c58ebd68e6ccbc857d80aa",
 			"previewPath": "samples/uk/uk_UA/lada/x_low/speaker_0.mp3",
-			"license": "Apache 2.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6928,9 +6433,6 @@
 			"path": "uk/uk_UA/mykyta/high/uk_UA-mykyta-high.onnx",
 			"configHash": "b5db6b4efb02d4a0e8f128253fd64e82dfa72d1105e9060b0c6fd9610eec6a4f",
 			"previewPath": "samples/uk/uk_UA/mykyta/high/speaker_0.mp3",
-			"license": "Apache 2.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6946,9 +6448,6 @@
 			"path": "uk/uk_UA/oleksa/high/uk_UA-oleksa-high.onnx",
 			"configHash": "296374263ad11d2c6c187a9e4cedf72a5b7ba3ddfc438da5eb8bf32fda3ede42",
 			"previewPath": "samples/uk/uk_UA/oleksa/high/speaker_0.mp3",
-			"license": "Apache 2.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6964,9 +6463,6 @@
 			"path": "uk/uk_UA/tetiana/high/uk_UA-tetiana-high.onnx",
 			"configHash": "c96a051028976afc74269f73470651384deb6872431f890cad3b6424d09e812b",
 			"previewPath": "samples/uk/uk_UA/tetiana/high/speaker_0.mp3",
-			"license": "Apache 2.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -6982,9 +6478,6 @@
 			"path": "uk/uk_UA/ukrainian_tts/medium/uk_UA-ukrainian_tts-medium.onnx",
 			"configHash": "4e96e72917ca9b94edc77d6ccfee03a73f450ba2fc1ca93c2e562bc014e5aa55",
 			"previewPath": "samples/uk/uk_UA/ukrainian_tts/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": false,
-			"phonemeType": "text",
 			"unsupported": null,
 			"speakers": 3,
 			"speakerNames": {
@@ -7005,9 +6498,6 @@
 			"path": "ur/ur_PK/aegis_female/medium/ur_PK-aegis_female-medium.onnx",
 			"configHash": "a8385c217a7e276acf5234bf01dbd0adb007a57c32ffbcc57d2db7eac3979bb6",
 			"previewPath": "samples/ur/ur_PK/aegis_female/medium/speaker_0.mp3",
-			"license": "mit",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -7023,9 +6513,6 @@
 			"path": "ur/ur_PK/fasih/medium/ur_PK-fasih-medium.onnx",
 			"configHash": "cfcf484a50b4036cb55675b6bbcdb9ddb9061ac10a51cfb2b3ce8391213205ec",
 			"previewPath": "samples/ur/ur_PK/fasih/medium/speaker_0.mp3",
-			"license": "mit",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -7041,9 +6528,6 @@
 			"path": "vi/vi_VN/25hours_single/low/vi_VN-25hours_single-low.onnx",
 			"configHash": "344b5849f5bc585031a63b9cc75f96e2c469f3d98879d8d3acbc2fce6d470064",
 			"previewPath": "samples/vi/vi_VN/25hours_single/low/speaker_0.mp3",
-			"license": "Unknown",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -7059,9 +6543,6 @@
 			"path": "vi/vi_VN/vais1000/medium/vi_VN-vais1000-medium.onnx",
 			"configHash": "fafb9da1354ed4b77c31af228ed41fb41cd825c14cffa105454b25e6ae751ee0",
 			"previewPath": "samples/vi/vi_VN/vais1000/medium/speaker_0.mp3",
-			"license": "https://creativecommons.org/licenses/by/4.0/",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -7077,9 +6558,6 @@
 			"path": "vi/vi_VN/vivos/x_low/vi_VN-vivos-x_low.onnx",
 			"configHash": "9dc373d69b0e4f39d864cb8ac9fe42cee49817a0f02d831e57a9ce6e944e234a",
 			"previewPath": "samples/vi/vi_VN/vivos/x_low/speaker_0.mp3",
-			"license": "CC BY-NC-SA 4.0",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 65,
 			"speakerNames": {
@@ -7162,9 +6640,6 @@
 			"path": "zh/zh_CN/chaowen/medium/zh_CN-chaowen-medium.onnx",
 			"configHash": "a6bb2caafa0645642f13cbf7e2f6fbbb16fded66e51109fc26d622f6472fa16f",
 			"previewPath": "samples/zh/zh_CN/chaowen/medium/speaker_0.mp3",
-			"license": "CC0",
-			"inheritedTerms": true,
-			"phonemeType": "pinyin",
 			"unsupported": "Requires the pinyin pronunciation engine",
 			"speakers": 1
 		},
@@ -7180,9 +6655,6 @@
 			"path": "zh/zh_CN/huayan/medium/zh_CN-huayan-medium.onnx",
 			"configHash": "d521dc45504a8ccc99e325822b35946dd701840bfb07e3dbb31a40929ed6a82b",
 			"previewPath": "samples/zh/zh_CN/huayan/medium/speaker_0.mp3",
-			"license": "Unknown",
-			"inheritedTerms": true,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -7198,9 +6670,6 @@
 			"path": "zh/zh_CN/huayan/x_low/zh_CN-huayan-x_low.onnx",
 			"configHash": "5521dcb09adf68a9bee289032f7f5af18d29bff020953429b5d223ec1f881816",
 			"previewPath": "samples/zh/zh_CN/huayan/x_low/speaker_0.mp3",
-			"license": "Unknown",
-			"inheritedTerms": false,
-			"phonemeType": "espeak",
 			"unsupported": null,
 			"speakers": 1
 		},
@@ -7216,9 +6685,6 @@
 			"path": "zh/zh_CN/xiao_ya/medium/zh_CN-xiao_ya-medium.onnx",
 			"configHash": "e1ec027b7065959643c1463705398d413ed4fdaa626d7d8ef1d12ab87e9a0320",
 			"previewPath": "samples/zh/zh_CN/xiao_ya/medium/speaker_0.mp3",
-			"license": "Non-commercial use (see https://www.data-baker.com/data/index/TNtts/)",
-			"inheritedTerms": false,
-			"phonemeType": "pinyin",
 			"unsupported": "Requires the pinyin pronunciation engine",
 			"speakers": 1
 		}

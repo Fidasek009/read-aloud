@@ -6,7 +6,7 @@ function isTabId(value: unknown): value is number {
 	return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
 }
 
-/** Session storage can contain old or incomplete state; consume only valid tab mappings. */
+/** Session storage is untrusted; consume only valid tab mappings. */
 export function parsePdfReaders(value: unknown): PdfReaders {
 	const readers: PdfReaders = {}
 	if (!value || typeof value !== "object" || Array.isArray(value)) return readers
