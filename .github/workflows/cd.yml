@@ -137,7 +137,7 @@ jobs:
           CHROME_PUBLISHER_ID: ${{ vars.CHROME_PUBLISHER_ID }}
           CHROME_SERVICE_ACCOUNT_ACCESS_TOKEN: ${{ steps.chrome-auth.outputs.access_token }}
         run: bun scripts/publish-extension.ts chrome --publish
-      - name: Submit Firefox and reviewer sources
+      - name: Create or update Firefox listing and submit reviewer sources
         if: matrix.browser == 'firefox'
         run: bun scripts/publish-extension.ts firefox --publish
         env:

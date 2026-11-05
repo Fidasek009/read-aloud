@@ -54,9 +54,12 @@ test("standalone live publishers reject an unresolved fixture before invoking pu
 		record.findings[0].status = "unresolved"
 		record.findings[0].remaining = ["Synthetic fixture: permission scope unresolved"]
 		await Bun.write(join(directory, "release/licensing.json"), JSON.stringify(record))
-		for (const name of ["publish-extension", "github-release"]) {
+		for (const [name, args] of [
+			["publish-extension", ["chrome", "--publish"]],
+			["publish-extension", ["firefox", "--publish"]],
+			["github-release", []],
+		] as const) {
 			const script = Bun.fileURLToPath(new URL(`../scripts/${name}.ts`, import.meta.url))
-			const args = name === "publish-extension" ? ["chrome", "--publish"] : []
 			const child = Bun.spawn([process.execPath, script, ...args], {
 				cwd: directory,
 				env: {

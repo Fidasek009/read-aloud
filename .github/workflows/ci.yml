@@ -28,6 +28,8 @@ jobs:
       - run: bun run typecheck
       - run: bun run format:check
       - run: bun run test
+      - name: Validate Firefox listing and license metadata
+        run: bun scripts/firefox-metadata.ts
       - run: bun run lint:workflows
 
   package:

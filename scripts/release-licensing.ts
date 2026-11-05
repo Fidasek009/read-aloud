@@ -10,6 +10,9 @@ const requiredFindings = [
 const requiredInputs = [
 	"package.json",
 	"bun.lock",
+	"scripts/firefox-metadata.ts",
+	"scripts/firefox-publishing.ts",
+	"store/listing.md",
 	"src/speech/voices.json",
 	"scripts/prepare-runtime.ts",
 	"public/notices.html",

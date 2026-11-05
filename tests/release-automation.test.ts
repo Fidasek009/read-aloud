@@ -6,14 +6,13 @@ import { join } from "node:path"
 import { publishRelease } from "../scripts/github-release"
 import { submissionArgs } from "../scripts/publish-extension"
 
-test("dry-run is explicit for both stores, uses WXT flags and allows the development version", () => {
-	for (const browser of ["chrome", "firefox"]) {
-		const args = submissionArgs(browser, "0.0.0", true)
-		expect(args.slice(0, 3)).toEqual(["submit", "--dry-run", "true"])
-		expect(args).toContain(`--${browser}-zip`)
-		expect(() => submissionArgs(browser, "0.0.0", false)).toThrow()
-		expect(submissionArgs(browser, "0.1.0", false).slice(0, 3)).toEqual(["submit", "--dry-run", "false"])
-	}
+test("Chrome uses explicit WXT dry-run and live modes; Firefox uses its dedicated publisher", () => {
+	const args = submissionArgs("chrome", "0.0.0", true)
+	expect(args.slice(0, 3)).toEqual(["submit", "--dry-run", "true"])
+	expect(args).toContain("--chrome-zip")
+	expect(() => submissionArgs("chrome", "0.0.0", false)).toThrow()
+	expect(submissionArgs("chrome", "0.1.0", false).slice(0, 3)).toEqual(["submit", "--dry-run", "false"])
+	expect(() => submissionArgs("firefox", "0.1.0", true)).toThrow()
 	expect(() => submissionArgs("edge", "0.1.0", true)).toThrow()
 })
 
