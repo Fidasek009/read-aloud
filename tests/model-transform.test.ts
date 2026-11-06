@@ -6,7 +6,7 @@ import { instrumentModel } from "../src/speech/instrument.ts"
 
 const schema = protobuf.parse(await Bun.file(new URL("../vendor/onnx/onnx.proto3", import.meta.url)).text()).root
 const Model = schema.lookupType("onnx.ModelProto")
-const fixture = (ceils = 1) =>
+const fixture = (ceils = 1, names: "scoped" | "numeric" | "absent" = "scoped", strides = [8, 8, 4]) =>
 	Model.encode(
 		Model.create({
 			irVersion: 7,
@@ -19,8 +19,10 @@ const fixture = (ceils = 1) =>
 						input: ["predictions"],
 						output: ["frames"],
 					})),
-					...[8, 8, 4].map((stride, index) => ({
-						name: `/dec/ups.${index}/ConvTranspose`,
+					...strides.map((stride, index) => ({
+						...(names === "absent"
+							? {}
+							: { name: names === "scoped" ? `/dec/ups.${index}/ConvTranspose` : `ConvTranspose_${5875 + index}` }),
 						opType: "ConvTranspose",
 						input: ["audio"],
 						output: ["audio"],
@@ -56,6 +58,29 @@ test("unrecognized and truncated model graphs are rejected before installation",
 	expect(() => instrumentModel(Uint8Array.from(fixture(2)).buffer)).toThrow("unsupported timing graph")
 	expect(() => instrumentModel(Uint8Array.from(fixture().slice(0, -3)).buffer)).toThrow()
 	expect(() => instrumentModel(new ArrayBuffer(0))).toThrow()
+	expect(() => instrumentModel(Uint8Array.from(fixture(1, "numeric", [4, 4, 4])).buffer)).toThrow(
+		"unsupported timing graph",
+	)
+	expect(() => instrumentModel(Uint8Array.from(fixture(1, "absent", [8, 8, 2, 1, 2])).buffer)).toThrow(
+		"unsupported timing graph",
+	)
+})
+
+test("catalog exports with numeric or absent node names retain genuine duration outputs", () => {
+	for (const names of ["numeric", "absent"] as const) {
+		for (const strides of [
+			[8, 8, 4],
+			[8, 8, 2, 2],
+		]) {
+			const source = fixture(1, names, strides)
+			const original = Model.toObject(Model.decode(source)) as any
+			const transformed = Model.toObject(Model.decode(instrumentModel(Uint8Array.from(source).buffer))) as any
+			expect(transformed.graph.node.slice(0, -1)).toEqual(original.graph.node)
+			expect(transformed.graph.initializer).toEqual(original.graph.initializer)
+			expect(transformed.graph.node.at(-1).input).toEqual(["frames"])
+			expect(transformed.graph.output.at(-1).name).toBe("read_aloud_durations")
+		}
+	}
 })
 
 test("voice preparation runs in a worker and returns the same instrumented graph", async () => {

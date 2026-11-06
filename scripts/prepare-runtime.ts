@@ -84,6 +84,8 @@ await copyDirectory(`${phonemizer}/espeak-ng-data`, `${out}/espeak-ng-data`, out
 )
 await copyAsset(`${phonemizer}/wasm/espeak-ng.wasm`, `${out}/espeak-ng.wasm`, out)
 for (const [source, target] of [
+	[`${root}/LICENSE`, "read-aloud-MIT.txt"],
+	[`${root}/NOTICE.md`, "read-aloud-notices.txt"],
 	[`${phonemizer}/LICENSE`, "spellophone-GPL-3.0.txt"],
 	[`${root}/vendor/espeak-ng/licenses/COPYING`, "espeak-ng-GPL-3.0.txt"],
 	[`${root}/vendor/espeak-ng/licenses/COPYING.APACHE`, "espeak-ng-Apache-2.0.txt"],

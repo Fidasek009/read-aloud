@@ -1,6 +1,6 @@
 # Unsent licensing clarification drafts
 
-Prepared 2026-11-05. These are drafts for owner review, not correspondence already sent. No terms have been accepted, permission purchased, or rights holder contacted. Kasandra's exact model grant is already substantiated by owner-issued PR #93; do not ask for that same grant again merely because the separate author-repo README advertises a paid package.
+Prepared 2026-11-05. Historical, unsent reference only: the owner declined third-party contact. Sending these is not a required workflow step, and no contact is planned. No terms have been accepted, permission purchased, or rights holder contacted. Kasandra's exact model grant is already substantiated by owner-issued PR #93; do not ask for that same grant again merely because the separate author-repo README advertises a paid package.
 
 ## Draft A: Jirka/parent-checkpoint lineage and grant scope
 

@@ -21,7 +21,14 @@ singleQuote = false
 trailingComma = "all"
 useTabs = true
 endOfLine = "lf"
-ignorePatterns = ["**/*.md", "**/.source/**", "**/generated/**", "lab/local-speech/vendor/**", "bun.lock"]
+ignorePatterns = [
+	"**/*.md",
+	"**/.source/**",
+	"**/generated/**",
+	"lab/local-speech/vendor/**",
+	"bun.lock",
+	"voice-previews/catalog.json",
+]
 
 [fmt.sortImports]
 groups = [

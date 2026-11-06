@@ -1,6 +1,6 @@
 # Product brief
 
-Started **2026-10-29**, updated **2026-11-05**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
+Started **2026-10-29**, updated **2026-11-06**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
 
 ## Confirmed experience
 
@@ -73,7 +73,7 @@ Previously asked questions on setup, reading scope, hardware, downloads, Piper's
 
 1. Improve cold startup and PDF readiness, and measure against the confirmed 1-second warm / 2-second cold target on the specified device.
 2. Validate CPU fallback, GPU inference, Windows, voice quality, pitch, accessibility, and complete benchmark reading behavior.
-3. Resolve licensing and distribution obligations for the current prototype's dependencies and voices.
+3. Resolve licensing and distribution obligations for the extension's dependencies and voices.
 
 ## Product-owner feedback — 2026-10-30
 
@@ -116,3 +116,11 @@ Preserve meaningful dots in domains such as `consensus.app`, where “dot” sho
 ## Release ownership confirmed 2026-11-05
 
 The product owner does not create artwork, screenshots, listing copy, privacy materials or build packages. The implementation agent owns these and routine release engineering. A pushed vX.Y.Z tag is the sole release-version authority and triggers automated CI, store publication submissions and GitHub release publication. No package-version bump or separate manual ready toggle is required. Public Chrome Web Store and listed Firefox AMO distribution are selected. Account/credential access, store review and the recorded product/license acceptance obligations remain external constraints; the agent must report their actual state without shifting design or engineering tasks back to the product owner.
+
+## Catalog-wide management confirmed 2026-11-06
+
+The managed product scope is the full voice catalog: currently 178 models across 53 languages, including all quality variants. There is no two-model delivery requirement or separate English/Czech implementation path. Use one catalog-driven workflow for model management, original preview generation, provenance, and coverage reporting. English and Czech remain mandatory language coverage, not a limit on the catalog. Original previews play inside the extension and are hosted separately; no third-party contact is authorized. Runtime limitations and unresolved model/output terms must remain explicit per model.
+
+## Catalog availability confirmed 2026-11-06
+
+Manage all upstream candidates through one catalog workflow, but offer only models compatible with the current runtime. Exclude unsupported pronunciation engines and demonstrated model/runtime incompatibilities from download and reading choices. Diagnose and fix our own integration errors before excluding models. Retain unavailable metadata for maintenance and allow deletion of older downloads. The current inventory is 178 upstream candidates with 171 available models; seven need unsupported engines. The 18 voices previously excluded after pronunciation-map errors synthesize successfully after correcting our adapter to follow Piper. Runtime compatibility does not establish license or acoustic-quality acceptance. See [the compatibility correction](piper-compatibility-2026-11-06.md).

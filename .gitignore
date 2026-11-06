@@ -6,6 +6,7 @@ public/pdf-runtime/
 .cache/
 .env
 .env.*
+voice-previews/*.wav
 lab/local-speech/dist/
 lab/local-speech/results/
 

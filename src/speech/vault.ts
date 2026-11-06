@@ -15,9 +15,10 @@ export async function installedVoices(): Promise<string[]> {
 }
 
 export async function readVoice(id: string): Promise<{ model: ArrayBuffer; config: VoiceConfig }> {
+	const voice = getVoice(id)
+	if (voice.unsupported) throw new SpeechVoiceError(voice.unsupported)
 	const stored = await voiceOperation<StoredVoice | undefined>("readonly", (store) => store.get(id))
-	if (!stored || stored.sourceHash !== getVoice(id).sha256)
-		throw new SpeechVoiceError("Stored voice is missing or outdated")
+	if (!stored || stored.sourceHash !== voice.sha256) throw new SpeechVoiceError("Stored voice is missing or outdated")
 	try {
 		return { model: stored.model, config: validateConfig(stored.config) }
 	} catch {

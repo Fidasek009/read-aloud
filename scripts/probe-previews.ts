@@ -1,4 +1,4 @@
-import { getVoice, voices as catalog } from "../src/speech/catalog.ts"
+import { voices as catalog } from "../src/speech/catalog.ts"
 import {
 	chromeExtensionId,
 	closeChromeProbe,
@@ -8,7 +8,8 @@ import {
 	waitFor as poll,
 } from "./probe-helpers.ts"
 
-const voices = [getVoice("en_US-ljspeech-medium"), getVoice("cs_CZ-jirka-medium")]
+const voices = catalog.filter((voice) => voice.previewUrl)
+if (!voices.length) throw new Error("No catalog previews are available to verify")
 
 const root = projectRoot
 const extension = `${root}/.cache/preview-probe`
@@ -60,9 +61,9 @@ try {
 			if (!unchanged) throw new Error("Filtering interrupted or rebuilt the playing preview")
 		}
 	}
-	const secondSelector = `[data-voice="${voices[1]!.id}"] [data-action="preview"]`
-	await view.evaluate(`document.querySelector(${JSON.stringify(secondSelector)}).click()`)
-	await waitFor(`document.querySelector(${JSON.stringify(secondSelector)}).textContent`, (value) => value === "Listen")
+	const lastSelector = `[data-voice="${voices.at(-1)!.id}"] [data-action="preview"]`
+	await view.evaluate(`document.querySelector(${JSON.stringify(lastSelector)}).click()`)
+	await waitFor(`document.querySelector(${JSON.stringify(lastSelector)}).textContent`, (value) => value === "Listen")
 	if (requests.some((url) => !voices.some((voice) => voice.previewUrl === url)))
 		throw new Error("A preview fetched something other than its audio")
 	await view.cdp("Network.emulateNetworkConditions", {
@@ -78,7 +79,7 @@ try {
 	})
 	await waitFor("document.querySelector('#status').textContent", (value) => value.includes("Preview unavailable"))
 	console.log(
-		"Both packages exclude audio. No preview prefetch. Both remote samples play; switching, stop, and offline recovery pass. No model requests.",
+		`Both packages exclude audio. No preview prefetch. All ${voices.length} catalog samples play; switching, stop, and offline recovery pass. No model requests.`,
 	)
 } finally {
 	await closeChromeProbe(view)

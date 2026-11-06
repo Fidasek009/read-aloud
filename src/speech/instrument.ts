@@ -91,7 +91,9 @@ export function instrumentModel(source: ArrayBuffer): Uint8Array<ArrayBuffer> {
 			return value ? decoder.decode(bytes.subarray(value.payload, value.end)) : ""
 		}
 		if (text(4) === "Ceil") ceils.push(text(2))
-		if (text(4) === "ConvTranspose" && text(3).includes("/dec/ups")) {
+		// Node names are optional exporter metadata, not graph semantics. Older
+		// catalog exports use names such as ConvTranspose_5875 instead of /dec/ups.
+		if (text(4) === "ConvTranspose") {
 			upsamplers++
 			let stride: number | undefined
 			for (const attr of node.filter((field) => field.number === 5 && field.wire === 2)) {

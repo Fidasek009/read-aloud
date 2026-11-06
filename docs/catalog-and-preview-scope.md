@@ -28,6 +28,6 @@ Text credit belongs to Wikipedia contributors, with source/history access and th
 
 No blanket audio grant was found in the pinned sample repository's README/tree, or in a targeted search of its public issue metadata. Public hosting and the site's deliberate sample player are relevant context, but this audit does not turn those facts into a universal permission or prohibition. The concrete remaining question is the existing creator/provider authorization and conditions for this exact on-demand, unchanged, source-host streaming/caching flow. An unsent clarification draft is prepared. A model license alone does not decide all recording/transcript/output rights.
 
-## What the release gate means
+## Release review
 
-The completed metadata and attribution work is recorded positively. Any remaining public-release hold for ambiguous model/sample use is an agent-owned risk/evidence review, not a claim that the absence of a root LICENSE makes every link illegal or that law mandates this particular CI gate. Known obligations, observed grants and unanswered scope questions remain separate in `release/licensing.json`.
+The [licensing checklist](licensing.md) separates supplied notices/source materials from the two open model/preview assessments. CI verifies the materials directly; there is no separate hash-bound approval record. The open questions are not established findings of illegality, and passing the material checks does not resolve them. The unsent drafts are historical reference only; contacting a third party is not a required next step.

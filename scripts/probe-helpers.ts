@@ -84,6 +84,13 @@ export async function closeChromeProbe(view: Bun.WebView) {
 	const directory = chromeProfiles.get(view)
 	if (directory) {
 		chromeProfiles.delete(view)
-		await $`rm -rf ${directory}`.quiet()
+		// Chromium shutdown can briefly keep writing profile files after close.
+		// Retry deletion of this disposable profile instead of failing a valid probe.
+		for (let attempt = 0; ; attempt++) {
+			const result = await $`rm -rf ${directory}`.quiet().nothrow()
+			if (result.exitCode === 0) break
+			if (attempt === 4) throw new Error(`Cannot remove probe profile ${directory}: ${result.stderr.toString()}`)
+			await Bun.sleep(100)
+		}
 	}
 }

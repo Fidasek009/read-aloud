@@ -14,8 +14,9 @@ export default defineConfig({
 			"scripts/**",
 			"public/**",
 			"vendor/**",
-			"release/**",
 			"docs/**",
+			"voice-previews/texts.json",
+			"voice-previews/README.md",
 			"package.json",
 			"bun.lock",
 			"bunfig.toml",
@@ -26,7 +27,7 @@ export default defineConfig({
 			"LICENSE",
 			"NOTICE.md",
 		],
-		excludeSources: ["public/runtime/**", "public/pdf-runtime/**"],
+		excludeSources: ["public/runtime/**", "public/pdf-runtime/**", "voice-previews/*.wav"],
 	},
 	hooks: {
 		"prepare:publicPaths": (_, paths) => {

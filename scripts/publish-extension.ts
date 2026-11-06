@@ -1,4 +1,4 @@
-import { assertReleaseLicensing } from "./release-licensing"
+import { assertLicenseMaterials } from "./check-licenses"
 import { buildVersion, parseVersion } from "./release-version"
 
 // Chrome uses WXT; Firefox uses Mozilla's client for first listings and updates.
@@ -33,7 +33,7 @@ if (import.meta.main) {
 	if (browser !== "chrome" && browser !== "firefox") throw new Error("Expected chrome or firefox")
 	parseVersion(version, !dryRun)
 	if (!dryRun) {
-		await assertReleaseLicensing()
+		await assertLicenseMaterials()
 		if (process.env.GITHUB_REF_TYPE !== "tag" || process.env.GITHUB_REF_NAME !== `v${version}`)
 			throw new Error("Publishing requires the matching release tag")
 	}

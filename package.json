@@ -31,8 +31,10 @@
 		"check:source-rebuild": "bun scripts/check-source-rebuild.ts",
 		"assets:store": "bun scripts/generate-store-assets.ts",
 		"package:store": "bun scripts/package-store.ts",
-		"check:licenses": "bun scripts/release-licensing.ts",
-		"audit:voice-licenses": "bun scripts/audit-voice-licenses.ts"
+		"check:licenses": "bun scripts/check-licenses.ts",
+		"audit:voice-licenses": "bun scripts/audit-voice-licenses.ts",
+		"previews:plan": "bun scripts/generate-voice-previews.ts --plan",
+		"previews:generate": "bun scripts/generate-voice-previews.ts"
 	},
 	"devDependencies": {
 		"@types/bun": "1.4.4",

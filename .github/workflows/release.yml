@@ -28,8 +28,6 @@ jobs:
       - run: bun scripts/release-version.ts --release
         env:
           DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-      - name: Validate public release licensing evidence
-        run: bun scripts/release-licensing.ts --release
 
   ci:
     needs: version

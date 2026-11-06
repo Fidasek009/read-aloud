@@ -1,13 +1,15 @@
 import { expect, test } from "bun:test"
 
-import { getVoice, languageLabel, qualityLabel, voiceChoice, voices } from "../src/speech/catalog.ts"
+import evidence from "../docs/evidence/voice-preview-generation-2026-11-06.json"
+import { catalogVoices, getVoice, languageLabel, qualityLabel, voiceChoice, voices } from "../src/speech/catalog.ts"
 import { tokenizeText } from "../src/speech/phonemes.ts"
 import { voiceModelId } from "../src/speech/protocol.ts"
 import { validateConfig } from "../src/speech/voice-config.ts"
 
 test("catalog assets are pinned and multilingual speaker choices refer to the shared model", () => {
 	expect(new Set(voices.map((voice) => voice.id)).size).toBe(voices.length)
-	expect(voices.length).toBeGreaterThan(170)
+	expect(catalogVoices.length).toBeGreaterThan(170)
+	expect(voices.length).toBe(171)
 	expect(voices.every((voice) => /^[a-f0-9]{64}$/.test(voice.sha256) && /^[a-f0-9]{64}$/.test(voice.configHash))).toBe(
 		true,
 	)
@@ -21,6 +23,21 @@ test("catalog assets are pinned and multilingual speaker choices refer to the sh
 	expect(() => voiceChoice("en_US-arctic-medium#9999")).toThrow("speaker")
 	expect(getVoice("he_IL-saspeech-medium").unsupported).toContain("hebrew")
 	expect(() => validateConfig({ audio: { sample_rate: 1 } })).toThrow("configuration")
+})
+
+test("models affected by our former mapping error remain available; unsupported engines are not offered", () => {
+	for (const entry of evidence.entries) {
+		const voice = getVoice(entry.id)
+		if (entry.status !== "unsupported-runtime") {
+			expect(voices).toContain(voice)
+			expect(voice.unsupported).toBeNull()
+		} else {
+			expect(voices).not.toContain(voice)
+			expect(voice.unsupported).toBeTruthy()
+			// Retain metadata so an older downloaded copy can still be deleted.
+			expect(languageLabel(voice)).toBeTruthy()
+		}
+	}
 })
 
 test("grapheme voice tokens keep original word spans and reject unreadable characters", () => {

@@ -1,8 +1,8 @@
 # Read Aloud
 
-A Firefox and Chrome extension in development: local speech, mandatory US English and Czech, explicit model ownership, and an intentionally small Edge-like reading interface. Natural voice quality is a release requirement still being evaluated.
+A Firefox and Chrome extension with local speech, a multilingual catalog with 171 available models, explicit model downloads, and a compact Edge-like playback bar. Natural voice quality is a release requirement still being evaluated.
 
-The current extension is a **development prototype** with explicit voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. It is not release-ready: native-entry autoplay, cold startup, PDF acceptance, model provenance, and GPU/Windows acceptance remain open. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for the latest confirmed requirements, including all three mandatory reading benchmarks.
+The extension provides explicit voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. It is not release-ready: native-entry autoplay, cold startup, PDF acceptance, model provenance, and GPU/Windows acceptance remain open. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for the latest confirmed requirements, including all three mandatory reading benchmarks.
 
 See [known issues](docs/known-issues.md) for user-facing limitations and [acceptance status](docs/feasibility-status.md) for remaining work.
 
@@ -25,11 +25,13 @@ Bun is development tooling; the finished extension must not require users to ins
 
 ## Technical notes
 
-The prototype uses a Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) describe the chosen approach and outstanding gates.
+Model management and [original preview production](voice-previews/README.md) derive from the same complete catalog, across every language and quality variant. Preview recordings are hosted separately and fetched only after Listen; replacement recordings currently remain local pending hosting and integration.
+
+The extension uses a Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) describe the chosen approach and outstanding gates.
 
 ## License
 
-Original project code is [MIT](LICENSE). Third-party runtime files, model weights, and voice/preview assets retain their own licenses. The prototype bundles GPL-3.0-or-later Spellophone/eSpeak NG with MIT ONNX Runtime. Original source files remain MIT; the combined bundle has GPL distribution obligations. See [NOTICE.md](NOTICE.md) and the [licensing inventory](docs/licensing.md). Public distribution remains gated.
+Original project code is [MIT](LICENSE). Third-party runtime files, model weights, and voice/preview assets retain their own licenses. The extension bundles GPL-3.0-or-later Spellophone/eSpeak NG with MIT ONNX Runtime. Original source files remain MIT; the combined bundle has GPL distribution obligations. See [NOTICE.md](NOTICE.md) and the [licensing checklist and open model/preview questions](docs/licensing.md). Run `bun run check:licenses` to verify supplied license/source materials; passing it does not establish release readiness.
 
 ## Browser checks
 
@@ -39,7 +41,7 @@ After building, use `bun run probe:chrome` and `bun run probe:firefox` for isola
 
 ## Voice management
 
-The voice page contains the pinned model catalog with search, source terms, variants, and explicit downloads; seven models need pronunciation engines that are not yet implemented. These are labeled unavailable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
+The voice page offers 171 models with search, source terms, variants, and explicit downloads. Seven upstream candidates require unsupported pronunciation engines and are excluded from new downloads; older downloaded copies remain deletable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
 
 ## PDF checks
 

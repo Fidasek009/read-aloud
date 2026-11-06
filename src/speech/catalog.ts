@@ -20,7 +20,8 @@ export interface Voice {
 	speakerNames: Record<string, number> | undefined
 }
 const base = `https://huggingface.co/rhasspy/piper-voices/resolve/${catalog.revision}`
-export const voices: readonly Voice[] = catalog.voices.map((voice) => ({
+/** Upstream metadata retained for maintenance and deleting older downloads. */
+export const catalogVoices: readonly Voice[] = catalog.voices.map((voice) => ({
 	...voice,
 	speakerNames: voice.speakerNames as Record<string, number> | undefined,
 	url: `${base}/${voice.path}`,
@@ -30,6 +31,8 @@ export const voices: readonly Voice[] = catalog.voices.map((voice) => ({
 		: null,
 	termsUrl: `https://huggingface.co/rhasspy/piper-voices/blob/${catalog.revision}/${voice.path.replace(/[^/]+$/, "MODEL_CARD")}`,
 }))
+/** Only compatible models are offered for download and reading. */
+export const voices: readonly Voice[] = catalogVoices.filter((voice) => !voice.unsupported)
 const languageNames = new Intl.DisplayNames(["en"], { type: "language" })
 const locales = new Map<string, Set<string>>()
 for (const voice of voices) {
@@ -41,10 +44,10 @@ for (const voice of voices) {
 /** Keep regional names only when they distinguish available catalog locales. */
 export function languageLabel(voice: Voice): string {
 	const language = new Intl.Locale(voice.locale.replaceAll("_", "-")).language
-	return locales.get(language)!.size > 1 ? voice.language : (languageNames.of(language) ?? voice.language)
+	return (locales.get(language)?.size ?? 0) > 1 ? voice.language : (languageNames.of(language) ?? voice.language)
 }
 
-const byId = new Map(voices.map((voice) => [voice.id, voice]))
+const byId = new Map(catalogVoices.map((voice) => [voice.id, voice]))
 export function qualityLabel(quality: string): string {
 	return quality === "x_low" ? "Extra low" : quality.charAt(0).toUpperCase() + quality.slice(1)
 }

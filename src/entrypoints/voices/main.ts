@@ -1,7 +1,7 @@
 import { browser } from "wxt/browser"
 
 import { localKeys } from "../../extension/storage.ts"
-import { languageLabel, qualityLabel, voices } from "../../speech/catalog.ts"
+import { catalogVoices, languageLabel, qualityLabel, voices } from "../../speech/catalog.ts"
 import { deleteVoice, downloadVoice, installedVoices, onVoicesChanged } from "../../speech/vault.ts"
 import "./style.css"
 
@@ -46,13 +46,8 @@ function stopPreview() {
 	}
 	preview = undefined
 }
-const priority = (id: string) => (id === "en_US-ljspeech-medium" ? 0 : id === "cs_CZ-jirka-medium" ? 1 : 2)
-const sorted = [...voices].sort(
-	(a, b) =>
-		priority(a.id) - priority(b.id) ||
-		a.language.localeCompare(b.language) ||
-		a.name.localeCompare(b.name) ||
-		a.quality.localeCompare(b.quality),
+const sorted = [...catalogVoices].sort(
+	(a, b) => a.language.localeCompare(b.language) || a.name.localeCompare(b.name) || a.quality.localeCompare(b.quality),
 )
 for (const [locale, name] of [...new Map(voices.map((voice) => [voice.locale, languageLabel(voice)]))].sort((a, b) =>
 	a[1].localeCompare(b[1]),
@@ -102,6 +97,7 @@ function render() {
 	const query = search.value.toLocaleLowerCase().trim()
 	const shown = sorted.filter(
 		(voice) =>
+			(!voice.unsupported || installed.has(voice.id)) &&
 			(!language.value || voice.locale === language.value) &&
 			(!qualityFilter.value || voice.quality === qualityFilter.value) &&
 			`${voice.name} ${voice.id} ${voice.language} ${voice.nativeLanguage} ${voice.quality}`
@@ -109,7 +105,7 @@ function render() {
 				.includes(query),
 	)
 	const resultCount = shown.length
-		? `${shown.length} of ${voices.length} models · ${installed.size} downloaded`
+		? `${shown.length} of ${sorted.filter((voice) => !voice.unsupported || installed.has(voice.id)).length} models · ${installed.size} downloaded`
 		: "No models match these filters."
 	if (count.textContent !== resultCount) count.textContent = resultCount
 	const shownIds = new Set(shown.map((voice) => voice.id))
@@ -139,7 +135,7 @@ function render() {
 		if (voice.unsupported) {
 			const warning = document.createElement("p")
 			warning.className = "compatibility"
-			warning.textContent = `${voice.unsupported}. Playback is not available yet.`
+			warning.textContent = "This voice cannot be used with this version. You can delete the download."
 			description.append(warning)
 		}
 		const sample = document.createElement("button")
