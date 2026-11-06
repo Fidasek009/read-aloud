@@ -9,10 +9,38 @@ import {
 	selectPreviewVoices,
 } from "../scripts/voice-preview-catalog.ts"
 import { catalogVoices as voices } from "../src/speech/catalog.ts"
+import delivery from "../src/speech/previews.json"
+import originals from "../voice-previews/catalog.json"
 
 const roots: string[] = []
 afterEach(async () => {
 	for (const root of roots.splice(0)) await $`rm -rf ${root}`.quiet()
+})
+
+test("every available model streams its matching original recording from the pinned Read Aloud collection", () => {
+	expect(delivery.revision).toMatch(/^[a-f0-9]{40}$/)
+	expect(Object.keys(delivery.recordings).sort()).toEqual(
+		voices
+			.filter((voice) => !voice.unsupported)
+			.map((voice) => voice.id)
+			.sort(),
+	)
+	for (const voice of voices) {
+		if (voice.unsupported) {
+			expect(voice.previewUrl).toBeNull()
+			continue
+		}
+		const recording = originals[voice.id as keyof typeof originals]
+		expect(recording.modelSha256).toBe(voice.sha256)
+		expect(recording.configSha256).toBe(voice.configHash)
+		expect(recording.text).toBe(previewText(voice))
+		expect(recording.speaker).toBe(0)
+		expect(recording.speed).toBe(1)
+		expect(delivery.recordings[voice.id as keyof typeof delivery.recordings]).toBe(recording.audioSha256)
+		expect(voice.previewUrl).toBe(
+			`https://raw.githubusercontent.com/Fidasek009/read-aloud/${delivery.revision}/samples/${encodeURIComponent(voice.id)}.wav`,
+		)
+	}
 })
 
 test("preview production covers every catalog model, language and quality without a voice allowlist", () => {
@@ -60,6 +88,8 @@ test("resume verifies actual recording bytes and exact recipe before skipping wo
 		renderer: "test",
 	}
 	expect(await currentPreview(voice, record, root, "renderer")).toBe(true)
+	// Delivery and unrelated bundle changes preserve already verified recordings.
+	expect(await currentPreview(voice, record, root)).toBe(true)
 	for (const change of [
 		{ text: "old text" },
 		{ modelSha256: "changed" },

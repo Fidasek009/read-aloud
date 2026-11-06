@@ -1,3 +1,4 @@
+import previews from "./previews.json"
 import { voiceModelId } from "./protocol.ts"
 import catalog from "./voices.json"
 
@@ -26,9 +27,10 @@ export const catalogVoices: readonly Voice[] = catalog.voices.map((voice) => ({
 	speakerNames: voice.speakerNames as Record<string, number> | undefined,
 	url: `${base}/${voice.path}`,
 	configUrl: `${base}/${voice.path}.json`,
-	previewUrl: voice.previewPath
-		? `https://raw.githubusercontent.com/rhasspy/piper-samples/${catalog.samplesRevision}/${voice.previewPath}`
-		: null,
+	previewUrl:
+		!voice.unsupported && Object.hasOwn(previews.recordings, voice.id)
+			? `https://raw.githubusercontent.com/Fidasek009/read-aloud/${previews.revision}/samples/${encodeURIComponent(voice.id)}.wav`
+			: null,
 	termsUrl: `https://huggingface.co/rhasspy/piper-voices/blob/${catalog.revision}/${voice.path.replace(/[^/]+$/, "MODEL_CARD")}`,
 }))
 /** Only compatible models are offered for download and reading. */

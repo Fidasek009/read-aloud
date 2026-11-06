@@ -19,7 +19,8 @@ import {
 const args = process.argv.slice(2)
 const planOnly = args.includes("--plan")
 const recheck = args.includes("--recheck")
-const ids = args.filter((arg) => arg !== "--plan" && arg !== "--recheck")
+const regenerate = args.includes("--regenerate")
+const ids = args.filter((arg) => !["--plan", "--recheck", "--regenerate"].includes(arg))
 const selected = selectPreviewVoices(ids.length || !planOnly ? ids : ["--all"])
 for (const voice of selected) previewText(voice)
 const directory = `${projectRoot}/voice-previews`
@@ -90,7 +91,10 @@ try {
 			console.error(`Unsupported ${id}: ${voice.unsupported}`)
 			continue
 		}
-		if (await currentPreview(voice, records[id], directory, rendererSha256)) {
+		// Existing recordings remain valid when delivery URLs, notices or other
+		// unrelated bundle bytes change. Preserve their original renderer identity;
+		// refreshing speech after an engine change is an explicit maintainer action.
+		if (!regenerate && (await currentPreview(voice, records[id], directory))) {
 			console.log(`Verified existing preview (${index + 1}/${selected.length}): ${id}`)
 			continue
 		}

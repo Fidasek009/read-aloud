@@ -1,6 +1,6 @@
 # Read Aloud privacy policy
 
-Effective: 2026-11-05.
+Effective: 2026-11-06.
 
 Read Aloud reads articles, explicitly selected text, and PDFs using speech synthesis running inside the browser extension on your computer. Reading text and synthesized audio are not sent to a remote speech service. The extension has no accounts, advertising, analytics or telemetry.
 
@@ -10,7 +10,7 @@ Selected/article/PDF text is processed to determine reading order, prepare speec
 
 ## Network requests
 
-A voice is downloaded only after you explicitly choose Download. Model files and configuration are fetched from pinned Hugging Face resources. A prerecorded voice sample is requested from GitHub-hosted Piper Samples only after you select Listen. These requests disclose ordinary connection information, including your IP address, to the hosting providers; they do not contain your selected/page text or synthesized audio. Those providers apply their own privacy policies. License/source links open the referenced external sites when you choose them.
+A voice is downloaded only after you explicitly choose Download. Model files and configuration are fetched from pinned Hugging Face resources. Our own prerecorded voice sample is requested from the Read Aloud repository on GitHub only after you select Listen. Samples use original preview texts and contain no user reading content. These requests disclose ordinary connection information, including your IP address, to the hosting providers; they do not contain your selected/page text or synthesized audio. Those providers apply their own privacy policies. License/source links open the referenced external sites when you choose them.
 
 Reading an online PDF may fetch that PDF from its original website. The extension may request access to that site to complete the fetch. This is access to the source document, not remote synthesis. Local file access depends on browser permissions. Browser/store update checks are controlled by the browser and extension store.
 

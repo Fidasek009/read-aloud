@@ -71,7 +71,7 @@ Previously asked questions on setup, reading scope, hardware, downloads, Piper's
 
 ## Immediate work
 
-1. Improve cold startup and PDF readiness, and measure against the confirmed 1-second warm / 2-second cold target on the specified device.
+1. Track cold startup and PDF readiness against the 1-second warm / 2-second cold optimization goal. On 2026-11-06 the owner explicitly waived performance as a first-release blocker; retain measured limitations without delaying that release for the latency goal.
 2. Validate CPU fallback, GPU inference, Windows, voice quality, pitch, accessibility, and complete benchmark reading behavior.
 3. Resolve licensing and distribution obligations for the extension's dependencies and voices.
 

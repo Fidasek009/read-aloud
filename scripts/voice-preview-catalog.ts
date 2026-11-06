@@ -52,7 +52,7 @@ export function previewLicenseEvidence(voice: Voice) {
 	}
 }
 
-/** Do not silently reuse recordings after text, model, config or renderer changes. */
+/** Verify recording identity; optionally require a particular historical renderer. */
 export async function currentPreview(
 	voice: Voice,
 	record: PreviewRecord | undefined,

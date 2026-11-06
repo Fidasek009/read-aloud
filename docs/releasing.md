@@ -1,6 +1,6 @@
 # CI and releases
 
-Updated **2026-11-05**. The implementation agent owns release engineering, icons, promotional artwork, screenshots, listing/privacy copy, and the submission package. The product owner supplies product decisions and only the account/identity/credential actions that cannot be performed without their access. They are not assigned design, copywriting, building, or routine publishing work.
+Updated **2026-11-06**. The implementation agent owns release engineering, icons, promotional artwork, screenshots, listing/privacy copy, and the submission package. The product owner supplies product decisions and only the account/identity/credential actions that cannot be performed without their access. They are not assigned design, copywriting, building, or routine publishing work.
 
 ## Version authority and automatic publishing
 
@@ -15,7 +15,7 @@ git tag -a v0.1.0 -m 'Release 0.1.0'
 git push origin v0.1.0
 ```
 
-No package bump, manual ZIP build, artwork task, separate `RELEASE_READY` variable or manual GitHub release creation is required. CI verifies required license notices and pinned source materials. The concise [licensing checklist](licensing.md) separately records the two open model/preview assessments; a passing material check does not establish release readiness. The tag triggers **CI → CD → published GitHub release**. Chrome is submitted with default automatic publication after approval; Firefox uses AMO's listed channel. The stores retain control of review timing and decisions. GitHub release notes state that submission success is not a claim of store approval.
+No package bump, manual ZIP build, artwork task, separate `RELEASE_READY` variable or manual GitHub release creation is required. CI verifies required license notices and pinned source materials. The concise [licensing checklist](licensing.md) separately records remaining model/output assessments; a passing material check does not establish release readiness. The tag triggers **CI → CD → published GitHub release**. Chrome is submitted with default automatic publication after approval; Firefox uses AMO's listed channel. The stores retain control of review timing and decisions. GitHub release notes state that submission success is not a claim of store approval.
 
 ## Workflows
 
@@ -54,7 +54,7 @@ The first live Firefox release creates its listing and consumes the tag-derived 
 
 ## Acceptance and retries
 
-`bun run check:licenses` checks required notices, pinned source archive/build-recipe checksums and dependency/source version alignment. It runs in CI and standalone live publishers. Package checks verify the installed license links. There is no review JSON, routine source-file hash refresh or separate release mode. The two open model/preview assessments remain in [the licensing checklist](licensing.md); simplifying automation does not clear them or certify release readiness. Corresponding-source materials and notices are supplied, including the exact Kasandra medium grant and attribution. The agent remains responsible for addressing applicable license conditions and the separate latency, Windows, GPU/CPU and real-browser acceptance in [feasibility status](feasibility-status.md) before publication. Use Store check for credential testing.
+`bun run check:licenses` checks required notices, pinned source archive/build-recipe checksums and dependency/source version alignment. It runs in CI and standalone live publishers. Package checks verify the installed license links. There is no review JSON, routine source-file hash refresh or separate release mode. Remaining model/output assessments remain in [the licensing checklist](licensing.md); simplifying automation does not clear them or certify release readiness. Corresponding-source materials and notices are supplied, including the exact Kasandra medium grant and attribution. The agent remains responsible for addressing applicable license conditions and the separate Windows, GPU/CPU and real-browser acceptance in [feasibility status](feasibility-status.md) before publication. The owner waived performance as a first-release blocker on 2026-11-06; keep measured limitations documented and optimize afterward. Original previews are separately hosted and fetched only on Listen; see voice-previews/README.md. Use Store check for credential testing.
 
 Stores and GitHub cannot commit an atomic transaction. If one store accepts and the other fails, the accepted submission remains; GitHub release publication is withheld. Inspect state and rerun only failed jobs, never blindly repeat a successful upload. If a request timed out after acceptance, reconcile the store state before retrying. Code fixes get a higher tag; existing tags and published artifacts stay immutable.
 

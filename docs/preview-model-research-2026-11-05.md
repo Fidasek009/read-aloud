@@ -2,6 +2,8 @@
 
 Checked **2026-11-05**, using existing public sources only. No issue, comment, email or other third-party contact was sent. The owner chose to keep preview playback inside the extension and investigate our own recordings. This is an evidence note, not another CI approval record.
 
+**Delivery update, 2026-11-06:** all 171 available models now use our own separately hosted recordings and original passages. The previous upstream-recording/transcript permission question below is historical and no longer applies to production. Underlying model/output assessments remain separate; see the current [licensing checklist](licensing.md) and [delivery instructions](../voice-previews/README.md).
+
 ## What can be settled now
 
 - **Private local modification differs from sharing.** CC BY 4.0 sections 1(i), 2(a) and 3(a) distinguish private reproduction/adaptation from making material public. Its attribution/change conditions apply when sharing. Our extension ships no voice weights, uploads no modified model, and provides no synthesis server. Therefore a user's private instrumented model is not, merely because it was modified, a requirement for us to publish that model. We retain source/license and change information as good provenance. This assessment applies where CC BY actually covers the model; a dataset-only label does not establish that scope. [CC BY legal code](https://creativecommons.org/licenses/by/4.0/legalcode.en).

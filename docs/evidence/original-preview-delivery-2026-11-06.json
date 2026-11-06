@@ -1,0 +1,47 @@
+{
+	"checkedAt": "2026-11-06T11:30:16.601Z",
+	"delivery": {
+		"repository": "Fidasek009/read-aloud",
+		"branch": "voice-previews",
+		"commit": "cd9ba44e150f15be9d3cda670b5b82ffe7e503e6",
+		"availableModels": 171,
+		"originalRecordings": 171,
+		"audioBytes": 41745764,
+		"format": "PCM16 mono WAV",
+		"remoteVerification": "Every public recording fetched successfully with cross-origin access and matched its committed SHA-256. Original text/model/config identity checked against provenance and the shared catalog.",
+		"bundledPreviewAudioFiles": 0,
+		"upstreamSampleRequests": 0,
+		"modelRequestsForAudition": 0,
+		"prefetchRequests": 0
+	},
+	"chrome": {
+		"version": "156.0.8078.4",
+		"played": 171,
+		"advancingClocks": true,
+		"switching": true,
+		"stop": true,
+		"offlineRecovery": true,
+		"scriptExceptions": 0,
+		"networkChangeRetries": "2 (de_DE-pavoque-low, de_DE-thorsten_emotional-medium)"
+	},
+	"firefox": {
+		"version": "159.0",
+		"played": 171,
+		"advancingClocks": true,
+		"switching": true,
+		"stop": true,
+		"scriptExceptions": 0,
+		"interruptedAttemptsRetried": []
+	},
+	"verification": {
+		"tests": 131,
+		"typecheck": "passed: app, worker and tooling",
+		"format": "passed",
+		"workflowLint": "passed",
+		"chromePackage": "passed",
+		"firefoxPackage": "passed",
+		"reviewerRebuildMatchingFiles": 380,
+		"generatorReuse": "All 171 originals verified and reused without regenerating any recording."
+	},
+	"scope": "Actual production Listen handlers and public originals in isolated Chrome/Firefox profiles, with test-only Audio/error observation and a private virtual audio sink. No product host-permission changes. Numerical playback/transport checks do not establish listening quality, target-device latency, physical audio output or underlying model/output rights. Performance was explicitly waived as a first-release blocker by the owner."
+}
