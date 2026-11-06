@@ -56,8 +56,8 @@ test("diagnostics reject malformed timings, unknown voices and raw fallback mess
 			crossOriginIsolated: "true",
 		}),
 	).toEqual({})
-	expect(speechDiagnostics({ voice: "en_GB-aru-medium#1" })).toEqual({ voice: "en_GB-aru-medium#1" })
-	for (const voice of ["en_US-ljspeech-medium#1", "en_GB-aru-medium#999", "en_GB-aru-medium#1#2", "en_GB-aru-medium#"])
+	expect(speechDiagnostics({ voice: "en_GB-aru-medium" })).toEqual({ voice: "en_GB-aru-medium" })
+	for (const voice of ["en_GB-aru-medium#1", "en_US-ljspeech-medium#1"])
 		expect(speechDiagnostics({ voice })).toEqual({})
 })
 

@@ -1,4 +1,4 @@
-import { MAX_VOICE_CHOICE_LENGTH } from "./protocol.ts"
+import { MAX_VOICE_ID_LENGTH } from "./protocol.ts"
 import catalog from "./voices.json"
 
 /** Configured runtime values and elapsed times only; never source text or errors. */
@@ -52,16 +52,8 @@ export function isWorkerTimings(value: unknown): value is WorkerTimings {
 	return object(value) && Object.entries(value).every(([key, item]) => workerField(key, item))
 }
 
-function knownVoice(choice: unknown): choice is string {
-	if (typeof choice !== "string" || choice.length > MAX_VOICE_CHOICE_LENGTH) return false
-	const [id, speaker, extra] = choice.split("#")
-	const voice = catalog.voices.find((item) => item.id === id)
-	return (
-		!!voice &&
-		extra === undefined &&
-		(speaker === undefined ||
-			(/^\d+$/u.test(speaker) && Number.isSafeInteger(Number(speaker)) && Number(speaker) < voice.speakers))
-	)
+function knownVoice(id: unknown): id is string {
+	return typeof id === "string" && id.length <= MAX_VOICE_ID_LENGTH && catalog.voices.some((voice) => voice.id === id)
 }
 
 /** Copy an explicit allowlist at transport and persistence boundaries. */

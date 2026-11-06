@@ -19,9 +19,6 @@ await copyProbeExtension("firefox", out)
 await $`mkdir -p ${root + "/.cache/product-probe/profiles"}`.quiet()
 await observePlayerAudio(out)
 await observeContextMenu(out)
-const speakerModel = Bun.file(`${root}/.cache/speaker-fixture/model.onnx`)
-const speakerConfig = Bun.file(`${root}/.cache/speaker-fixture/config.json`)
-const hasSpeakerFixture = (await speakerModel.exists()) && (await speakerConfig.exists())
 const cachedPdf = Bun.env.PDF_CACHED === "1" ? Bun.file(`${root}/.cache/benchmarks/muni-thesis.pdf`) : undefined
 if (
 	cachedPdf &&
@@ -30,16 +27,6 @@ if (
 			"30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32")
 )
 	throw new Error("Provision the pinned original MUNI thesis before using PDF_CACHED=1")
-if (hasSpeakerFixture) {
-	const built = await Bun.build({
-		entrypoints: [`${root}/scripts/check-speakers.ts`],
-		outdir: out,
-		naming: "check-speakers.js",
-		target: "browser",
-		format: "esm",
-	})
-	if (!built.success) throw new AggregateError(built.logs, "Speaker fixture failed to bundle")
-}
 const manifest = await Bun.file(`${out}/manifest.json`).json()
 // Test-only grant for scripted entry; native Firefox action activation is a separate gate.
 manifest.host_permissions = ["http://127.0.0.1/*", "https://is.muni.cz/*"]
@@ -51,10 +38,6 @@ const server = Bun.serve({
 		const path = new URL(request.url).pathname
 		if (cachedPdf && path === "/thesis.pdf")
 			return new Response(cachedPdf, { headers: { "Content-Type": "application/pdf" } })
-		if (hasSpeakerFixture && (path === "/model" || path === "/config"))
-			return new Response(path === "/model" ? speakerModel : speakerConfig, {
-				headers: { "Access-Control-Allow-Origin": "*", "Cross-Origin-Resource-Policy": "cross-origin" },
-			})
 		return new Response(
 			'<!doctype html><main><h1>Čtení na vašem zařízení</h1><p id="selection">Dobrý den. Čtení běží přímo ve vašem počítači a váš text zůstává v soukromí, zatímco přirozený hlas pokračuje ve čtení této delší věty, abychom mohli ověřit ovládání přehrávání.</p><p id="warm-selection">Jenom tento výběr.</p><p>Další věta pro ověření přehrávání.</p></main>',
 			{ headers: { "Content-Type": "text/html;charset=utf-8" } },
@@ -587,15 +570,6 @@ try {
 	console.log(
 		`Firefox ${cachedPdf ? "cached" : "live"} MUNI PDF fetch, text mapping, highlighting, and original-tab preservation passed.`,
 	)
-	const speakerSwitch = hasSpeakerFixture
-		? await script(
-				`import(browser.runtime.getURL('check-speakers.js')).then(m=>m.checkSpeakers(${JSON.stringify(server.url.href)}))`,
-			)
-		: undefined
-	if (hasSpeakerFixture) {
-		assert(speakerSwitch?.reusedSession, `Firefox speaker switching failed: ${JSON.stringify(speakerSwitch)}`)
-		console.log("Firefox two-speaker model reused:", JSON.stringify(speakerSwitch))
-	}
 	await Bun.write(
 		`${root}/.cache/evidence/firefox-product.json`,
 		JSON.stringify(
@@ -609,7 +583,6 @@ try {
 				pdfSelection,
 				pdfSelectionReadyMs,
 				pdfFirstBufferMs,
-				...(speakerSwitch ? { speakerSwitch } : {}),
 				passed: [
 					"no-voice state hides unusable controls",
 					"live installation recovers a stale preference",

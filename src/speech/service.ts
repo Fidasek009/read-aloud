@@ -1,6 +1,6 @@
 import { type SpeechDiagnostics, speechDiagnostics } from "./diagnostics.ts"
 import { speechFailure, speechFailureCode } from "./errors.ts"
-import { type SpeechClip, type SpeechRequest, type SpeechResponse, voiceModelId } from "./protocol.ts"
+import { type SpeechClip, type SpeechRequest, type SpeechResponse } from "./protocol.ts"
 import { synthesizeWithRecovery } from "./recovery.ts"
 
 interface SpeechBackend {
@@ -22,7 +22,7 @@ export class SpeechService {
 		private encoding: "base64" | "structured" = "base64",
 	) {}
 	voiceDeleted(id: string) {
-		if (voiceModelId(this.requestedVoice) === id) {
+		if (this.requestedVoice === id) {
 			this.generation++
 			this.engine.dispose()
 		}

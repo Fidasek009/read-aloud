@@ -4,7 +4,6 @@ import type { GpuFallbackReason, SpeechDiagnostics } from "./diagnostics.ts"
 import type { SpeechClip } from "./protocol.ts"
 import type { VoiceConfig } from "./voice-config.ts"
 
-import { voiceChoice } from "./catalog.ts"
 import { SPEECH_REQUEST_TIMEOUT_MS, speechFailure, SpeechTextError, SpeechTimeoutError } from "./errors.ts"
 import { sendSpeechHost, SPEECH_GPU_FAILURE_KEY } from "./host-protocol.ts"
 import { readVoice } from "./vault.ts"
@@ -105,14 +104,14 @@ export class SpeechEngine {
 	}
 
 	private async loadVoice(voice: string): Promise<void> {
-		const sameModel = this.voice && voiceChoice(this.voice).voice.id === voiceChoice(voice).voice.id
-		if (sameModel && this.worker && !this.cpuFallback) {
+		const sameVoice = this.voice === voice
+		if (sameVoice && this.worker && !this.cpuFallback) {
 			// A reused session did not incur the previous initialization costs.
 			this.voice = voice
 			this.diagnostics = { backend: this.backend, voice, reusedSession: true }
 			return
 		}
-		let recovered = sameModel ? this.cpuFallback?.recovered : undefined
+		let recovered = sameVoice ? this.cpuFallback?.recovered : undefined
 		this.dispose()
 		const loadStarted = performance.now()
 		const epoch = this.epoch
@@ -139,7 +138,6 @@ export class SpeechEngine {
 
 	private async initialize(voice: string, backend: "cpu" | "gpu", epoch: number, recovered?: RecoveredModel) {
 		const started = performance.now()
-		const selected = voiceChoice(voice)
 		// Parsing the worker and loading its runtime imports overlaps the IDB read.
 		const worker = this.runtime.createWorker(backend)
 		this.worker = worker
@@ -160,16 +158,13 @@ export class SpeechEngine {
 		worker.onerror = () => {
 			if (this.worker === worker) this.stopWorker(new Error("The speech worker stopped unexpectedly"))
 		}
-		const { model, config } = recovered ?? (await this.runtime.readVoice(selected.voice.id))
+		const { model, config } = recovered ?? (await this.runtime.readVoice(voice))
 		const modelReadMs = recovered ? recovered.modelReadMs : performance.now() - started
 		if (epoch !== this.epoch) throw speechFailure("cancelled")
 		this.backend = backend
 		let loaded: Extract<WorkerSuccess, { type: "load" }>
 		try {
-			loaded = await this.request(
-				{ type: "load", voice: selected.voice.id, speaker: selected.speaker, config, model },
-				[model],
-			)
+			loaded = await this.request({ type: "load", voice, config, model }, [model])
 		} catch (error) {
 			if (error instanceof WorkerFailure && error.model) throw new WorkerLoadFailure(error, config, modelReadMs)
 			if (model.byteLength)
@@ -198,7 +193,6 @@ export class SpeechEngine {
 		const epoch = this.epoch
 		const generation = this.generation
 		const cacheEpoch = this.cacheEpoch
-		const speaker = voiceChoice(this.voice).speaker
 		const key = `${this.voice}\u0000${speed}\u0000${text}`
 		const job = this.serial
 			.catch(() => {})
@@ -206,7 +200,7 @@ export class SpeechEngine {
 				if (epoch !== this.epoch || generation !== this.generation) throw speechFailure("cancelled")
 				return (
 					this.clips.get(key) ??
-					this.generate(text, speed, generation, speaker).then((clip) => {
+					this.generate(text, speed, generation).then((clip) => {
 						// Completed work can be reused after Next/Previous, but never
 						// across model disposal or a change in reading ownership.
 						if (epoch === this.epoch && cacheEpoch === this.cacheEpoch && clip.pcm.byteLength <= 4_000_000) {
@@ -227,7 +221,7 @@ export class SpeechEngine {
 		return job
 	}
 
-	private async generate(text: string, speed: number, generation: number, speaker: number): Promise<SpeechClip> {
+	private async generate(text: string, speed: number, generation: number): Promise<SpeechClip> {
 		const epoch = this.epoch
 		const started = performance.now()
 		let value: Extract<WorkerSuccess, { type: "synthesize" }>
@@ -240,7 +234,7 @@ export class SpeechEngine {
 				if (epoch !== this.epoch || generation !== this.generation) throw speechFailure("cancelled")
 				this.diagnostics.gpuFallbackReason = "gpu-inference-failed"
 			}
-			value = await this.request({ type: "synthesize", text, speed, speaker })
+			value = await this.request({ type: "synthesize", text, speed })
 		} catch (error) {
 			if (epoch !== this.epoch) throw speechFailure("cancelled")
 			if (this.backend === "cpu" || error instanceof SpeechTextError) {
@@ -262,7 +256,7 @@ export class SpeechEngine {
 			this.cpuFallback = undefined
 			if (epoch !== this.epoch || generation !== this.generation) throw speechFailure("cancelled")
 			this.diagnostics.gpuFallbackReason = "gpu-inference-failed"
-			value = await this.request({ type: "synthesize", text, speed, speaker })
+			value = await this.request({ type: "synthesize", text, speed })
 		}
 		if (epoch !== this.epoch) throw speechFailure("cancelled")
 		this.diagnostics.synthesisMs = performance.now() - started

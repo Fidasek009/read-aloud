@@ -52,13 +52,13 @@ export async function checkSpeech(text: string, base: string) {
 			throw Error("Wrong model fixture")
 		const config = await (await fetch(base + "config")).json()
 		const model = instrumentModel(bytes).buffer
-		await request({ type: "load", voice: "en_US-ljspeech-medium", speaker: 0, model, config }, [model])
+		await request({ type: "load", voice: "en_US-ljspeech-medium", model, config }, [model])
 		let samples = 0,
 			words = 0,
 			chunks = 0
 		for (const part of readingChunks(text)) {
 			const input = text.slice(part.start, part.end)
-			const result = await request({ type: "synthesize", text: input, speed: 1, speaker: 0 })
+			const result = await request({ type: "synthesize", text: input, speed: 1 })
 			if (!result.pcm.some((sample) => Math.abs(sample) > 0.001) || !result.words.length)
 				throw Error("Empty or silent speech")
 			if (result.words.some((word) => word.start < 0 || word.end > input.length || word.end <= word.start))
@@ -67,7 +67,7 @@ export async function checkSpeech(text: string, base: string) {
 			words += result.words.length
 			chunks++
 		}
-		const compound = await request({ type: "synthesize", text: "pre-exascale computing.", speed: 1, speaker: 0 })
+		const compound = await request({ type: "synthesize", text: "pre-exascale computing.", speed: 1 })
 		const aligned = compound.words.find((word) => word.start === 0)
 		if (!aligned || aligned.end !== 12) throw Error("Neural compound highlight did not cover the full word")
 		return {

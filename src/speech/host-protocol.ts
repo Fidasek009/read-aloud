@@ -1,6 +1,6 @@
 import { browser } from "wxt/browser"
 
-import { MAX_VOICE_CHOICE_LENGTH } from "./protocol.ts"
+import { MAX_VOICE_ID_LENGTH } from "./protocol.ts"
 
 export const SPEECH_CLIENT_PORT = "speech-client"
 export const SPEECH_SERVER_PORT = "speech-server"
@@ -72,7 +72,7 @@ export function isSpeechHostCommand(message: unknown): message is SpeechHostComm
 		return false
 	return (
 		message.type !== "speech-voice-deleted" ||
-		("id" in message && typeof message.id === "string" && !!message.id && message.id.length <= MAX_VOICE_CHOICE_LENGTH)
+		("id" in message && typeof message.id === "string" && !!message.id && message.id.length <= MAX_VOICE_ID_LENGTH)
 	)
 }
 
@@ -86,7 +86,7 @@ export async function sendSpeechHost<C extends SpeechHostCommand>(command: C): P
 	const valid =
 		command.type === "installed-voices"
 			? Array.isArray(response) &&
-				response.every((id: unknown) => typeof id === "string" && id.length <= MAX_VOICE_CHOICE_LENGTH)
+				response.every((id: unknown) => typeof id === "string" && id.length <= MAX_VOICE_ID_LENGTH)
 			: isSpeechHostReply(response)
 	if (!valid) throw new Error(`Invalid speech host reply to ${command.type}`)
 	return response as SpeechHostResponse<C>

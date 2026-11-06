@@ -83,7 +83,6 @@ self.onmessage = async ({ data }: MessageEvent<unknown>) => {
 			timings.workerLoadMs = performance.now() - started
 			self.postMessage({ id, ok: true, type: "load", timings } satisfies WorkerResponse)
 		} else if (data.type === "synthesize" && voiceId && session && phonemizer && config) {
-			if (data.speaker >= (config.num_speakers ?? 1)) throw new Error("This speaker is not available")
 			const tokens =
 				config.phoneme_type === "text"
 					? tokenizeText(data.text, config.phoneme_id_map, config.espeak.voice)
@@ -107,8 +106,8 @@ self.onmessage = async ({ data }: MessageEvent<unknown>) => {
 					[3],
 				),
 			}
-			if (session.inputNames.includes("sid"))
-				feeds.sid = new ort.Tensor("int64", new BigInt64Array([BigInt(data.speaker)]), [1])
+			// Multi-speaker models read with their first speaker; the app exposes one voice per model.
+			if (session.inputNames.includes("sid")) feeds.sid = new ort.Tensor("int64", new BigInt64Array([0n]), [1])
 			const output = await session.run(feeds)
 			const pcm = Float32Array.from(output.output!.data as Float32Array)
 			const durations = output.read_aloud_durations!.data as Float32Array

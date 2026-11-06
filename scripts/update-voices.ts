@@ -46,8 +46,6 @@ await Promise.all(
 				unsupported: ["espeak", "text"].includes(phonemeType)
 					? null
 					: `Requires the ${phonemeType} pronunciation engine`,
-				speakers: voice.num_speakers,
-				speakerNames: voice.num_speakers > 1 ? voice.speaker_id_map : undefined,
 			})
 		}
 	}),

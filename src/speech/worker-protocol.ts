@@ -1,7 +1,7 @@
 import type { WordTiming } from "./phonemes.ts"
 
 import { isWorkerTimings, type WorkerTimings } from "./diagnostics.ts"
-import { MAX_VOICE_CHOICE_LENGTH, speechRequest } from "./protocol.ts"
+import { MAX_VOICE_ID_LENGTH, speechRequest } from "./protocol.ts"
 import { validateConfig, type VoiceConfig } from "./voice-config.ts"
 
 function isArrayBuffer(value: unknown): value is ArrayBuffer {
@@ -9,8 +9,8 @@ function isArrayBuffer(value: unknown): value is ArrayBuffer {
 }
 
 export type WorkerRequest =
-	| { id: number; type: "load"; voice: string; speaker: number; config: VoiceConfig; model: ArrayBuffer }
-	| { id: number; type: "synthesize"; text: string; speed: number; speaker: number }
+	| { id: number; type: "load"; voice: string; config: VoiceConfig; model: ArrayBuffer }
+	| { id: number; type: "synthesize"; text: string; speed: number }
 
 export type WorkerCommand =
 	Omit<Extract<WorkerRequest, { type: "load" }>, "id"> | Omit<Extract<WorkerRequest, { type: "synthesize" }>, "id">
@@ -32,15 +32,7 @@ export type WorkerResponse =
 /** Validate data received across the worker boundary, including the stored model config. */
 export function isWorkerRequest(value: unknown): value is WorkerRequest {
 	if (!value || typeof value !== "object" || !("type" in value)) return false
-	if (value.type === "synthesize")
-		return (
-			speechRequest(value) &&
-			value.type === "synthesize" &&
-			"speaker" in value &&
-			typeof value.speaker === "number" &&
-			Number.isSafeInteger(value.speaker) &&
-			value.speaker >= 0
-		)
+	if (value.type === "synthesize") return speechRequest(value) && value.type === "synthesize"
 	if (
 		value.type !== "load" ||
 		!("id" in value) ||
@@ -48,18 +40,15 @@ export function isWorkerRequest(value: unknown): value is WorkerRequest {
 		!("voice" in value) ||
 		typeof value.voice !== "string" ||
 		!value.voice ||
-		value.voice.length > MAX_VOICE_CHOICE_LENGTH ||
-		!("speaker" in value) ||
-		typeof value.speaker !== "number" ||
-		!Number.isSafeInteger(value.speaker) ||
-		value.speaker < 0 ||
+		value.voice.length > MAX_VOICE_ID_LENGTH ||
 		!("model" in value) ||
 		!isArrayBuffer(value.model) ||
 		!("config" in value)
 	)
 		return false
 	try {
-		return value.speaker < (validateConfig(value.config).num_speakers ?? 1)
+		validateConfig(value.config)
+		return true
 	} catch {
 		return false
 	}

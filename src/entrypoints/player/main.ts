@@ -8,7 +8,7 @@ import { bindMediaSession } from "../../playback/media-session.ts"
 import { parentReaderHost } from "../../reading/bridge.ts"
 import { isReaderChange, isReaderResponse, type ReaderCommand, type ReaderResponse } from "../../reading/host.ts"
 import { readerMessage, readingMessages } from "../../reading/messages.ts"
-import { languageLabel, qualityLabel, voiceChoice, voices } from "../../speech/catalog.ts"
+import { getVoice, languageLabel, qualityLabel, qualityRank, voices } from "../../speech/catalog.ts"
 import { SpeechClient } from "../../speech/client.ts"
 import { firstAudioPerformance, firstBufferPerformance } from "../../speech/diagnostics.ts"
 import {
@@ -19,7 +19,7 @@ import {
 	SpeechVoiceError,
 } from "../../speech/errors.ts"
 import { sendSpeechHost } from "../../speech/host-protocol.ts"
-import { isVoiceChange, voiceModelId } from "../../speech/protocol.ts"
+import { isVoiceChange } from "../../speech/protocol.ts"
 import "./style.css"
 
 const session = location.hash.slice(1)
@@ -227,7 +227,7 @@ function updateSpeed() {
 	speed.setAttribute("aria-valuetext", `${Number(speed.value)}× normal speed`)
 }
 function restart() {
-	const { voice } = voiceChoice(voiceSelect.value)
+	const voice = getVoice(voiceSelect.value)
 	void controller.restart(voiceSelect.value, voice.locale, Number(speed.value))
 }
 speed.oninput = updateSpeed
@@ -252,24 +252,24 @@ async function refreshVoices(
 	if (controller.closed || current !== voiceRevision) return hasVoices
 	const previousChoice = voiceSelect.value
 	voiceSelect.replaceChildren()
-	for (const voice of voices.filter((voice) => installed.has(voice.id))) {
-		const group = document.createElement("optgroup")
-		group.label = `${voice.name} · ${qualityLabel(voice.quality)} · ${languageLabel(voice)}`
-		const names = new Map(Object.entries(voice.speakerNames ?? {}).map(([name, id]) => [id, name]))
-		for (let speaker = 0; speaker < voice.speakers; speaker++) {
-			const option = document.createElement("option")
-			option.value = speaker ? `${voice.id}#${speaker}` : voice.id
-			option.textContent =
-				voice.speakers > 1
-					? `${voice.name} · ${names.get(speaker) ?? `Speaker ${speaker + 1}`}`
-					: `${voice.name} · ${qualityLabel(voice.quality)}`
-			group.append(option)
-		}
-		voiceSelect.append(group)
+	for (const voice of voices
+		.filter((voice) => installed.has(voice.id))
+		.sort(
+			(a, b) =>
+				languageLabel(a).localeCompare(languageLabel(b)) ||
+				a.name.localeCompare(b.name) ||
+				qualityRank(a.quality) - qualityRank(b.quality),
+		)) {
+		const option = document.createElement("option")
+		option.value = voice.id
+		option.textContent = `${voice.name} · ${qualityLabel(voice.quality)} · ${languageLabel(voice)}`
+		voiceSelect.append(option)
 	}
 	for (const preferred of [preferences.voice, previousChoice]) {
-		if (typeof preferred === "string" && Array.from(voiceSelect.options).some((option) => option.value === preferred)) {
-			voiceSelect.value = preferred
+		// Earlier releases stored a speaker suffix after the voice ID.
+		const id = typeof preferred === "string" ? preferred.split("#")[0] : undefined
+		if (id && Array.from(voiceSelect.options).some((option) => option.value === id)) {
+			voiceSelect.value = id
 			break
 		}
 	}
@@ -287,9 +287,9 @@ async function voicesChanged(id: string, deleted: boolean) {
 	const revision = voiceRevision
 	const available = await pending
 	if (controller.closed || revision !== voiceRevision) return
-	const stillInstalled = Array.from(voiceSelect.options).some((option) => voiceModelId(option.value) === id)
+	const stillInstalled = Array.from(voiceSelect.options).some((option) => option.value === id)
 	if (!available) controller.unavailable()
-	else if (deleted && id === voiceModelId(previousChoice) && !stillInstalled)
+	else if (deleted && id === previousChoice && !stillInstalled)
 		controller.fail(new SpeechVoiceError("Voice removed. Press Play to use another downloaded voice."))
 	else if (wasWaiting && !deleted) await initialize()
 	updateControls()
@@ -343,7 +343,7 @@ async function initialize() {
 		await controller.setScope(
 			source.text,
 			voiceSelect.value,
-			voiceChoice(voiceSelect.value).voice.locale,
+			getVoice(voiceSelect.value).locale,
 			Number(speed.value),
 			began,
 		)

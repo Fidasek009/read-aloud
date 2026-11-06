@@ -46,7 +46,7 @@ test("structured transport preserves PCM samples without base64 encoding", async
 	}
 })
 
-test("changing a speaker invalidates in-flight speech even without a separate cancel message", async () => {
+test("changing a voice invalidates in-flight speech even without a separate cancel message", async () => {
 	let finish: ((value: SpeechClip) => void) | undefined
 	let cancelled = 0
 	const service = new SpeechService(
@@ -58,7 +58,7 @@ test("changing a speaker invalidates in-flight speech even without a separate ca
 	try {
 		await service.request("reader", { id: 1, type: "load", voice: "en_GB-aru-medium" })
 		const stale = service.request("reader", { id: 2, type: "synthesize", text: "hello", speed: 1 })
-		await service.request("reader", { id: 3, type: "load", voice: "en_GB-aru-medium#1" })
+		await service.request("reader", { id: 3, type: "load", voice: "en_US-ljspeech-medium" })
 		finish!(clip(Float32Array.of(0.1)))
 		expect(await stale).toMatchObject({ ok: false, code: "cancelled" })
 		expect(cancelled).toBe(1)

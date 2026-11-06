@@ -1,5 +1,4 @@
 import previews from "./previews.json"
-import { voiceModelId } from "./protocol.ts"
 import catalog from "./voices.json"
 
 export interface Voice {
@@ -17,14 +16,11 @@ export interface Voice {
 	previewUrl: string | null
 	termsUrl: string
 	unsupported: string | null
-	speakers: number
-	speakerNames: Record<string, number> | undefined
 }
 const base = `https://huggingface.co/rhasspy/piper-voices/resolve/${catalog.revision}`
 /** Upstream metadata retained for maintenance and deleting older downloads. */
 export const catalogVoices: readonly Voice[] = catalog.voices.map((voice) => ({
 	...voice,
-	speakerNames: voice.speakerNames as Record<string, number> | undefined,
 	url: `${base}/${voice.path}`,
 	configUrl: `${base}/${voice.path}.json`,
 	previewUrl:
@@ -50,22 +46,19 @@ export function languageLabel(voice: Voice): string {
 }
 
 const byId = new Map(catalogVoices.map((voice) => [voice.id, voice]))
+const qualityOrder = ["x_low", "low", "medium", "high"]
 export function qualityLabel(quality: string): string {
 	return quality === "x_low" ? "Extra low" : quality.charAt(0).toUpperCase() + quality.slice(1)
+}
+
+/** Orders qualities by speech quality rather than by label text. */
+export function qualityRank(quality: string): number {
+	const rank = qualityOrder.indexOf(quality)
+	return rank === -1 ? qualityOrder.length : rank
 }
 
 export function getVoice(id: string): Voice {
 	const voice = byId.get(id)
 	if (!voice) throw new Error("This voice is not available")
 	return voice
-}
-
-export function voiceChoice(value: string): { voice: Voice; speaker: number } {
-	const id = voiceModelId(value)
-	const speakerText = id.length === value.length ? undefined : value.slice(id.length + 1)
-	const voice = getVoice(id)
-	const speaker = speakerText === undefined ? 0 : /^\d+$/u.test(speakerText) ? Number(speakerText) : NaN
-	if (!Number.isSafeInteger(speaker) || speaker < 0 || speaker >= voice.speakers)
-		throw new Error("This speaker is not available")
-	return { voice, speaker }
 }

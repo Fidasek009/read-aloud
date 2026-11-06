@@ -2,13 +2,7 @@ import type { SpeechDiagnostics } from "./diagnostics.ts"
 import type { SpeechFailureCode } from "./errors.ts"
 import type { WordTiming } from "./phonemes.ts"
 
-export const MAX_VOICE_CHOICE_LENGTH = 160
-
-/** A speaker choice can share one downloaded model with other choices. */
-export function voiceModelId(choice: string): string {
-	const separator = choice.indexOf("#")
-	return separator < 0 ? choice : choice.slice(0, separator)
-}
+export const MAX_VOICE_ID_LENGTH = 160
 
 export interface SpeechClip {
 	pcm: Float32Array<ArrayBuffer>
@@ -28,7 +22,7 @@ export function isVoiceChange(value: unknown): value is VoiceChange {
 		typeof value === "object" &&
 		"id" in value &&
 		typeof value.id === "string" &&
-		value.id.length <= MAX_VOICE_CHOICE_LENGTH &&
+		value.id.length <= MAX_VOICE_ID_LENGTH &&
 		"deleted" in value &&
 		typeof value.deleted === "boolean" &&
 		"revision" in value &&
@@ -51,7 +45,7 @@ export function speechRequest(value: unknown): value is SpeechRequest {
 		return false
 	if (value.type === "cancel") return true
 	if (value.type === "load")
-		return "voice" in value && typeof value.voice === "string" && value.voice.length <= MAX_VOICE_CHOICE_LENGTH
+		return "voice" in value && typeof value.voice === "string" && value.voice.length <= MAX_VOICE_ID_LENGTH
 	return (
 		value.type === "synthesize" &&
 		"text" in value &&

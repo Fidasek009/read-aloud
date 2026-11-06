@@ -1,7 +1,7 @@
 import { browser } from "wxt/browser"
 
 import { localKeys } from "../../extension/storage.ts"
-import { catalogVoices, languageLabel, qualityLabel, voices } from "../../speech/catalog.ts"
+import { catalogVoices, languageLabel, qualityLabel, qualityRank, voices } from "../../speech/catalog.ts"
 import { deleteVoice, downloadVoice, installedVoices, onVoicesChanged } from "../../speech/vault.ts"
 import "./style.css"
 
@@ -47,15 +47,18 @@ function stopPreview() {
 	preview = undefined
 }
 const sorted = [...catalogVoices].sort(
-	(a, b) => a.language.localeCompare(b.language) || a.name.localeCompare(b.name) || a.quality.localeCompare(b.quality),
+	(a, b) =>
+		a.language.localeCompare(b.language) ||
+		a.name.localeCompare(b.name) ||
+		qualityRank(a.quality) - qualityRank(b.quality),
 )
 for (const [locale, name] of [...new Map(voices.map((voice) => [voice.locale, languageLabel(voice)]))].sort((a, b) =>
 	a[1].localeCompare(b[1]),
 )) {
 	language.add(new Option(name, locale))
 }
-for (const quality of [...new Set(voices.map((voice) => voice.quality))].sort((a, b) =>
-	qualityLabel(a).localeCompare(qualityLabel(b)),
+for (const quality of [...new Set(voices.map((voice) => voice.quality))].sort(
+	(a, b) => qualityRank(a) - qualityRank(b),
 ))
 	qualityFilter.add(new Option(qualityLabel(quality), quality))
 
@@ -123,7 +126,7 @@ function render() {
 		title.textContent = voice.name
 		const detail = document.createElement("p")
 		const quality = qualityLabel(voice.quality)
-		detail.textContent = `${languageLabel(voice)} · ${quality} · ${Math.round(voice.bytes / 1e6)} MB${voice.speakers > 1 ? ` · ${voice.speakers} speakers` : ""}`
+		detail.textContent = `${languageLabel(voice)} · ${quality} · ${Math.round(voice.bytes / 1e6)} MB`
 		const terms = document.createElement("a")
 		terms.className = "terms"
 		terms.textContent = "License"

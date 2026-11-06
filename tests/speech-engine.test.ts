@@ -31,7 +31,7 @@ function fixture(
 		},
 		readVoice: async (voice) => {
 			reads++
-			return options.read ? options.read(voice) : { model: new ArrayBuffer(8), config: { ...config, num_speakers: 2 } }
+			return options.read ? options.read(voice) : { model: new ArrayBuffer(8), config }
 		},
 		createWorker(backend) {
 			const state = { backend, terminated: false }
@@ -82,20 +82,6 @@ test("a reused voice reports warm diagnostics without past initialization timing
 	await engine.load("en_US-ljspeech-medium")
 	expect(engine.diagnostics).toEqual({ backend: "cpu", voice: "en_US-ljspeech-medium", reusedSession: true })
 	engine.dispose()
-})
-
-test("switching speakers reuses the loaded model and supplies the current speaker tensor", async () => {
-	const f = fixture()
-	await f.engine.load("en_GB-aru-medium")
-	await f.engine.synthesize("hello", 1)
-	await f.engine.load("en_GB-aru-medium#1")
-	await f.engine.synthesize("hello", 1)
-	expect(
-		f.commands.filter(({ request }) => request.type === "synthesize").map(({ request }) => request.speaker),
-	).toEqual([0, 1])
-	expect(f.reads).toBe(1)
-	expect(f.workers).toHaveLength(1)
-	f.engine.dispose()
 })
 
 test("completed cancelled inference is cached without delivering stale audio", async () => {
