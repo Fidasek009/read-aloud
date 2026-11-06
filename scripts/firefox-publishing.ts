@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
+import { isDeepStrictEqual } from "node:util"
 import { JwtApiAuth, signAddon } from "web-ext/util/submit-addon"
 
 import { firefoxMetadata } from "./firefox-metadata"
@@ -17,14 +18,20 @@ interface FirefoxOptions {
 	metadataOnly?: boolean
 }
 interface Addon {
+	[key: string]: unknown
 	guid: string
 	channels?: string[]
-	previews: { id: number; position: number }[]
+	icon_url?: string
+	previews: { id: number; position: number; caption?: Record<string, string> }[]
 }
 
 // Production always uses AMO. Tests pass a local mock origin to exercise
 // Mozilla's actual submission client under Bun without touching a store.
-export async function publishFirefox(options: FirefoxOptions, apiBase = "https://addons.mozilla.org/api/v5/") {
+export async function publishFirefox(
+	options: FirefoxOptions,
+	apiBase = "https://addons.mozilla.org/api/v5/",
+	pause: (ms: number) => Promise<unknown> = Bun.sleep,
+) {
 	const { version, dryRun, extensionId, issuer, secret, root = process.cwd() } = options
 	parseVersion(version, !dryRun)
 	if (!extensionId || !issuer || !secret) throw new Error("Firefox ID and AMO API issuer/secret are required")
@@ -44,9 +51,12 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 	for (const file of ["icon-128.png", ...screenshots])
 		if (!(await Bun.file(join(root, "store/assets", file)).exists())) throw new Error(`Missing store asset: ${file}`)
 	const auth = new JwtApiAuth({ apiKey: issuer, apiSecret: secret })
+	const retryDeadline = Date.now() + 75 * 60_000
+	let lastWrite = 0
 	async function request(path: string, method = "GET", body?: FormData | Record<string, unknown>) {
-		let waited = 0
+		if (method !== "GET") await pause(Math.max(0, lastWrite + 21_000 - Date.now()))
 		for (let attempt = 0; ; attempt++) {
+			if (method !== "GET") lastWrite = Date.now()
 			const response = await fetch(new URL(path, apiBase), {
 				method,
 				headers: {
@@ -69,17 +79,16 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 						: retryAfter && Number.isFinite(Date.parse(retryAfter))
 							? Math.max(0, Date.parse(retryAfter) - Date.now())
 							: 60_000 * (attempt + 1)
-				if (waited + delay <= 600_000) {
+				if (Date.now() + delay <= retryDeadline) {
 					await response.body?.cancel()
 					console.log(`AMO rate limit; retrying ${method} ${path} in ${Math.ceil(delay / 1000)}s`)
-					await Bun.sleep(delay)
-					waited += delay
+					await pause(delay)
 					continue
 				}
 			}
 			if (!response.ok && !(method === "GET" && response.status === 404))
 				throw new Error(
-					`AMO ${method} ${path} failed (HTTP ${response.status}); check account access and configuration`,
+					`AMO ${method} ${path} failed (HTTP ${response.status}, Retry-After: ${response.headers.get("Retry-After") ?? "none"}); check account access and configuration`,
 				)
 			return response
 		}
@@ -95,7 +104,7 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 	if (!Number.isInteger(profile.id) || typeof acceptedAt !== "string" || !Number.isFinite(Date.parse(acceptedAt)))
 		throw new Error("Complete AMO account setup and accept Mozilla's developer agreement first")
 	const addonPath = `addons/addon/${encodeURIComponent(extensionId)}/`
-	const detail = await request(addonPath)
+	const detail = await request(`${addonPath}?show_source=true`)
 	const existing: Addon | undefined = detail.ok ? await detail.json() : undefined
 	if (existing && (existing.guid !== extensionId || !Array.isArray(existing.channels)))
 		throw new Error("AMO ID mismatch or account lacks access to this add-on's publishing details")
@@ -145,14 +154,27 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 				userAgentString: "read-aloud-release/web-ext",
 			})
 			if (result.id !== extensionId) throw new Error("AMO returned a different permanent extension ID")
+			// Mozilla's submission client also consumes the shared write quota.
+			// Start metadata outside its burst window, then space further writes.
+			await pause(61_000)
 		}
 		const { version: _, ...listing } = metadata
-		// PUT uses listing metadata on creation but not on updates.
-		await request(addonPath, "PATCH", listing)
-		await request(`${addonPath}eula_policy/`, "PATCH", { privacy_policy: { "en-US": privacy } })
-		const icon = new FormData()
-		icon.set("icon", Bun.file(join(root, "store/assets/icon-128.png")), "icon-128.png")
-		await request(addonPath, "PATCH", icon)
+		// PUT already configures a new listing. For updates/recovery, send only
+		// changed fields so reruns do not consume AMO's small hourly write quota.
+		const changes = Object.fromEntries(
+			Object.entries(listing).filter(([key, value]) => !isDeepStrictEqual(existing?.[key], value)),
+		)
+		if (existing && Object.keys(changes).length) await request(addonPath, "PATCH", changes)
+		const policy = await (await request(`${addonPath}eula_policy/?show_source=true`)).json()
+		if (policy.privacy_policy?.["en-US"] !== privacy)
+			await request(`${addonPath}eula_policy/`, "PATCH", { privacy_policy: { "en-US": privacy } })
+		// Retain an uploaded custom icon. AMO's default icons use /addon-icons/;
+		// uploaded ones use /addon_icons/ (olympia.addons.models.get_icon_url).
+		if (!existing?.icon_url?.includes("/addon_icons/")) {
+			const icon = new FormData()
+			icon.set("icon", Bun.file(join(root, "store/assets/icon-128.png")), "icon-128.png")
+			await request(addonPath, "PATCH", icon)
+		}
 		const current: Addon = await (await request(addonPath)).json()
 		for (const [index, file] of screenshots.entries()) {
 			const position = index + 1
@@ -164,10 +186,9 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 				preview = await (await request(`${addonPath}previews/`, "POST", image)).json()
 			}
 			if (!preview || !Number.isInteger(preview.id)) throw new Error("AMO returned an invalid screenshot ID")
-			await request(`${addonPath}previews/${preview.id}/`, "PATCH", {
-				caption: { "en-US": `Choose ${index === 0 ? "an English" : "a Czech"} voice before downloading it.` },
-				position,
-			})
+			const caption = `Choose ${index === 0 ? "an English" : "a Czech"} voice before downloading it.`
+			if (preview.caption?.["en-US"] !== caption)
+				await request(`${addonPath}previews/${preview.id}/`, "PATCH", { caption: { "en-US": caption }, position })
 		}
 		console.log(`Firefox ${version} and reviewer sources submitted to AMO; listing, privacy and artwork configured.`)
 	} finally {

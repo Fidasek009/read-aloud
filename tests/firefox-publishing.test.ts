@@ -3,7 +3,11 @@ import { mkdtemp, rm } from "node:fs/promises"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
-import { publishFirefox } from "../scripts/firefox-publishing"
+import { firefoxMetadata } from "../scripts/firefox-metadata"
+import { publishFirefox as submitFirefox } from "../scripts/firefox-publishing"
+
+const publishFirefox = (options: Parameters<typeof submitFirefox>[0], base: string) =>
+	submitFirefox(options, base, async () => {})
 
 const extensionId = "read-aloud@fidasek009.github.io"
 const issuer = "user:123:456"
@@ -47,6 +51,7 @@ interface MockState {
 	rateLimits?: number
 	retryAfter?: string
 	versionDetails?: Record<string, unknown>
+	complete?: boolean
 }
 
 async function withAmo(
@@ -61,10 +66,19 @@ async function withAmo(
 	const root = await fixture()
 	const requests: string[] = []
 	const metadata: Record<string, unknown>[] = []
+	const { version: _, ...listing } = await firefoxMetadata("0.1.0", root)
 	const previews = state.exists
 		? [
-				{ id: 1, position: 1 },
-				{ id: 2, position: 2 },
+				{
+					id: 1,
+					position: 1,
+					...(state.complete ? { caption: { "en-US": "Choose an English voice before downloading it." } } : {}),
+				},
+				{
+					id: 2,
+					position: 2,
+					...(state.complete ? { caption: { "en-US": "Choose a Czech voice before downloading it." } } : {}),
+				},
 			]
 		: []
 	const key = await crypto.subtle.importKey(
@@ -105,7 +119,14 @@ async function withAmo(
 			const addon = `addons/addon/${extensionId}/`
 			if (path === addon && request.method === "GET")
 				return Response.json(
-					{ guid: extensionId, ...(state.privateAccess === false ? {} : { channels: ["listed"] }), previews },
+					{
+						...(state.complete
+							? { ...listing, icon_url: "https://example.invalid/user-media/addon_icons/1/1000-64.png" }
+							: {}),
+						guid: extensionId,
+						...(state.privateAccess === false ? {} : { channels: ["listed"] }),
+						previews,
+					},
 					{ status: state.listingStatus ?? (state.exists ? 200 : 404) },
 				)
 			if (path === "addons/upload/" && request.method === "POST") {
@@ -152,6 +173,10 @@ async function withAmo(
 				return Response.json({})
 			}
 			if (path === `${addon}eula_policy/`) {
+				if (request.method === "GET")
+					return Response.json({
+						privacy_policy: state.complete ? { "en-US": await Bun.file("PRIVACY.md").text() } : null,
+					})
 				if (state.rateLimits && state.rateLimits-- > 0)
 					return Response.json({}, { status: 429, headers: { "Retry-After": state.retryAfter ?? "0" } })
 				expect(await request.json()).toEqual({ privacy_policy: { "en-US": await Bun.file("PRIVACY.md").text() } })
@@ -200,7 +225,7 @@ test.each([false, true])("Mozilla client creates/updates listing=%s and submits 
 		})
 		expect(JSON.stringify(metadata[0])).toContain("/blob/v0.1.0/SOURCE_CODE_REVIEW.md")
 		expect(JSON.stringify(metadata[0])).not.toContain('"license":"MIT"')
-		expect(metadata[1]).not.toHaveProperty("version")
+		if (exists) expect(metadata[1]).not.toHaveProperty("version")
 		expect(requests).toContain(`PATCH addons/addon/${extensionId}/versions/7/`)
 		expect(requests.filter((item) => item === `POST addons/addon/${extensionId}/previews/`)).toHaveLength(
 			exists ? 0 : 2,
@@ -216,7 +241,7 @@ test("AMO metadata recovers from rejected rate-limited writes without repeating 
 			{ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root },
 			base,
 		)
-		expect(requests.filter((item) => item.endsWith("eula_policy/"))).toHaveLength(3)
+		expect(requests.filter((item) => item.startsWith("PATCH ") && item.endsWith("eula_policy/"))).toHaveLength(3)
 		expect(
 			requests.some(
 				(item) => item.startsWith("PUT ") || item.includes("addons/upload/") || item.includes("versions/7/"),
@@ -230,16 +255,40 @@ test("AMO recovery gives up on sustained throttling, without re-uploading", asyn
 		await expect(
 			publishFirefox({ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root }, base),
 		).rejects.toThrow("HTTP 429")
-		expect(requests.filter((item) => item.endsWith("eula_policy/"))).toHaveLength(6)
+		expect(requests.filter((item) => item.startsWith("PATCH ") && item.endsWith("eula_policy/"))).toHaveLength(6)
 	})
 })
 
 test("AMO respects long Retry-After by stopping instead of retrying early", async () => {
-	await withAmo({ exists: true, rateLimits: 1, retryAfter: "3600" }, async ({ root, base, requests }) => {
+	await withAmo({ exists: true, rateLimits: 1, retryAfter: "86400" }, async ({ root, base, requests }) => {
 		await expect(
 			publishFirefox({ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root }, base),
 		).rejects.toThrow("HTTP 429")
-		expect(requests.filter((item) => item.endsWith("eula_policy/"))).toHaveLength(1)
+		expect(requests.filter((item) => item.startsWith("PATCH ") && item.endsWith("eula_policy/"))).toHaveLength(1)
+	})
+})
+
+test("completed Firefox recovery performs only reads, preserving write quota and existing artwork", async () => {
+	await withAmo({ exists: true, complete: true }, async ({ root, base, requests }) => {
+		await publishFirefox(
+			{ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root },
+			base,
+		)
+		expect(requests.every((item) => item.startsWith("GET "))).toBe(true)
+	})
+})
+
+test("Firefox recovery honors an hourly AMO cooldown", async () => {
+	await withAmo({ exists: true, rateLimits: 1, retryAfter: "3600" }, async ({ root, base }) => {
+		const waits: number[] = []
+		await submitFirefox(
+			{ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root },
+			base,
+			async (ms) => {
+				waits.push(ms)
+			},
+		)
+		expect(waits).toContain(3_600_000)
 	})
 })
 
