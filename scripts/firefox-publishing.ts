@@ -13,6 +13,8 @@ interface FirefoxOptions {
 	issuer: string
 	secret: string
 	root?: string
+	// Repair an accepted version without calling Mozilla's upload client again.
+	metadataOnly?: boolean
 }
 interface Addon {
 	guid: string
@@ -43,20 +45,44 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 		if (!(await Bun.file(join(root, "store/assets", file)).exists())) throw new Error(`Missing store asset: ${file}`)
 	const auth = new JwtApiAuth({ apiKey: issuer, apiSecret: secret })
 	async function request(path: string, method = "GET", body?: FormData | Record<string, unknown>) {
-		const response = await fetch(new URL(path, apiBase), {
-			method,
-			headers: {
-				Authorization: await auth.getAuthHeader(),
-				Accept: "application/json",
-				...(body && !(body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
-			},
-			body: body instanceof FormData ? body : body ? JSON.stringify(body) : null,
-			redirect: "error",
-			signal: AbortSignal.timeout(60_000),
-		})
-		if (!response.ok && !(method === "GET" && response.status === 404))
-			throw new Error(`AMO ${method} ${path} failed (HTTP ${response.status}); check account access and configuration`)
-		return response
+		let waited = 0
+		for (let attempt = 0; ; attempt++) {
+			const response = await fetch(new URL(path, apiBase), {
+				method,
+				headers: {
+					Authorization: await auth.getAuthHeader(),
+					Accept: "application/json",
+					...(body && !(body instanceof FormData) ? { "Content-Type": "application/json" } : {}),
+				},
+				body: body instanceof FormData ? body : body ? JSON.stringify(body) : null,
+				redirect: "error",
+				signal: AbortSignal.timeout(60_000),
+			})
+			// A 429 explicitly rejects this request, so retrying even a screenshot POST
+			// is safe. Never retry ambiguous network failures or arbitrary write errors.
+			if (response.status === 429 && attempt < 5) {
+				const retryAfter = response.headers.get("Retry-After")
+				const seconds = retryAfter === null ? NaN : Number(retryAfter)
+				const delay =
+					Number.isFinite(seconds) && seconds >= 0
+						? seconds * 1000
+						: retryAfter && Number.isFinite(Date.parse(retryAfter))
+							? Math.max(0, Date.parse(retryAfter) - Date.now())
+							: 60_000 * (attempt + 1)
+				if (waited + delay <= 600_000) {
+					await response.body?.cancel()
+					console.log(`AMO rate limit; retrying ${method} ${path} in ${Math.ceil(delay / 1000)}s`)
+					await Bun.sleep(delay)
+					waited += delay
+					continue
+				}
+			}
+			if (!response.ok && !(method === "GET" && response.status === 404))
+				throw new Error(
+					`AMO ${method} ${path} failed (HTTP ${response.status}); check account access and configuration`,
+				)
+			return response
+		}
 	}
 	// Authenticate before interpreting an add-on 404. A public add-on lookup alone
 	// can succeed even when credentials are unusable.
@@ -84,26 +110,42 @@ export async function publishFirefox(options: FirefoxOptions, apiBase = "https:/
 
 	const temp = await mkdtemp(join(tmpdir(), "read-aloud-amo-"))
 	try {
-		// Use Mozilla's exported client rather than rebuilding/repacking the CI ZIP.
-		// PUT by permanent GUID creates the first listing or submits an update.
-		const result = await signAddon({
-			apiKey: issuer,
-			apiSecret: secret,
-			amoBaseUrl: apiBase,
-			id: extensionId,
-			xpiPath: zip,
-			downloadDir: temp,
-			channel: "listed",
-			savedUploadUuidPath: join(temp, "upload.json"),
-			metaDataJson: metadata,
-			submissionSource: sources,
-			validationCheckTimeout: 300_000,
-			// Store review can take days. The job waits for submission and sources;
-			// AMO controls approval and automatic publication.
-			approvalCheckTimeout: 0,
-			userAgentString: "read-aloud-release/web-ext",
-		})
-		if (result.id !== extensionId) throw new Error("AMO returned a different permanent extension ID")
+		if (options.metadataOnly) {
+			if (!existing) throw new Error("Cannot repair metadata: Firefox listing does not exist")
+			const response = await request(`${addonPath}versions/${version}/`)
+			if (!response.ok) throw new Error("Cannot repair metadata: Firefox version does not exist")
+			const accepted = await response.json()
+			if (
+				accepted.version !== version ||
+				accepted.channel !== "listed" ||
+				!accepted.source ||
+				accepted.is_disabled ||
+				!["unreviewed", "public"].includes(accepted.file?.status)
+			)
+				throw new Error("Cannot repair metadata: expected an active listed version with reviewer sources")
+			console.log(`Repairing existing Firefox ${version} (AMO version ${accepted.id}); no extension or source upload.`)
+		} else {
+			// Use Mozilla's exported client rather than rebuilding/repacking the CI ZIP.
+			// PUT by permanent GUID creates the first listing or submits an update.
+			const result = await signAddon({
+				apiKey: issuer,
+				apiSecret: secret,
+				amoBaseUrl: apiBase,
+				id: extensionId,
+				xpiPath: zip,
+				downloadDir: temp,
+				channel: "listed",
+				savedUploadUuidPath: join(temp, "upload.json"),
+				metaDataJson: metadata,
+				submissionSource: sources,
+				validationCheckTimeout: 300_000,
+				// Store review can take days. The job waits for submission and sources;
+				// AMO controls approval and automatic publication.
+				approvalCheckTimeout: 0,
+				userAgentString: "read-aloud-release/web-ext",
+			})
+			if (result.id !== extensionId) throw new Error("AMO returned a different permanent extension ID")
+		}
 		const { version: _, ...listing } = metadata
 		// PUT uses listing metadata on creation but not on updates.
 		await request(addonPath, "PATCH", listing)

@@ -44,6 +44,9 @@ interface MockState {
 	privateAccess?: boolean
 	valid?: boolean
 	sourceFailure?: boolean
+	rateLimits?: number
+	retryAfter?: string
+	versionDetails?: Record<string, unknown>
 }
 
 async function withAmo(
@@ -133,12 +136,24 @@ async function withAmo(
 				)
 				return Response.json({}, { status: state.sourceFailure ? 500 : 200 })
 			}
+			if (path === `${addon}versions/0.1.0/` && request.method === "GET")
+				return Response.json(
+					state.versionDetails ?? {
+						id: 7,
+						version: "0.1.0",
+						channel: "listed",
+						source: "https://example.invalid/sources.zip",
+						file: { status: "unreviewed" },
+					},
+				)
 			if (path === addon && request.method === "PATCH") {
 				if (request.headers.get("Content-Type")?.includes("application/json")) metadata.push(await request.json())
 				else expect((await request.formData()).get("icon")).toBeInstanceOf(File)
 				return Response.json({})
 			}
 			if (path === `${addon}eula_policy/`) {
+				if (state.rateLimits && state.rateLimits-- > 0)
+					return Response.json({}, { status: 429, headers: { "Retry-After": state.retryAfter ?? "0" } })
 				expect(await request.json()).toEqual({ privacy_policy: { "en-US": await Bun.file("PRIVACY.md").text() } })
 				return Response.json({})
 			}
@@ -192,6 +207,53 @@ test.each([false, true])("Mozilla client creates/updates listing=%s and submits 
 		)
 		// Approval is asynchronous; the pipeline must not wait for store review.
 		expect(requests).not.toContain(`GET addons/addon/${extensionId}/versions/7/`)
+	})
+})
+
+test("AMO metadata recovers from rejected rate-limited writes without repeating the version upload", async () => {
+	await withAmo({ exists: true, rateLimits: 2 }, async ({ root, base, requests }) => {
+		await publishFirefox(
+			{ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root },
+			base,
+		)
+		expect(requests.filter((item) => item.endsWith("eula_policy/"))).toHaveLength(3)
+		expect(
+			requests.some(
+				(item) => item.startsWith("PUT ") || item.includes("addons/upload/") || item.includes("versions/7/"),
+			),
+		).toBe(false)
+	})
+})
+
+test("AMO recovery gives up on sustained throttling, without re-uploading", async () => {
+	await withAmo({ exists: true, rateLimits: 10 }, async ({ root, base, requests }) => {
+		await expect(
+			publishFirefox({ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root }, base),
+		).rejects.toThrow("HTTP 429")
+		expect(requests.filter((item) => item.endsWith("eula_policy/"))).toHaveLength(6)
+	})
+})
+
+test("AMO respects long Retry-After by stopping instead of retrying early", async () => {
+	await withAmo({ exists: true, rateLimits: 1, retryAfter: "3600" }, async ({ root, base, requests }) => {
+		await expect(
+			publishFirefox({ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root }, base),
+		).rejects.toThrow("HTTP 429")
+		expect(requests.filter((item) => item.endsWith("eula_policy/"))).toHaveLength(1)
+	})
+})
+
+test.each([
+	{ version: "0.2.0", channel: "listed", source: "sources", file: { status: "unreviewed" } },
+	{ version: "0.1.0", channel: "unlisted", source: "sources", file: { status: "unreviewed" } },
+	{ version: "0.1.0", channel: "listed", source: null, file: { status: "unreviewed" } },
+	{ version: "0.1.0", channel: "listed", source: "sources", file: { status: "disabled" } },
+])("Firefox metadata recovery refuses an incompatible existing version: %j", async (versionDetails) => {
+	await withAmo({ exists: true, versionDetails }, async ({ root, base, requests }) => {
+		await expect(
+			publishFirefox({ version: "0.1.0", dryRun: false, metadataOnly: true, extensionId, issuer, secret, root }, base),
+		).rejects.toThrow("expected an active listed version")
+		expect(requests.every((item) => item.startsWith("GET "))).toBe(true)
 	})
 })
 

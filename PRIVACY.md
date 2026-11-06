@@ -20,4 +20,6 @@ The extension uses the active tab and scripting to read a page after you invoke 
 
 ## Contact and changes
 
+Read Aloud uses the requested document content and its URL only to provide the reading feature. It does not sell this data, transfer it for unrelated purposes, use it for advertising or creditworthiness decisions, or give the developer access to users' reading content. This use follows the Chrome Web Store User Data Policy, including its Limited Use requirements. The explicit download and sample requests described above still disclose ordinary connection information to their hosting providers.
+
 Questions and privacy reports can be filed at https://github.com/Fidasek009/read-aloud/issues. Avoid including private page text or documents in a public issue. Policy changes are versioned in this repository. No claim of complete offline capability is made before a model has been explicitly downloaded and any source document made available locally.
