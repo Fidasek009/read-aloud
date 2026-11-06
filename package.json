@@ -23,6 +23,8 @@
 		"probe:chrome": "bun scripts/probe-product.ts",
 		"probe:host": "bun scripts/probe-host-lifecycle.ts",
 		"probe:firefox": "bun scripts/probe-product-firefox.ts",
+		"probe:native:chrome": "bun scripts/probe-native-entry-chrome.ts",
+		"probe:native:firefox": "bun scripts/probe-native-entry-firefox.ts",
 		"probe:speakers": "bun scripts/probe-speakers.ts",
 		"probe:pdf": "bun scripts/probe-pdf.ts",
 		"probe:previews": "bun scripts/probe-previews.ts",

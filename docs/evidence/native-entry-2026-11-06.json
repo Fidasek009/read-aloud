@@ -1,0 +1,71 @@
+{
+	"checkedAt": "2026-11-06T12:16:05.228Z",
+	"runtimeCommit": "6702918fbfe435d99ba95a174fab18100c2a68ff",
+	"scope": "Actual browser-owned context menu, production permissions/default autoplay, explicit model download and exact selection scope; Linux virtual audio fixture. No simulated extension entry and no autoplay bypass.",
+	"entries": [
+		{
+			"checkedAt": "2026-11-06T12:13:21.918Z",
+			"browser": "chrome",
+			"browserVersion": "Chrome/156.0.8078.4",
+			"voice": "en_US-ljspeech-medium",
+			"manifestSha256": "e5a35e45540b699d7abe06602bc5aac02f50c9f0564deea7c407d3f8b5a3166a",
+			"permanentHostPermissions": [],
+			"method": "Fresh isolated profile; production Download control; DOM text selection; real browser-owned Read selection menu; no simulated menu listener, pre-granted source origin, autoplay override or second Play click. Only native audio/error observation added to a copied package.",
+			"checks": {
+				"automaticPlayback": true,
+				"audioClockSeconds": 0.041495,
+				"exactSelectionScope": true,
+				"uncaughtPlayerScriptErrors": 0
+			},
+			"limitations": "Linux VM and virtual audio sink; not physical listening-quality, Windows or target-device latency acceptance."
+		},
+		{
+			"checkedAt": "2026-11-06T12:13:37.576Z",
+			"browser": "chrome",
+			"browserVersion": "Chrome/156.0.8078.4",
+			"voice": "cs_CZ-kasandra-medium",
+			"manifestSha256": "e5a35e45540b699d7abe06602bc5aac02f50c9f0564deea7c407d3f8b5a3166a",
+			"permanentHostPermissions": [],
+			"method": "Fresh isolated profile; production Download control; DOM text selection; real browser-owned Read selection menu; no simulated menu listener, pre-granted source origin, autoplay override or second Play click. Only native audio/error observation added to a copied package.",
+			"checks": {
+				"automaticPlayback": true,
+				"audioClockSeconds": 0.04644,
+				"exactSelectionScope": true,
+				"uncaughtPlayerScriptErrors": 0
+			},
+			"limitations": "Linux VM and virtual audio sink; not physical listening-quality, Windows or target-device latency acceptance."
+		},
+		{
+			"checkedAt": "2026-11-06T12:14:04.761Z",
+			"browser": "firefox",
+			"browserVersion": "159.0",
+			"voice": "en_US-ljspeech-medium",
+			"manifestSha256": "7d1ca7f5c60596c2701fb566353361b49993c7daa601e46a43a5bff583352f7f",
+			"permanentHostPermissions": [],
+			"method": "Fresh isolated profile; production Download control; DOM text selection; real browser-owned Read selection menu; no simulated menu listener, pre-granted source origin, autoplay override or second Play click. Only native audio/error observation added to a copied package.",
+			"checks": {
+				"automaticPlayback": true,
+				"audioClockSeconds": 0.02263,
+				"exactSelectionScope": true,
+				"uncaughtPlayerScriptErrors": 0
+			},
+			"limitations": "Linux VM and virtual audio sink; not physical listening-quality, Windows or target-device latency acceptance."
+		},
+		{
+			"checkedAt": "2026-11-06T12:14:31.566Z",
+			"browser": "firefox",
+			"browserVersion": "159.0",
+			"voice": "cs_CZ-kasandra-medium",
+			"manifestSha256": "7d1ca7f5c60596c2701fb566353361b49993c7daa601e46a43a5bff583352f7f",
+			"permanentHostPermissions": [],
+			"method": "Fresh isolated profile; production Download control; DOM text selection; real browser-owned Read selection menu; no simulated menu listener, pre-granted source origin, autoplay override or second Play click. Only native audio/error observation added to a copied package.",
+			"checks": {
+				"automaticPlayback": true,
+				"audioClockSeconds": 0.097301,
+				"exactSelectionScope": true,
+				"uncaughtPlayerScriptErrors": 0
+			},
+			"limitations": "Linux VM and virtual audio sink; not physical listening-quality, Windows or target-device latency acceptance."
+		}
+	]
+}

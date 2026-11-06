@@ -16,12 +16,13 @@ The Chrome product probe exercises explicit download, storage, local synthesis, 
 
 Product probes use isolated profiles and narrow test-only origin grants (localhost plus MD Dash or MUNI as appropriate). They **do not prove native context-menu/action activation or activeTab behavior**. No product reading text is logged.
 
+Separate [native entry probes](native-entry-2026-11-06.md) now pass in Chrome 156 and Firefox 159 with the production permissions and default autoplay policy. Fresh profiles for English and Czech used the actual browser-owned Read selection menu, started native audio without a second Play click, and preserved the exact selected scope. These tests use no source-origin grant or simulated extension listener. Their Linux/audio-fixture limits are recorded with the evidence.
+
 The supplied thesis has been fetched from the live MUNI URL in browser tests with an explicit test-origin grant: **60 pages**, SHA-256 `30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32`. The PDF probes verify missing-site-access recovery, fetching without CORS, mapping, highlighting, and cross-page local synthesis; product probes also exercise playback from a simulated native-viewer selection. They do not prove native menu activation, every paragraph's reading order, tables, citations, or accessibility.
 
 ## Acceptance still open
 
 - **Performance follow-up, waived for the first release:** on 2026-11-06 the owner explicitly removed performance as a first-release blocker. The **1 second warm / 2 seconds cold** medium-model goal remains an optimization target. Measured cold startup exceeds it; do not claim that target has passed.
-- **Automatic native entry:** selection → right-click must start speech without a second Play action. Verify actual browser entry and resolve autoplay restrictions without weakening privacy or requiring a helper.
 - **All three benchmarks:** MD Dash now passes actual-page sentence navigation, including Previous after several Next operations. Full listening/extraction acceptance on both HTML articles and the complete thesis remains open.
 - **Lifecycle:** verify tab switching, navigation/closure, cross-tab replacement, interrupted model loading, speed/voice changes, source mutations, and stale-work cancellation. Implemented handlers alone are insufficient evidence.
 - **GPU/CPU and platforms:** no physical GPU or Windows machine has been tested. Verify GPU correctness, device loss, CPU fallback, memory, and the 4-core/8-GB baseline.
