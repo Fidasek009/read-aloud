@@ -2,39 +2,11 @@ import { expect, test } from "bun:test"
 
 import type { SpeechResponse } from "../src/speech/protocol.ts"
 
-import {
-	isSpeechHostCommand,
-	isSpeechHostReply,
-	type SpeechHostCommand,
-	speechHostDispatcher,
-} from "../src/speech/host-protocol.ts"
+import { isSpeechHostReply, speechHostDispatcher } from "../src/speech/host-protocol.ts"
 import { type SpeechPort, SpeechPortRegistry } from "../src/speech/port-registry.ts"
 import { SpeechService } from "../src/speech/service.ts"
 
-const commands: SpeechHostCommand[] = [
-	{ type: "prepare-speech-host" },
-	{ type: "installed-voices" },
-	{ type: "reserve-speech-host" },
-	{ type: "claim-speech-host-close" },
-	{ type: "release-speech-host-close" },
-	{ type: "close-idle-speech-host" },
-	{ type: "connect-speech-host" },
-	{ type: "speech-voice-deleted", id: "en_US-ljspeech-medium" },
-	{ type: "speech-gpu-available" },
-	{ type: "speech-gpu-failed" },
-]
-
-test("both speech hosts share one command registry and reject mistyped controls", () => {
-	for (const command of commands) expect(isSpeechHostCommand(command)).toBe(true)
-	for (const command of [
-		null,
-		{},
-		{ type: "reserve-speech-hots" },
-		{ type: "speech-voice-deleted" },
-		{ type: "speech-voice-deleted", id: "" },
-		{ type: "speech-voice-deleted", id: 1 },
-	])
-		expect(isSpeechHostCommand(command)).toBe(false)
+test("host replies require a boolean result", () => {
 	expect(isSpeechHostReply({ ok: true })).toBe(true)
 	expect(isSpeechHostReply({ ok: false })).toBe(true)
 	expect(isSpeechHostReply({ ok: "true" })).toBe(false)

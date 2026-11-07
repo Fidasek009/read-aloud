@@ -2,8 +2,6 @@ import { defineBackground } from "#imports"
 import { type Browser, browser } from "wxt/browser"
 
 import { isExtensionPageSender } from "../extension/sender.ts"
-import { localKeys } from "../extension/storage.ts"
-import { type ReaderChange } from "../reading/host.ts"
 import { maximumReadingCharacters } from "../reading/limits.ts"
 import { isReaderMessage, readingMessages, startReadingMessage } from "../reading/messages.ts"
 import { pdfSelectionKey } from "../reading/pdf-control.ts"
@@ -11,6 +9,14 @@ import { isPdfReaderContext, isPdfReaderUrl } from "../reading/pdf-reader.ts"
 import { commandPdf } from "../reading/pdf-transport.ts"
 import { parsePdfReaders, parseReadingState, readingKeys, readingLocks } from "../reading/state.ts"
 import { installSpeechBroker } from "../speech/broker.ts"
+
+type StartReading = {
+	tabId: number
+	mode: "selection" | "article"
+	selection?: string | undefined
+	reveal?: boolean
+	pageUrl?: string | undefined
+}
 
 export default defineBackground(() => {
 	const extensionRoot = browser.runtime.getURL("/")
@@ -53,13 +59,7 @@ export default defineBackground(() => {
 		browser.contextMenus.create({ id: "read-page", title: "Read this page", contexts: ["page"] })
 		if (details.reason === "install") await browser.tabs.create({ url: browser.runtime.getURL("/voices.html") })
 	})
-	const start = async (
-		tabId: number,
-		mode: "selection" | "article",
-		selection?: string,
-		reveal = false,
-		pageUrl?: string,
-	) =>
+	const start = async ({ tabId, mode, selection, reveal = false, pageUrl }: StartReading) =>
 		navigator.locks.request(readingLocks.session, async () => {
 			try {
 				const tab = await browser.tabs.get(tabId)
@@ -92,8 +92,9 @@ export default defineBackground(() => {
 				}
 				// Inspect the loaded document, never its filename. Native PDF viewers
 				// block injection; the reader verifies bytes after explicit site access.
+				const supportedDocumentUrl = !!documentUrl && /^(?:https?|file):/u.test(documentUrl)
 				let documentType: string | undefined
-				if (documentUrl && /^(?:https?|file):/u.test(documentUrl)) {
+				if (supportedDocumentUrl) {
 					try {
 						const [result] = await browser.scripting.executeScript({
 							target: { tabId },
@@ -104,11 +105,7 @@ export default defineBackground(() => {
 						/* Protected viewers require extension-owned document access. */
 					}
 				}
-				if (
-					documentUrl &&
-					/^(?:https?|file):/u.test(documentUrl) &&
-					(documentType === undefined || documentType === "application/pdf")
-				) {
+				if (supportedDocumentUrl && (documentType === undefined || documentType === "application/pdf")) {
 					if (mode === "selection" && !selection?.trim()) throw new Error("Select some PDF text first.")
 					if (selection && selection.length > maximumReadingCharacters)
 						throw new Error("Select a smaller part of the PDF to read.")
@@ -176,10 +173,6 @@ export default defineBackground(() => {
 				}
 				if (result?.error) throw new Error(String(result.error))
 				await browser.storage.session.set({ [readingKeys.currentTab]: tabId })
-				if (result?.reuse)
-					await browser.storage.local.set({
-						[localKeys.readerChange]: { session: result.session, revision: crypto.randomUUID() } satisfies ReaderChange,
-					})
 			} catch (error) {
 				await browser.action.setBadgeText({ tabId, text: "!" })
 				await browser.action.setTitle({
@@ -190,16 +183,15 @@ export default defineBackground(() => {
 		})
 	browser.contextMenus.onClicked.addListener((info, tab) => {
 		if (tab?.id !== undefined)
-			return start(
-				tab.id,
-				info.menuItemId === "read-selection" ? "selection" : "article",
-				info.selectionText,
-				false,
-				info.pageUrl,
-			)
+			return start({
+				tabId: tab.id,
+				mode: info.menuItemId === "read-selection" ? "selection" : "article",
+				selection: info.selectionText,
+				pageUrl: info.pageUrl,
+			})
 	})
 	browser.action.onClicked.addListener((tab) => {
-		if (tab.id !== undefined) void start(tab.id, "article", undefined, true, tab.url)
+		if (tab.id !== undefined) void start({ tabId: tab.id, mode: "article", reveal: true, pageUrl: tab.url })
 	})
 	// Lock order is always reading session -> PDF registry -> individual PDF command.
 	// Starts and cleanup share the outer lock, so cleanup cannot erase a newer start.

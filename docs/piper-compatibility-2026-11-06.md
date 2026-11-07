@@ -1,6 +1,6 @@
 # Piper pronunciation compatibility — 2026-11-06
 
-The 18 repeatable preview failures were caused by our adapter rejecting pronunciation symbols absent from older model configurations. The failure happened before ONNX inference. Repeating it established reproducibility, not damaged model weights. The earlier [catalog run](evidence/voice-preview-generation-2026-11-06.json) remains an observation of the code before this correction.
+The 18 repeatable preview failures were caused by our adapter rejecting pronunciation symbols absent from older model configurations. The failure happened before ONNX inference. Repeating it established reproducibility, not damaged model weights.
 
 Piper's [phoneme-to-ID implementation](https://github.com/OHF-Voice/piper1-gpl/blob/d4a61197bfad09542e64d8675f7289ab9884a766/src/piper/phoneme_ids.py) skips absent symbols without adding padding for them. Its [eSpeak adapter](https://github.com/OHF-Voice/piper1-gpl/blob/main/src/piper/phonemize_espeak.py) decomposes Unicode IPA before mapping. Our shared adapter now follows those rules, preserves model-provided replacements, and attaches original word spans only to emitted IDs. It retains known diacritics and does not invent IDs, edit model weights, or add language-specific workarounds. Entirely unmappable pronunciation still fails instead of producing empty speech. Required framing tokens and invalid IDs remain fatal configuration errors. Source text and pronunciation symbols are not logged.
 
@@ -23,6 +23,6 @@ Regression tests cover each of the five missing symbols seen across the 18 failu
 
 Firefox 159.0 synthesized all 18 formerly failing models plus the required English and Czech reference voices. This used a disposable extension profile, injected maintainer entry, hash-verified local model cache, test-only localhost permission, and geckodriver's privileged automation flag. It did not use mocked speech or exercise native context-menu entry.
 
-All 130 tests passed, along with strict type checks, formatting, workflow lint and package validation for both browsers. Rebuilding the Firefox reviewer archive reproduced all 380 installed files byte for byte. Separate Chrome and Firefox UI fixtures verified 171 available model rows and deletion of an unsupported legacy download; deletion used synthetic IndexedDB metadata in disposable profiles, rather than a real old model download.
+All tests, type checks, formatting, workflow lint and both package validations passed. Rebuilding the Firefox reviewer archive reproduced the installed files byte for byte. Separate Chrome and Firefox UI fixtures verified the full available model rows and deletion of an unsupported legacy download; deletion used synthetic IndexedDB metadata in disposable profiles, rather than a real old model download.
 
 Preview recordings stay outside extension and reviewer archives. Public preview hosting, underlying model/output rights, GPU acceptance, and audible quality remain separate from this compatibility fix.

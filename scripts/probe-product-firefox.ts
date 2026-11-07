@@ -209,7 +209,7 @@ try {
 	assert(initialMenu?.ok, `Firefox initial context-menu route failed: ${JSON.stringify(initialMenu)}`)
 	await waitFor(
 		() => script("document.body.dataset.probeControlChange"),
-		(value) => value === "local:true",
+		(value) => value === "message",
 		5,
 	)
 	await run("/frame", { id: null })

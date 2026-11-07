@@ -42,10 +42,12 @@ References checked:
   produced 49,920 samples and six aligned words. Broker GPU-failure policy,
   retained/closed host behavior and preparation leases passed.
 - Chromium PDF probe opened and indexed the thesis, then failed on the same
-  range-highlighting check before its speech checks. The full Chromium product
-  probe stopped at its stale-preference voice-picker assertion. Whether these
-  failures predate this patch has not been established; do not report the full
-  product/PDF suites as passing.
+  range-highlighting check before its speech checks. The Chromium product probe
+  passes end to end after its fixture explicitly selects the pinned English
+  voice instead of the first catalog row. The Firefox product flow passes
+  through voice download, playback, media controls, volume, speed, recovery,
+  pause, close and deletion; the PDF range check still fails. Do not report the
+  full PDF suites as passing.
 - Chromium probes required a disposable launcher adding `--headless=new` and
   `--no-sandbox` in this container; production packaging is unaffected.
 - Hardware GPU execution, Windows, physical audio quality, and target-device

@@ -1,21 +1,14 @@
 import { expect, test } from "bun:test"
 
-import {
-	speechFailure,
-	speechFailureCode,
-	SpeechTextError,
-	SpeechTimeoutError,
-	SpeechTransportError,
-	SpeechVoiceError,
-} from "../src/speech/errors.ts"
+import { SpeechError, speechFailure, speechFailureCode, SpeechTextError } from "../src/speech/errors.ts"
 
 test("speech failures retain their category across the transport without exposing internals", () => {
 	for (const original of [
 		new DOMException("stopped", "AbortError"),
 		new SpeechTextError("private phonemizer diagnostic"),
-		new SpeechTimeoutError("private timeout diagnostic"),
-		new SpeechTransportError("private transport diagnostic"),
-		new SpeechVoiceError("private voice diagnostic"),
+		new SpeechError("timeout", "private timeout diagnostic"),
+		new SpeechError("transport", "private transport diagnostic"),
+		new SpeechError("voice", "private voice diagnostic"),
 		new Error("private runtime diagnostic"),
 	]) {
 		const code = speechFailureCode(original)

@@ -5,10 +5,12 @@ import { isExtensionBackgroundSender, isExtensionPageSender } from "../extension
 import { createReaderDispatcher } from "../reading/dispatch.ts"
 import { captureDocument, type ReadingDocument, sourceRange } from "../reading/document.ts"
 import { currentWordHighlight, paintReaderHighlight } from "../reading/layout.ts"
-import { isStartReadingMessage, readingMessages } from "../reading/messages.ts"
+import { isStartReadingMessage, readingMessages, sourceChangedMessage } from "../reading/messages.ts"
 import { ReaderSession } from "../reading/session.ts"
 
 import currentWordStyle from "../reading/current-word.css?inline"
+import frameStyle from "../reading/frame.css?inline"
+import playerFrameStyle from "../reading/player-frame.css?inline"
 
 export default defineContentScript({
 	registration: "runtime",
@@ -17,14 +19,17 @@ export default defineContentScript({
 		if (scope.__readAloudInstalled) return
 		scope.__readAloudInstalled = true
 		const session = new ReaderSession<ReadingDocument>()
+		const playerOrigin = new URL(browser.runtime.getURL("/")).origin
 		let host: HTMLDivElement | undefined
 		let frame: HTMLIFrameElement | undefined
 		const pageAddress = () => `${location.origin}${location.pathname}${location.search}`
 		let sourceUrl = pageAddress()
 		let navigationTimer: ReturnType<typeof setInterval> | undefined
 		const key = currentWordHighlight
-		const style = document.createElement("style")
-		style.textContent = currentWordStyle
+		const wordStyle = document.createElement("style")
+		wordStyle.textContent = currentWordStyle
+		const hostStyle = document.createElement("style")
+		hostStyle.textContent = frameStyle
 		const close = () => {
 			clearInterval(navigationTimer)
 			navigationTimer = undefined
@@ -33,7 +38,8 @@ export default defineContentScript({
 			frame = undefined
 			session.close()
 			CSS.highlights?.delete(key)
-			style.remove()
+			wordStyle.remove()
+			hostStyle.remove()
 		}
 		const dispatch = createReaderDispatcher({
 			session,
@@ -62,7 +68,7 @@ export default defineContentScript({
 			const player = isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/"), ["/player.html"])
 			if (isStartReadingMessage(message) && background) {
 				try {
-					if ("reveal" in message && message.reveal === true && frame?.isConnected) {
+					if (message.reveal === true && frame?.isConnected) {
 						frame.focus()
 						return Promise.resolve({ ok: true })
 					}
@@ -72,23 +78,22 @@ export default defineContentScript({
 					if (frame?.isConnected) {
 						session.replace(captured)
 						CSS.highlights?.delete(key)
-						return Promise.resolve({ ok: true, reuse: true, session: session.id })
+						frame.contentWindow?.postMessage(sourceChangedMessage(), playerOrigin)
+						return Promise.resolve({ ok: true })
 					}
 					close()
 					session.replace(captured)
 					host = document.createElement("div")
 					host.dataset.readAloud = ""
-					host.style.cssText =
-						"all:initial!important;position:fixed!important;top:12px!important;left:50%!important;transform:translateX(-50%)!important;width:calc(100vw - 24px)!important;max-width:640px!important;z-index:2147483647!important;display:block!important;"
 					const shadow = host.attachShadow({ mode: "open" })
+					const shadowStyle = document.createElement("style")
+					shadowStyle.textContent = playerFrameStyle
 					frame = document.createElement("iframe")
 					frame.title = "Read Aloud playback controls"
 					frame.src = `${browser.runtime.getURL("/player.html")}#${session.id}`
 					if (import.meta.env.BROWSER !== "firefox") frame.allow = "autoplay"
-					frame.style.cssText =
-						"display:block;width:100%;height:52px;border:0;border-radius:12px;color-scheme:light dark;"
-					shadow.append(frame)
-					document.documentElement.append(host, style)
+					shadow.append(shadowStyle, frame)
+					document.documentElement.append(host, wordStyle, hostStyle)
 					navigationTimer = setInterval(() => {
 						if (pageAddress() !== sourceUrl) close()
 					}, 300)

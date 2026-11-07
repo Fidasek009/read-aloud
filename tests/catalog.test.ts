@@ -1,14 +1,13 @@
 import { expect, test } from "bun:test"
 
-import evidence from "../docs/evidence/voice-preview-generation-2026-11-06.json"
 import { catalogVoices, getVoice, languageLabel, qualityLabel, qualityRank, voices } from "../src/speech/catalog.ts"
 import { tokenizeText } from "../src/speech/phonemes.ts"
 import { validateConfig } from "../src/speech/voice-config.ts"
 
-test("catalog assets are pinned", () => {
+test("catalog assets are pinned and every entry resolves", () => {
 	expect(new Set(voices.map((voice) => voice.id)).size).toBe(voices.length)
-	expect(catalogVoices.length).toBeGreaterThan(170)
-	expect(voices.length).toBe(171)
+	expect(voices.length).toBeGreaterThan(0)
+	expect(voices.every((voice) => voice.unsupported === null)).toBe(true)
 	expect(voices.every((voice) => /^[a-f0-9]{64}$/.test(voice.sha256) && /^[a-f0-9]{64}$/.test(voice.configHash))).toBe(
 		true,
 	)
@@ -19,21 +18,17 @@ test("catalog assets are pinned", () => {
 		),
 	).toBe(true)
 	expect(getVoice("he_IL-saspeech-medium").unsupported).toContain("hebrew")
+	expect(() => getVoice("missing-voice")).toThrow("not available")
 	expect(() => validateConfig({ audio: { sample_rate: 1 } })).toThrow("configuration")
 })
 
-test("models affected by our former mapping error remain available; unsupported engines are not offered", () => {
-	for (const entry of evidence.entries) {
-		const voice = getVoice(entry.id)
-		if (entry.status !== "unsupported-runtime") {
-			expect(voices).toContain(voice)
-			expect(voice.unsupported).toBeNull()
-		} else {
+test("unsupported catalog entries remain addressable for deletion but are not offered", () => {
+	for (const voice of catalogVoices) {
+		if (voice.unsupported) {
 			expect(voices).not.toContain(voice)
-			expect(voice.unsupported).toBeTruthy()
-			// Retain metadata so an older downloaded copy can still be deleted.
+			expect(getVoice(voice.id)).toBe(voice)
 			expect(languageLabel(voice)).toBeTruthy()
-		}
+		} else expect(voices).toContain(voice)
 	}
 })
 

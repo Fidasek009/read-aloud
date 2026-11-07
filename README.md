@@ -1,10 +1,8 @@
 # Read Aloud
 
-A Firefox and Chrome extension with local speech, a multilingual catalog with 171 available models, explicit model downloads, and a compact Edge-like playback bar. Natural voice quality is a release requirement still being evaluated.
+A Firefox and Chrome extension with local speech, a multilingual voice catalog, explicit model downloads, and a compact Edge-like playback bar. Natural voice quality is a release requirement still being evaluated.
 
-The extension provides explicit voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. It is not release-ready: native-entry autoplay, cold startup, PDF acceptance, model provenance, and GPU/Windows acceptance remain open. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for the latest confirmed requirements, including all three mandatory reading benchmarks.
-
-See [known issues](docs/known-issues.md) for user-facing limitations and [acceptance status](docs/feasibility-status.md) for remaining work.
+The extension provides voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for confirmed requirements. [Known issues](docs/known-issues.md) lists user-facing limitations; [acceptance status](docs/feasibility-status.md) tracks remaining work.
 
 ## Development
 
@@ -25,7 +23,7 @@ Bun is development tooling; the finished extension must not require users to ins
 
 ## Technical notes
 
-Model management and [original preview production](voice-previews/README.md) derive from the same complete catalog, across every language and quality variant. Preview recordings are hosted separately and fetched only after Listen; replacement recordings currently remain local pending hosting and integration.
+Model management and [original preview production](voice-previews/README.md) derive from the same complete catalog across every language and quality variant. Preview recordings are hosted separately and fetched only after Listen. Refresh pinned upstream catalog metadata with `bun run catalog:update`; it downloads no model weights.
 
 The extension uses a Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) describe the chosen approach and outstanding gates.
 
@@ -41,15 +39,11 @@ After building, use `bun run probe:chrome` and `bun run probe:firefox` for isola
 
 ## Voice management
 
-The voice page offers 171 models with search, source terms, variants, and explicit downloads. Seven upstream candidates require unsupported pronunciation engines and are excluded from new downloads; older downloaded copies remain deletable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
+The voice page exposes the full pinned catalog with search, source terms, variants, and explicit downloads. Candidates that require unsupported pronunciation engines are excluded from new downloads; older downloaded copies remain deletable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
 
 ## PDF checks
 
 For a live PDF fetch check, use `PDF_SOURCE_URL=https://is.muni.cz/th/wdhgd/bc.pdf bun run probe:pdf`. The test checks access recovery in a fresh ungranted profile, then uses a narrow grant in a separate test copy; it does not click the browser's native permission dialog. In your normal browser, the new PDF tab may ask for access to the PDF's site. This is optional site access, not an install-time all-sites grant.
-
-## Updating a development package
-
-After updating a development package, reload the extension **and existing source tabs** once to remove listeners left by older builds. On Chrome, the new inference host adds the internal offscreen permission; accept that updated extension permission if the browser asks. No helper app is involved.
 
 ## Local diagnostics
 

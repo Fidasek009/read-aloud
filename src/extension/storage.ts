@@ -5,5 +5,4 @@ export const localKeys = {
 	volume: "volume",
 	lastSpeechPerformance: "lastSpeechPerformance",
 	voiceChange: "voiceChange",
-	readerChange: "readerChange",
 } as const

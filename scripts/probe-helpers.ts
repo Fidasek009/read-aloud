@@ -4,7 +4,7 @@ export const projectRoot = Bun.fileURLToPath(new URL("..", import.meta.url)).rep
 
 // Bun.WebView's disposable fixture profiles have no real credentials. Avoid
 // waiting for the desktop password store in headless Linux automation.
-export const chromeTestProfileArguments = ["--password-store=basic"] as const
+const chromeTestProfileArguments = ["--password-store=basic"] as const
 
 export function assert(condition: unknown, message: string): asserts condition {
 	if (!condition) throw new Error(message)

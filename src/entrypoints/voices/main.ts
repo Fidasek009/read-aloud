@@ -1,7 +1,7 @@
 import { browser } from "wxt/browser"
 
 import { localKeys } from "../../extension/storage.ts"
-import { catalogVoices, languageLabel, qualityLabel, qualityRank, voices } from "../../speech/catalog.ts"
+import { catalogVoices, compareVoices, languageLabel, qualityLabel, qualityRank, voices } from "../../speech/catalog.ts"
 import { deleteVoice, downloadVoice, installedVoices, onVoicesChanged } from "../../speech/vault.ts"
 import "./style.css"
 
@@ -46,12 +46,7 @@ function stopPreview() {
 	}
 	preview = undefined
 }
-const sorted = [...catalogVoices].sort(
-	(a, b) =>
-		a.language.localeCompare(b.language) ||
-		a.name.localeCompare(b.name) ||
-		qualityRank(a.quality) - qualityRank(b.quality),
-)
+const sorted = [...catalogVoices].sort(compareVoices)
 for (const [locale, name] of [...new Map(voices.map((voice) => [voice.locale, languageLabel(voice)]))].sort((a, b) =>
 	a[1].localeCompare(b[1]),
 )) {

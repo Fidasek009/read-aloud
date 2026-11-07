@@ -1,14 +1,21 @@
 import { browser } from "wxt/browser"
 
 /** Permission prompts stay attached to trusted clicks; every pending UI wait is abortable. */
-function askAccess(
-	status: HTMLElement,
-	signal: AbortSignal,
-	message: string,
-	label: string,
-	request: (explain: (message: string) => void) => Promise<Response | undefined>,
+function askAccess({
+	status,
+	signal,
+	message,
+	label,
+	request,
 	allowFileChoice = false,
-): Promise<Response | undefined> {
+}: {
+	status: HTMLElement
+	signal: AbortSignal
+	message: string
+	label: string
+	request: (explain: (message: string) => void) => Promise<Response | undefined>
+	allowFileChoice?: boolean
+}): Promise<Response | undefined> {
 	signal.throwIfAborted()
 	const explanation = document.createTextNode(message)
 	const allow = document.createElement("button")
@@ -92,12 +99,12 @@ async function localPdf(url: URL, signal: AbortSignal, status: HTMLElement): Pro
 		signal.throwIfAborted()
 	}
 	if (import.meta.env.BROWSER !== "firefox") {
-		const response = await askAccess(
+		const response = await askAccess({
 			status,
 			signal,
-			"Allow local file access to open this PDF directly.",
-			"Allow local file access",
-			async (explain) => {
+			message: "Allow local file access to open this PDF directly.",
+			label: "Allow local file access",
+			async request(explain) {
 				const granted = await browser.permissions.request({ origins: ["file:///*"] })
 				if (!granted) return undefined
 				try {
@@ -114,8 +121,8 @@ async function localPdf(url: URL, signal: AbortSignal, status: HTMLElement): Pro
 				)
 				return undefined
 			},
-			true,
-		)
+			allowFileChoice: true,
+		})
 		if (response) {
 			status.textContent = "Opening PDF…"
 			return response
@@ -126,14 +133,14 @@ async function localPdf(url: URL, signal: AbortSignal, status: HTMLElement): Pro
 
 export async function fetchPdf(url: URL, signal: AbortSignal, status: HTMLElement): Promise<Response> {
 	if (url.protocol === "file:") return localPdf(url, signal, status)
-	const request = () =>
+	const load = () =>
 		fetch(url, {
 			credentials: "include",
 			referrerPolicy: "no-referrer",
 			signal: AbortSignal.any([signal, AbortSignal.timeout(60_000)]),
 		})
 	try {
-		return await request()
+		return await load()
 	} catch (cause) {
 		signal.throwIfAborted()
 		const origins = [`${url.protocol}//${url.hostname}/*`]
@@ -142,25 +149,25 @@ export async function fetchPdf(url: URL, signal: AbortSignal, status: HTMLElemen
 				cause,
 			})
 		// activeTab belongs to the source tab; a new reader needs its own host grant.
-		const response = await askAccess(
+		const response = await askAccess({
 			status,
 			signal,
-			`Allow access to ${url.hostname} to open this PDF.`,
-			"Allow access and open PDF",
-			async (explain) => {
+			message: `Allow access to ${url.hostname} to open this PDF.`,
+			label: "Allow access and open PDF",
+			async request(explain) {
 				if (!(await browser.permissions.request({ origins }))) {
 					explain(`Access to ${url.hostname} is needed to open this PDF.`)
 					return undefined
 				}
 				try {
-					return await request()
+					return await load()
 				} catch {
 					signal.throwIfAborted()
 					explain("The PDF could not be reached. Open it on its original site, then try again.")
 					return undefined
 				}
 			},
-		)
+		})
 		if (!response) throw new Error("The PDF could not be opened.")
 		status.textContent = "Opening PDF…"
 		return response

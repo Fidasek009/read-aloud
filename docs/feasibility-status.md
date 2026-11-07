@@ -1,6 +1,6 @@
 # Implementation and acceptance status
 
-The extension is implemented; the requested release is **not complete**. The evidence and outstanding acceptance work are recorded below.
+The extension is implemented; product acceptance is **not complete**. The evidence and outstanding acceptance work are recorded below.
 
 ## Implemented
 
@@ -26,7 +26,7 @@ The supplied thesis has been fetched from the live MUNI URL in browser tests wit
 - **All three benchmarks:** MD Dash now passes actual-page sentence navigation, including Previous after several Next operations. Full listening/extraction acceptance on both HTML articles and the complete thesis remains open.
 - **Lifecycle:** verify tab switching, navigation/closure, cross-tab replacement, interrupted model loading, speed/voice changes, source mutations, and stale-work cancellation. Implemented handlers alone are insufficient evidence.
 - **GPU/CPU and platforms:** no physical GPU or Windows machine has been tested. Verify GPU correctness, device loss, CPU fallback, memory, and the 4-core/8-GB baseline.
-- **Speech and catalog:** listen to speed/quality variants, validate pitch, test normalized numbers/abbreviations and mixed scripts, and clear additional supported languages/voice variants. The [initial catalog-wide CPU run](evidence/voice-preview-generation-2026-11-06.json) produced 153 recordings and exposed 18 failures in our own pronunciation adapter. Those 18 synthesize after [correcting the adapter](piper-compatibility-2026-11-06.md). Seven models still need unsupported pronunciation engines. Synthesis evidence for tested passages does not establish acoustic quality, exact word alignment or target-device acceptance.
+- **Speech and catalog:** listen to speed/quality variants, validate pitch, test normalized numbers/abbreviations and mixed scripts, and clear additional supported languages/voice variants. The catalog-wide CPU run exposed 18 failures in our own pronunciation adapter; all now synthesize after [correcting the adapter](piper-compatibility-2026-11-06.md). Seven models still need unsupported pronunciation engines. Synthesis evidence for tested passages does not establish acoustic quality, exact word alignment or target-device acceptance.
 - **UI/accessibility:** visual checks and some keyboard interaction exist; complete keyboard, focus, contrast, assistive-technology, responsive layout, and recovery checks remain.
 - **Licensing/distribution:** original source remains MIT. Spellophone/eSpeak NG impose GPL obligations on the combined distribution; pinned source materials, source-access directions and notices are supplied. Own recordings replace upstream samples; model grant/lineage and applicable output terms remain separate assessments. See [licensing.md](licensing.md) and [NOTICE.md](../NOTICE.md); passing the materials check does not resolve these questions.
 
@@ -38,7 +38,7 @@ The extension offers 171 of the 178 upstream candidates. Seven require unsupport
 
 Verification before the adapter correction reproduced the 18 errors. That established reproducibility, not model damage. The [compatibility evidence](piper-compatibility-2026-11-06.md) records the corrected upstream behavior and subsequent validation scope.
 
-After the correction, the complete Chrome CPU run synthesized all 171 available models across 49 languages with zero failures. Firefox 159.0 synthesized the 18 previously failing voices plus the required English/Czech references. All 171 local recordings passed source/recording identity and numerical signal checks without clipping. All 130 tests, type checks, formatting, workflow lint and both package validations passed; the reviewer rebuild matched all 380 installed files. No preview audio is bundled. See the [dated results](evidence/piper-compatibility-2026-11-06.json) for test-entry permissions and limitations.
+After the correction, the complete Chrome CPU run synthesized all 171 available models across 49 languages with zero failures. Firefox 159.0 synthesized the 18 previously failing voices plus the required English/Czech references. All 171 local recordings passed source/recording identity and numerical signal checks without clipping. The full test, type-check, formatting, workflow-lint and package-validation suite passed, and the reviewer rebuild matched the installed files. No preview audio is bundled. See the [dated results](evidence/piper-compatibility-2026-11-06.json) for test-entry permissions and limitations.
 
 ## Original preview delivery — 2026-11-06
 

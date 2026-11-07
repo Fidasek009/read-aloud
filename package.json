@@ -33,6 +33,7 @@
 		"assets:store": "bun scripts/generate-store-assets.ts",
 		"package:store": "bun scripts/package-store.ts",
 		"check:licenses": "bun scripts/check-licenses.ts",
+		"catalog:update": "bun scripts/update-voices.ts",
 		"audit:voice-licenses": "bun scripts/audit-voice-licenses.ts",
 		"previews:plan": "bun scripts/generate-voice-previews.ts --plan",
 		"previews:generate": "bun scripts/generate-voice-previews.ts",

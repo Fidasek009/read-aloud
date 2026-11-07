@@ -199,8 +199,12 @@ try {
 	await call(sessionId, "Input.dispatchKeyEvent", { type: "keyUp", key: "Tab", code: "Tab", windowsVirtualKeyCode: 9 })
 	assert(await player("document.activeElement.id==='close'"), "Setup does not tab directly to Close")
 	console.log("No-voice layout passed in dark and narrow views; only Choose a voice and Close are visible.")
-	await view.evaluate("document.querySelector('section .primary').click()")
-	await waitFor(() => view.evaluate<boolean>("!!document.querySelector('section .danger')"), Boolean, 120)
+	await view.evaluate("document.querySelector('[data-voice=\"en_US-ljspeech-medium\"] .primary').click()")
+	await waitFor(
+		() => view.evaluate<boolean>("!!document.querySelector('[data-voice=\"en_US-ljspeech-medium\"] .danger')"),
+		Boolean,
+		120,
+	)
 	assert(
 		await view.evaluate("document.querySelector('#status').textContent===''"),
 		"Download added a page-level success notice",

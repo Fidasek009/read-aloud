@@ -22,11 +22,12 @@ export function installSpeechBroker() {
 		isExtensionPageSender(sender, browser.runtime.id, browser.runtime.getURL("/"), [path])
 	// IndexedDB model storage can be partitioned in an embedded frame. Unlike
 	// IndexedDB, browser.storage.local remains extension-scoped there.
-	const local = import.meta.env.BROWSER === "firefox" ? new SpeechService(new SpeechEngine(), "structured") : undefined
+	const firefoxService =
+		import.meta.env.BROWSER === "firefox" ? new SpeechService(new SpeechEngine(), "structured") : undefined
 	const lifetime = new SpeechHostLifetime()
 	let idleTimer: ReturnType<typeof setTimeout> | undefined
-	const localRegistry = local
-		? new SpeechPortRegistry(local, {
+	const firefoxRegistry = firefoxService
+		? new SpeechPortRegistry(firefoxService, {
 				connect(client) {
 					clearTimeout(idleTimer)
 					return lifetime.connect(client)
@@ -36,7 +37,7 @@ export function installSpeechBroker() {
 					const delay = lifetime.closeDelay(performance.now())
 					if (delay !== undefined)
 						idleTimer = setTimeout(() => {
-							local.dispose()
+							firefoxService.dispose()
 							lifetime.reopen()
 						}, delay)
 				},
@@ -50,10 +51,10 @@ export function installSpeechBroker() {
 		void navigator.locks.request(voiceLock(change.id), async () => {
 			// A later download may have committed before this event was handled.
 			if ((await installedVoices()).includes(change.id)) return
-			local?.voiceDeleted(change.id)
+			firefoxService?.voiceDeleted(change.id)
 			// The offscreen document may outlive this service worker and have no
 			// port yet. Runtime messaging can reach it without creating it.
-			if (!local) await sendSpeechHost({ type: "speech-voice-deleted", id: change.id }).catch(() => {})
+			if (!firefoxService) await sendSpeechHost({ type: "speech-voice-deleted", id: change.id }).catch(() => {})
 		})
 	})
 	const connectHost = async () => {
@@ -96,7 +97,7 @@ export function installSpeechBroker() {
 		})
 	const playerCommands = speechHostDispatcher({
 		"installed-voices": () => installedVoices(),
-		"prepare-speech-host": () => (local ? { ok: true } : ready().then(() => ({ ok: true }))),
+		"prepare-speech-host": () => (firefoxService ? { ok: true } : ready().then(() => ({ ok: true }))),
 	})
 	const inferenceCommands = speechHostDispatcher({
 		"speech-gpu-available": async () => ({
@@ -123,7 +124,7 @@ export function installSpeechBroker() {
 	})
 	browser.runtime.onMessage.addListener((message: unknown, sender) => {
 		if (isPage(sender, "/player.html")) return playerCommands(message)
-		if (!local && isPage(sender, "/inference.html")) return inferenceCommands(message)
+		if (!firefoxService && isPage(sender, "/inference.html")) return inferenceCommands(message)
 	})
 	browser.runtime.onConnect.addListener((port) => {
 		if (port.name === SPEECH_SERVER_PORT && isPage(port.sender, "/inference.html")) {
@@ -135,6 +136,6 @@ export function installSpeechBroker() {
 			})
 			return
 		}
-		if (port.name === SPEECH_CLIENT_PORT && isPage(port.sender, "/player.html")) localRegistry?.connect(port)
+		if (port.name === SPEECH_CLIENT_PORT && isPage(port.sender, "/player.html")) firefoxRegistry?.connect(port)
 	})
 }

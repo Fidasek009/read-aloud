@@ -6,18 +6,12 @@ import { PlaybackController } from "../../playback/controller.ts"
 import { playbackCopy } from "../../playback/copy.ts"
 import { bindMediaSession } from "../../playback/media-session.ts"
 import { parentReaderHost } from "../../reading/bridge.ts"
-import { isReaderChange, isReaderResponse, type ReaderCommand, type ReaderResponse } from "../../reading/host.ts"
-import { readerMessage, readingMessages } from "../../reading/messages.ts"
-import { getVoice, languageLabel, qualityLabel, qualityRank, voices } from "../../speech/catalog.ts"
+import { isReaderResponse, type ReaderCommand, type ReaderResponse } from "../../reading/host.ts"
+import { isSourceChangedMessage, readerMessage } from "../../reading/messages.ts"
+import { compareVoices, getVoice, languageLabel, qualityLabel, voices } from "../../speech/catalog.ts"
 import { SpeechClient } from "../../speech/client.ts"
 import { firstAudioPerformance, firstBufferPerformance } from "../../speech/diagnostics.ts"
-import {
-	SpeechTextError,
-	SpeechTimeoutError,
-	SpeechTransportError,
-	SpeechUnavailableError,
-	SpeechVoiceError,
-} from "../../speech/errors.ts"
+import { SpeechError, SpeechTextError } from "../../speech/errors.ts"
 import { sendSpeechHost } from "../../speech/host-protocol.ts"
 import { isVoiceChange } from "../../speech/protocol.ts"
 import "./style.css"
@@ -25,18 +19,18 @@ import "./style.css"
 const session = location.hash.slice(1)
 const readerHost = parentReaderHost()
 // Firefox exposes runtime messaging, but not tabs, to this embedded extension frame.
-const currentTab =
-	readerHost || import.meta.env.BROWSER === "firefox" ? undefined : browser.tabs.getCurrent().catch(() => undefined)
+const canReadCurrentTab = !readerHost && import.meta.env.BROWSER !== "firefox"
+const currentTab = canReadCurrentTab ? browser.tabs.getCurrent().catch(() => undefined) : undefined
 async function send(command: ReaderCommand): Promise<ReaderResponse> {
 	const request = { ...command, session }
-	const tab = readerHost ? undefined : await currentTab
+	const tab = await currentTab
 	const response: unknown = readerHost
 		? await readerHost(request)
 		: tab?.id === undefined
 			? await browser.runtime.sendMessage(readerMessage(request))
 			: await browser.tabs.sendMessage(tab.id, readerMessage(request), { frameId: 0 })
 	if (!isReaderResponse(command, response))
-		throw new SpeechTransportError("The page did not respond. Press Play to try again.")
+		throw new SpeechError("transport", "The page did not respond. Press Play to try again.")
 	return response
 }
 const button = (id: string) => document.querySelector<HTMLButtonElement>(`#${id}`)!
@@ -85,15 +79,8 @@ const mediaControls = bindMediaSession(navigator.mediaSession, {
 	nexttrack: () => next.click(),
 	stop: () => button("close").click(),
 })
-const skippedCopy = playbackCopy.skipped
 function userError(error: unknown): string {
-	return error instanceof SpeechTextError ||
-		error instanceof SpeechTimeoutError ||
-		error instanceof SpeechTransportError ||
-		error instanceof SpeechUnavailableError ||
-		error instanceof SpeechVoiceError
-		? error.message
-		: playbackCopy.failed
+	return error instanceof SpeechError ? error.message : playbackCopy.failed
 }
 function announce(copy: string, quiet: boolean) {
 	status.setAttribute("aria-live", quiet ? "off" : "polite")
@@ -145,19 +132,15 @@ function updateControls() {
 				: busy
 					? playbackCopy.preparing
 					: ended
-						? `Finished${controller.skippedText ? ` · ${skippedCopy}` : ""}`
+						? `Finished${controller.skippedText ? ` · ${playbackCopy.skipped}` : ""}`
 						: awaitingGesture
 							? "Press Play to start listening."
 							: state.kind === "ready" && state.intent === "pause"
 								? "Paused"
 								: controller.skippedText
-									? skippedCopy
+									? playbackCopy.skipped
 									: "Reading"
 	announce(copy, quiet)
-	voiceSelect.title =
-		voiceSelect.selectedOptions[0]?.parentElement instanceof HTMLOptGroupElement
-			? voiceSelect.selectedOptions[0].parentElement.label
-			: "Voice"
 	resizeBar()
 }
 function resizeBar() {
@@ -245,21 +228,14 @@ async function refreshVoices(
 ) {
 	const current = ++voiceRevision
 	const response = await sendSpeechHost({ type: "installed-voices" }).catch(() => {
-		throw new SpeechVoiceError("Your voices could not be loaded. Open Voices and try again.")
+		throw new SpeechError("voice", "Your voices could not be loaded. Open Voices and try again.")
 	})
 	const installed = new Set<string>(response)
 	const preferences = await preferencesPromise
 	if (controller.closed || current !== voiceRevision) return hasVoices
 	const previousChoice = voiceSelect.value
 	voiceSelect.replaceChildren()
-	for (const voice of voices
-		.filter((voice) => installed.has(voice.id))
-		.sort(
-			(a, b) =>
-				languageLabel(a).localeCompare(languageLabel(b)) ||
-				a.name.localeCompare(b.name) ||
-				qualityRank(a.quality) - qualityRank(b.quality),
-		)) {
+	for (const voice of voices.filter((voice) => installed.has(voice.id)).sort(compareVoices)) {
 		const option = document.createElement("option")
 		option.value = voice.id
 		option.textContent = `${voice.name} · ${qualityLabel(voice.quality)} · ${languageLabel(voice)}`
@@ -290,7 +266,7 @@ async function voicesChanged(id: string, deleted: boolean) {
 	const stillInstalled = Array.from(voiceSelect.options).some((option) => option.value === id)
 	if (!available) controller.unavailable()
 	else if (deleted && id === previousChoice && !stillInstalled)
-		controller.fail(new SpeechVoiceError("Voice removed. Press Play to use another downloaded voice."))
+		controller.fail(new SpeechError("voice", "Voice removed. Press Play to use another downloaded voice."))
 	else if (wasWaiting && !deleted) await initialize()
 	updateControls()
 }
@@ -298,8 +274,6 @@ browser.storage.onChanged.addListener((changes, area) => {
 	const change: unknown = changes[localKeys.voiceChange]?.newValue
 	if (area === "local" && isVoiceChange(change))
 		void voicesChanged(change.id, change.deleted).catch((error) => controller.fail(error))
-	const reset: unknown = changes[localKeys.readerChange]?.newValue
-	if (!controller.closed && area === "local" && isReaderChange(reset) && reset.session === session) void initialize()
 })
 window.addEventListener("pagehide", () => {
 	controller.close()
@@ -352,4 +326,6 @@ async function initialize() {
 	}
 }
 void initialize()
-window.addEventListener(readingMessages.sourceChanged, () => void initialize())
+window.addEventListener("message", (event) => {
+	if (event.source === window.parent && isSourceChangedMessage(event.data)) void initialize()
+})

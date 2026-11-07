@@ -39,12 +39,11 @@ function installAudioObservation() {
 	window.addEventListener("unhandledrejection", (event) => {
 		document.documentElement.dataset.probeRejection = String(event.reason)
 	})
-	const extension = probeWindow.browser ?? probeWindow.chrome
-	if (!extension) throw new Error("Extension storage API is unavailable")
-	extension.storage.onChanged.addListener((changes, area) => {
-		const change: unknown = changes.readerChange?.newValue
-		if (change && typeof change === "object" && "session" in change)
-			document.body.dataset.probeControlChange = `${area}:${change.session === location.hash.slice(1)}`
+	window.addEventListener("message", (event) => {
+		if (event.source !== window.parent) return
+		const message: unknown = event.data
+		if (message && typeof message === "object" && "type" in message && message.type === "read-aloud-source-changed")
+			document.body.dataset.probeControlChange = "message"
 	})
 	const NativeAudio = window.Audio
 	window.Audio = function (src?: string) {

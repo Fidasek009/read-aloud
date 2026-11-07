@@ -28,4 +28,4 @@ The former Piper Samples/Wikipedia integration is removed, including its URLs, d
 
 ## Release review
 
-The [licensing checklist](licensing.md) separates supplied notices/source materials from remaining model/lineage and output assessments. CI verifies the materials directly; there is no separate hash-bound approval record. Those questions are not established findings of illegality, and passing material checks does not resolve them. The upstream-sample clarification drafts are obsolete, unsent historical references; no third-party contact is planned.
+The [licensing checklist](licensing.md) separates supplied notices/source materials from remaining model/lineage and output assessments. CI verifies the materials directly; there is no separate hash-bound approval record. Those questions are not established findings of illegality, and passing material checks does not resolve them. No third-party contact is planned.

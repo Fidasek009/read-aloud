@@ -42,38 +42,14 @@ export function speechHostDispatcher(handlers: SpeechHostHandlers) {
 			!Object.hasOwn(handlers, command.type)
 		)
 			return
-		if (!isSpeechHostCommand(command)) return Promise.reject(new Error("Invalid speech host command"))
-		const handler = handlers[command.type] as (command: SpeechHostCommand) => unknown
-		return Promise.resolve(handler(command))
+		if (
+			command.type === "speech-voice-deleted" &&
+			(!("id" in command) || typeof command.id !== "string" || !command.id || command.id.length > MAX_VOICE_ID_LENGTH)
+		)
+			return Promise.reject(new Error("Invalid speech host command"))
+		const handler = handlers[command.type as SpeechHostCommand["type"]] as (command: SpeechHostCommand) => unknown
+		return Promise.resolve(handler(command as SpeechHostCommand))
 	}
-}
-
-const commandTypes: Record<SpeechHostCommand["type"], true> = {
-	"installed-voices": true,
-	"prepare-speech-host": true,
-	"reserve-speech-host": true,
-	"claim-speech-host-close": true,
-	"release-speech-host-close": true,
-	"close-idle-speech-host": true,
-	"connect-speech-host": true,
-	"speech-voice-deleted": true,
-	"speech-gpu-available": true,
-	"speech-gpu-failed": true,
-}
-
-export function isSpeechHostCommand(message: unknown): message is SpeechHostCommand {
-	if (
-		!message ||
-		typeof message !== "object" ||
-		!("type" in message) ||
-		typeof message.type !== "string" ||
-		!Object.hasOwn(commandTypes, message.type)
-	)
-		return false
-	return (
-		message.type !== "speech-voice-deleted" ||
-		("id" in message && typeof message.id === "string" && !!message.id && message.id.length <= MAX_VOICE_ID_LENGTH)
-	)
 }
 
 export function isSpeechHostReply(response: unknown): response is SpeechHostReply {

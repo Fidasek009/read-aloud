@@ -1,8 +1,8 @@
 import type { WordTiming } from "./phonemes.ts"
 
-import { isWorkerTimings, type WorkerTimings } from "./diagnostics.ts"
 import { MAX_VOICE_ID_LENGTH, speechRequest } from "./protocol.ts"
 import { validateConfig, type VoiceConfig } from "./voice-config.ts"
+import { isWorkerTimings, type WorkerTimings } from "./worker-timings.ts"
 
 function isArrayBuffer(value: unknown): value is ArrayBuffer {
 	return Object.prototype.toString.call(value) === "[object ArrayBuffer]"

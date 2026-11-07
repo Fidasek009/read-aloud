@@ -9,6 +9,7 @@ export const readingMessages = {
 
 export type ReaderMessage = ReaderRequest & { type: typeof readingMessages.reader }
 export type StartReadingMessage = { type: typeof readingMessages.start; mode: "article" | "selection"; reveal: boolean }
+export type SourceChangedMessage = { type: typeof readingMessages.sourceChanged }
 
 export function readerMessage(request: ReaderRequest): ReaderMessage {
 	return { type: readingMessages.reader, ...request }
@@ -16,6 +17,10 @@ export function readerMessage(request: ReaderRequest): ReaderMessage {
 
 export function startReadingMessage(mode: StartReadingMessage["mode"], reveal = false): StartReadingMessage {
 	return { type: readingMessages.start, mode, reveal }
+}
+
+export function sourceChangedMessage(): SourceChangedMessage {
+	return { type: readingMessages.sourceChanged }
 }
 
 export function isReaderMessage(value: unknown): value is ReaderMessage {
@@ -39,4 +44,8 @@ export function isStartReadingMessage(value: unknown): value is StartReadingMess
 		"reveal" in value &&
 		typeof value.reveal === "boolean"
 	)
+}
+
+export function isSourceChangedMessage(value: unknown): value is SourceChangedMessage {
+	return !!value && typeof value === "object" && "type" in value && value.type === readingMessages.sourceChanged
 }

@@ -7,7 +7,7 @@ import { isExtensionBackgroundSender } from "../../extension/sender.ts"
 import { createReaderDispatcher } from "../../reading/dispatch.ts"
 import { overlappingRuns, type ReadingDocument, sourceRange, type TextRun } from "../../reading/document.ts"
 import { currentWordHighlight, paintReaderHighlight } from "../../reading/layout.ts"
-import { readingMessages } from "../../reading/messages.ts"
+import { sourceChangedMessage } from "../../reading/messages.ts"
 import { normalizeDocument } from "../../reading/normalize.ts"
 import { fetchPdf } from "../../reading/pdf-access.ts"
 import { isPdfCommand, isPdfSelectionToken, type PdfCommand, pdfSelectionKey } from "../../reading/pdf-control.ts"
@@ -132,7 +132,7 @@ async function start(mode: "article" | "selection", initial?: ReadingDocument) {
 	if (!started || !alive) return
 	clearMapping()
 	if (frame) {
-		frame.contentWindow?.dispatchEvent(new Event(readingMessages.sourceChanged))
+		frame.contentWindow?.postMessage(sourceChangedMessage(), location.origin)
 		return
 	}
 	frame = document.createElement("iframe")
@@ -393,8 +393,9 @@ async function load() {
 		const section = document.createElement("section")
 		section.className = "pdf-page"
 		section.setAttribute("aria-label", `Page ${n}`)
-		section.dataset.scale = String(scale)
-		section.style.cssText = `width:${viewport.width}px;height:${viewport.height}px;--total-scale-factor:${scale};`
+		section.style.width = `${viewport.width}px`
+		section.style.height = `${viewport.height}px`
+		section.style.setProperty("--total-scale-factor", String(scale))
 		const canvas = document.createElement("canvas")
 		canvas.width = canvas.height = 0
 		canvas.setAttribute("aria-hidden", "true")

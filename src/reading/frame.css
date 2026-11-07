@@ -1,0 +1,11 @@
+[data-read-aloud] {
+	all: initial !important;
+	position: fixed !important;
+	top: 12px !important;
+	left: 50% !important;
+	transform: translateX(-50%) !important;
+	width: calc(100vw - 24px) !important;
+	max-width: 640px !important;
+	z-index: 2147483647 !important;
+	display: block !important;
+}

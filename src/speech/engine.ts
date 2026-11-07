@@ -4,7 +4,7 @@ import type { GpuFallbackReason, SpeechDiagnostics } from "./diagnostics.ts"
 import type { SpeechClip } from "./protocol.ts"
 import type { VoiceConfig } from "./voice-config.ts"
 
-import { SPEECH_REQUEST_TIMEOUT_MS, speechFailure, SpeechTextError, SpeechTimeoutError } from "./errors.ts"
+import { SPEECH_REQUEST_TIMEOUT_MS, speechFailure, SpeechTextError } from "./errors.ts"
 import { sendSpeechHost, SPEECH_GPU_FAILURE_KEY } from "./host-protocol.ts"
 import { readVoice } from "./vault.ts"
 import { isWorkerResponse, type WorkerCommand, type WorkerRequest, type WorkerSuccess } from "./worker-protocol.ts"
@@ -287,10 +287,7 @@ export class SpeechEngine {
 		return new Promise((resolve, reject) => {
 			if (!this.worker) return reject(new Error("Choose a downloaded voice first"))
 			const id = ++this.sequence
-			const timer = setTimeout(
-				() => this.stopWorker(new SpeechTimeoutError("Speech timed out")),
-				SPEECH_REQUEST_TIMEOUT_MS,
-			)
+			const timer = setTimeout(() => this.stopWorker(speechFailure("timeout")), SPEECH_REQUEST_TIMEOUT_MS)
 			this.pending.set(id, { type: message.type, resolve, reject, timer })
 			try {
 				this.worker.postMessage({ ...message, id } satisfies WorkerRequest, transfer)

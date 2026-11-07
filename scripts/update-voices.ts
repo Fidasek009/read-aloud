@@ -2,22 +2,52 @@
 const revision = "5041a7a49ae5b3a0f30e6837769eb03fdbb231bd"
 const repository = "https://huggingface.co/rhasspy/piper-voices"
 const base = `${repository}/resolve/${revision}`
-async function json(url: string): Promise<any> {
+
+interface UpstreamVoice {
+	key: string
+	name: string
+	quality: string
+	files: Record<string, unknown>
+	language: { code: string; name_english: string; country_english: string; name_native: string }
+}
+
+interface TreeFile {
+	path: string
+	size: number
+	lfs?: { oid?: string }
+}
+
+interface VoiceRecord {
+	id: string
+	name: string
+	language: string
+	nativeLanguage: string
+	locale: string
+	quality: string
+	bytes: number
+	sha256: string
+	path: string
+	configHash: string
+	unsupported: string | null
+}
+
+async function json<T>(url: string): Promise<T> {
 	const response = await fetch(url)
 	if (!response.ok) throw new Error(`Metadata request failed: ${response.status} ${url}`)
-	return response.json()
+	return response.json() as Promise<T>
 }
-const catalog = await json(`${base}/voices.json`)
-const files = new Map<string, any>()
+
+const catalog = await json<Record<string, UpstreamVoice>>(`${base}/voices.json`)
+const files = new Map<string, TreeFile>()
 let next = `https://huggingface.co/api/models/rhasspy/piper-voices/tree/${revision}?recursive=true&expand=false&limit=1000`
 while (next) {
 	const response = await fetch(next)
 	if (!response.ok) throw new Error("Cannot read pinned model file metadata")
-	for (const file of (await response.json()) as any[]) files.set(file.path, file)
+	for (const file of (await response.json()) as TreeFile[]) files.set(file.path, file)
 	next = response.headers.get("link")?.match(/<([^>]+)>; rel="next"/)?.[1] ?? ""
 }
-const queue: any[] = Object.values(catalog)
-const result: any[] = []
+const queue = Object.values(catalog)
+const result: VoiceRecord[] = []
 await Promise.all(
 	Array.from({ length: 8 }, async () => {
 		for (;;) {
@@ -29,7 +59,7 @@ await Promise.all(
 			const configResponse = await fetch(`${base}/${path}.json`)
 			if (!configResponse.ok) throw new Error(`Missing configuration: ${voice.key}`)
 			const configBytes = await configResponse.arrayBuffer()
-			const config = JSON.parse(new TextDecoder().decode(configBytes))
+			const config = JSON.parse(new TextDecoder().decode(configBytes)) as { phoneme_type?: string }
 			const phonemeType = config.phoneme_type ?? "espeak"
 			const language = voice.language
 			result.push({

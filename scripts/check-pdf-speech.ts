@@ -1,5 +1,6 @@
 import { browser } from "wxt/browser"
 
+import type {} from "../src/reading/bridge.ts"
 import type { SpeechClip } from "../src/speech/protocol.ts"
 import type { WorkerCommand } from "../src/speech/worker-protocol.ts"
 
@@ -86,18 +87,37 @@ export async function checkSpeech(text: string, base: string) {
 }
 
 /** Select the actual cross-page range before invoking the bundled production CPU worker. */
-export const pdfSpeechCheck = (base: string) => `(async()=>{
- const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
- const full=(await window.readAloudHost({session,command:'document'})).text;
- const start=full.indexOf('This work was supported',full.indexOf('Acknowledgements'));
- const end=full.slice(0,full.indexOf('This thesis',start)).trimEnd().length;
- if(start<0||end<=start)throw Error('Cross-page speech fixture missing');
- await window.readAloudHost({session,command:'highlight',start,end});
- const range=[...CSS.highlights.get('read-aloud-current-word')][0].cloneRange();
- getSelection().removeAllRanges();getSelection().addRange(range);
- await window.readAloudHost({session,command:'selection'});
- const selected=(await window.readAloudHost({session,command:'document'})).text;
- frame.contentDocument.querySelector('#close').click();
- const {checkSpeech}=await import(chrome.runtime.getURL('check-pdf-speech.js'));
- return checkSpeech(selected,${JSON.stringify(base)});
-})()`
+async function checkPdfSpeechInBrowser(base: string) {
+	const frame = document.querySelector<HTMLIFrameElement>("iframe")
+	if (!frame) throw Error("PDF player is missing")
+	const session = new URL(frame.src).hash.slice(1)
+	const host = window.readAloudHost
+	if (!host) throw Error("PDF reading host is unavailable")
+	const documentResponse = await host({ session, command: "document" })
+	if (!("text" in documentResponse) || typeof documentResponse.text !== "string")
+		throw Error("PDF document text is unavailable")
+	const full = documentResponse.text
+	const start = full.indexOf("This work was supported", full.indexOf("Acknowledgements"))
+	const end = full.slice(0, full.indexOf("This thesis", start)).trimEnd().length
+	if (start < 0 || end <= start) throw Error("Cross-page speech fixture missing")
+	await host({ session, command: "highlight", start, end })
+	const range = CSS.highlights?.get("read-aloud-current-word")?.values().next().value
+	if (!(range instanceof Range)) throw Error("Cross-page range could not be highlighted")
+	const selection = getSelection()
+	selection?.removeAllRanges()
+	selection?.addRange(range)
+	await host({ session, command: "selection" })
+	const selectedResponse = await host({ session, command: "document" })
+	if (!("text" in selectedResponse) || typeof selectedResponse.text !== "string")
+		throw Error("PDF selection text is unavailable")
+	const selected = selectedResponse.text
+	frame.contentDocument?.querySelector<HTMLButtonElement>("#close")?.click()
+	const extension = (globalThis as unknown as { chrome: typeof browser }).chrome
+	const scriptUrl = new URL("check-pdf-speech.js", extension.runtime.getURL("/")).href
+	const module = (await import(/* @vite-ignore */ scriptUrl)) as {
+		checkSpeech: (text: string, base: string) => Promise<unknown>
+	}
+	return module.checkSpeech(selected, base)
+}
+
+export const pdfSpeechCheck = (base: string) => `(${checkPdfSpeechInBrowser.toString()})(${JSON.stringify(base)})`

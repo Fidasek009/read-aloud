@@ -1,11 +1,7 @@
 import { expect, test } from "bun:test"
 
-import {
-	firstAudioPerformance,
-	firstBufferPerformance,
-	isWorkerTimings,
-	speechDiagnostics,
-} from "../src/speech/diagnostics.ts"
+import { firstAudioPerformance, firstBufferPerformance, speechDiagnostics } from "../src/speech/diagnostics.ts"
+import { isWorkerTimings } from "../src/speech/worker-timings.ts"
 
 test("diagnostics retain measured metadata and remove source text and arbitrary errors", () => {
 	expect(

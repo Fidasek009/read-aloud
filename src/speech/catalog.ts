@@ -57,6 +57,14 @@ export function qualityRank(quality: string): number {
 	return rank === -1 ? qualityOrder.length : rank
 }
 
+export function compareVoices(a: Voice, b: Voice): number {
+	return (
+		languageLabel(a).localeCompare(languageLabel(b)) ||
+		a.name.localeCompare(b.name) ||
+		qualityRank(a.quality) - qualityRank(b.quality)
+	)
+}
+
 export function getVoice(id: string): Voice {
 	const voice = byId.get(id)
 	if (!voice) throw new Error("This voice is not available")

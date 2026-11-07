@@ -1,8 +1,8 @@
 import { createEspeak } from "@spelling-creator/spellophone/browser"
 import * as ort from "onnxruntime-web"
 
-import type { WorkerTimings } from "./diagnostics.ts"
 import type { VoiceConfig } from "./voice-config.ts"
+import type { WorkerTimings } from "./worker-timings.ts"
 
 import { speechDataFetch } from "./data-fetch.ts"
 import { SpeechTextError } from "./errors.ts"

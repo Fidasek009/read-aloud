@@ -23,7 +23,7 @@ Selected source models are cached under `.cache/own-preview-models/`. Synthesis 
 
 ## Delivery status
 
-The [initial 2026-11-06 catalog run](../docs/evidence/voice-preview-generation-2026-11-06.json) recorded 153 models and exposed 18 failures in our own pronunciation adapter. Those 18 now synthesize successfully after [matching Piper's handling of absent symbols](../docs/piper-compatibility-2026-11-06.md). Seven other candidates need unsupported pronunciation engines. The earlier report remains historical evidence, not a list of broken models.
+The catalog run exposed 18 failures in our own pronunciation adapter. Those 18 now synthesize successfully after [matching Piper's handling of absent symbols](../docs/piper-compatibility-2026-11-06.md). Seven other candidates need unsupported pronunciation engines.
 
 The [completed run after the correction](../docs/evidence/piper-compatibility-2026-11-06.json) regenerated all **171 available models across 49 languages** with the same renderer: zero failures, valid source/recording hashes and non-silent PCM16 audio, with no clipped samples. Firefox also synthesized the 18 formerly failing models and the required English/Czech references. These are numerical synthesis checks, not listening-quality acceptance.
 
