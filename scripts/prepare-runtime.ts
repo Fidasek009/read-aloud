@@ -1,3 +1,5 @@
+import { adaptOrtBindings, adaptOrtImports, adaptPdfWorker } from "./runtime-adapters"
+
 const root = Bun.fileURLToPath(new URL("..", import.meta.url)).replace(/[\\/]$/u, "")
 const out = `${root}/public/runtime`
 const expected = new Map<string, Set<string>>()
@@ -67,6 +69,10 @@ for (const [directory, backend, runtime] of [
 		],
 	})
 	if (!result.success) throw new AggregateError(result.logs, "Speech worker bundling failed")
+	await Bun.write(
+		`${out}/${directory}/speech.js`,
+		adaptOrtImports(await Bun.file(`${out}/${directory}/speech.js`).text(), backend),
+	)
 	expected.get(out)!.add(`${directory}/speech.js`)
 	const name = `ort-wasm-simd-threaded${backend === "wasm" ? "" : ".asyncify"}`
 	for (const suffix of ["mjs", "wasm"])
@@ -76,6 +82,8 @@ for (const [directory, backend, runtime] of [
 			out,
 		)
 }
+const gpuModule = `${out}/ort/webgpu/ort-wasm-simd-threaded.asyncify.mjs`
+await Bun.write(gpuModule, adaptOrtBindings(await Bun.file(gpuModule).text()))
 const phonemizer = `${root}/node_modules/@spelling-creator/spellophone`
 // Chrome rejects a second manifest.json anywhere in the extension archive.
 // The speech loader maps its inventory request to this packaged filename.
@@ -104,6 +112,8 @@ for (const [source, target] of [
 	await copyAsset(source, `${out}/licenses/${target}`, out)
 const pdf = `${root}/node_modules/pdfjs-dist`
 const pdfOut = `${root}/public/pdf-runtime`
+expected.set(pdfOut, new Set(["pdf.worker.mjs"]))
+await Bun.write(`${pdfOut}/pdf.worker.mjs`, adaptPdfWorker(await Bun.file(`${pdf}/build/pdf.worker.mjs`).text()))
 await copyAsset(`${pdf}/LICENSE`, `${pdfOut}/LICENSE`, pdfOut)
 for (const folder of ["cmaps", "standard_fonts", "wasm", "iccs"])
 	await copyDirectory(`${pdf}/${folder}`, `${pdfOut}/${folder}`, pdfOut)

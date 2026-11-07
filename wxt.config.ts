@@ -2,10 +2,21 @@ import { $ } from "bun"
 import { defineConfig } from "wxt"
 
 import { buildVersion } from "./scripts/release-version"
+import { adaptPdfMain } from "./scripts/runtime-adapters"
 
 export default defineConfig({
 	srcDir: "src",
 	manifestVersion: 3,
+	vite: () => ({
+		plugins: [
+			{
+				name: "packaged-pdf-worker",
+				transform(code, id) {
+					if (id.endsWith("/pdfjs-dist/build/pdf.mjs")) return adaptPdfMain(code)
+				},
+			},
+		],
+	}),
 	zip: {
 		artifactTemplate: "{{name}}-{{version}}-{{browser}}{{modeSuffix}}.zip",
 		sourcesTemplate: "{{name}}-{{version}}-sources{{modeSuffix}}.zip",
@@ -82,7 +93,9 @@ export default defineConfig({
 					browser_specific_settings: {
 						gecko: {
 							id: process.env.FIREFOX_EXTENSION_ID || "read-aloud@fidasek009.github.io",
-							strict_min_version: "140.0",
+							// AMO checks the data-consent key against Android 142 as well.
+							// Do not add gecko_android: only desktop is supported/tested.
+							strict_min_version: "142.0",
 							data_collection_permissions: { required: ["none"] },
 						},
 					},

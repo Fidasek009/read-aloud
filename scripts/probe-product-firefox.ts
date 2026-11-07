@@ -102,7 +102,7 @@ try {
 					prefs: {
 						// Enables Firefox's test-only OS-key injection API, not media eligibility.
 						"media.mediacontrol.testingevents.enabled": true,
-						"extensions.webextensions.uuids": JSON.stringify({ "read-aloud@local.invalid": uuid }),
+						"extensions.webextensions.uuids": JSON.stringify({ [manifest.browser_specific_settings.gecko.id]: uuid }),
 					},
 				},
 			},

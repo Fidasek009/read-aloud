@@ -1,7 +1,6 @@
 import type { PDFPageProxy, RenderTask } from "pdfjs-dist"
 
 import { getDocument, GlobalWorkerOptions, TextLayer } from "pdfjs-dist"
-import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.mjs?url"
 import { browser } from "wxt/browser"
 
 import { isExtensionBackgroundSender } from "../../extension/sender.ts"
@@ -311,7 +310,7 @@ async function load() {
 		initial = normalizeDocument({ text: stored[name], runs: [] }, true)
 		if (allowStart && alive) await start("selection", initial)
 	}
-	GlobalWorkerOptions.workerSrc = new URL(pdfWorkerUrl, location.href).href
+	GlobalWorkerOptions.workerSrc = new URL("/pdf-runtime/pdf.worker.mjs", location.href).href
 	let bytes: Uint8Array<ArrayBuffer> | undefined
 	for (let attempt = 0; attempt < 2; attempt++) {
 		const response = await fetchPdf(url, lifecycle.signal, status)
@@ -350,7 +349,8 @@ async function load() {
 			try {
 				// Recover the module error swallowed by PDF.js. Only packaged-code
 				// metadata is logged, never a PDF URL or selected text.
-				await import(/* @vite-ignore */ GlobalWorkerOptions.workerSrc)
+				// @ts-expect-error Packaged by prepare-runtime.ts, outside the module graph.
+				await import(/* @vite-ignore */ "/pdf-runtime/pdf.worker.mjs")
 			} catch (moduleError: unknown) {
 				if (moduleError instanceof Error) {
 					reason = moduleError.message
