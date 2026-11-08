@@ -21,6 +21,8 @@ import "./style.css"
 const pages = document.querySelector<HTMLDivElement>("#pages")!
 const status = document.querySelector<HTMLParagraphElement>("#status")!
 const controls = document.querySelector<HTMLDivElement>("#controls")!
+const zoomControls = document.querySelector<HTMLDivElement>("#zoom")!
+const zoomLevel = document.querySelector<HTMLSpanElement>("#zoom-level")!
 const params = new URLSearchParams(location.search)
 const highlightKey = currentWordHighlight
 const session = new ReaderSession<ReadingDocument>()
@@ -71,9 +73,11 @@ interface PdfTextRun extends TextRun {
 interface PageState {
 	page: PDFPageProxy
 	canvas: HTMLCanvasElement
+	section: HTMLElement
 	container: HTMLDivElement
 	content: Awaited<ReturnType<PDFPageProxy["getTextContent"]>>
 	viewport: ReturnType<PDFPageProxy["getViewport"]>
+	fitScale: number
 	runs: (PdfTextRun | undefined)[]
 	task?: RenderTask
 	visible: boolean
@@ -81,6 +85,74 @@ interface PageState {
 	pending: Promise<void>
 }
 const owners = new WeakMap<Text, PageState>()
+
+function setPageMetrics(section: HTMLElement, viewport: PageState["viewport"], scale: number) {
+	section.style.width = `${viewport.width}px`
+	section.style.height = `${viewport.height}px`
+	section.style.setProperty("--total-scale-factor", String(scale))
+}
+
+// The page raster is background only; the text layer stays crisp at any zoom.
+// These caps keep re-rendered pages inside browser canvas limits.
+const MAX_CANVAS_SIDE = 16_384
+const MAX_CANVAS_AREA = 24_000_000
+const MIN_ZOOM = 0.5
+const MAX_ZOOM = 5
+const ZOOM_STEP = 1.25
+let zoom = 1
+let paintTimer: ReturnType<typeof setTimeout> | undefined
+
+function canvasPixelRatio(viewport: PageState["viewport"]) {
+	const side = MAX_CANVAS_SIDE / Math.max(viewport.width, viewport.height)
+	const area = Math.sqrt(MAX_CANVAS_AREA / (viewport.width * viewport.height))
+	return Math.min(devicePixelRatio, 2, side, area)
+}
+
+function scrollAnchor() {
+	const center = scrollY + innerHeight / 2
+	for (const item of renderers.values()) {
+		const rect = item.section.getBoundingClientRect()
+		if (rect.bottom < center) continue
+		return {
+			section: item.section,
+			x: Math.min(1, Math.max(0, (scrollX + innerWidth / 2 - rect.left) / rect.width)),
+			y: Math.min(1, Math.max(0, (center - rect.top) / rect.height)),
+		}
+	}
+	return undefined
+}
+
+function applyZoom() {
+	const anchor = scrollAnchor()
+	for (const item of renderers.values()) {
+		const scale = item.fitScale * zoom
+		const viewport = item.page.getViewport({ scale })
+		item.viewport = viewport
+		setPageMetrics(item.section, viewport, scale)
+	}
+	if (anchor) {
+		const rect = anchor.section.getBoundingClientRect()
+		const top = rect.top + scrollY + anchor.y * rect.height
+		const left = rect.left + scrollX + anchor.x * rect.width
+		scrollTo({ top: Math.max(0, top - innerHeight / 2), left: Math.max(0, left - innerWidth / 2) })
+	}
+	zoomLevel.textContent = `${Math.round(zoom * 100)}%`
+	// Re-rasterize visible pages once the gesture settles; layout stays immediate.
+	clearTimeout(paintTimer)
+	paintTimer = setTimeout(() => {
+		for (const item of renderers.values()) {
+			item.task?.cancel()
+			if (item.visible) queuePaint(item)
+		}
+	}, 120)
+}
+
+function zoomTo(value: number) {
+	const next = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, value))
+	if (next === zoom) return
+	zoom = next
+	applyZoom()
+}
 
 function ensureText(state: PageState): Promise<void> {
 	return (state.textReady ??= (async () => {
@@ -227,6 +299,46 @@ window.readAloudHost = createReaderDispatcher({
 })
 
 const renderers = new Map<Element, PageState>()
+
+function queuePaint(item: PageState) {
+	item.pending = item.pending
+		.catch(() => {})
+		.then(async () => {
+			if (!alive) return
+			if (!item.visible) {
+				item.canvas.width = item.canvas.height = 0
+				item.section.removeAttribute("data-painted")
+				return
+			}
+			await ensureText(item)
+			if (!item.visible || !alive) return
+			const pixelRatio = canvasPixelRatio(item.viewport)
+			const canvas = document.createElement("canvas")
+			canvas.setAttribute("aria-hidden", "true")
+			canvas.width = Math.ceil(item.viewport.width * pixelRatio)
+			canvas.height = Math.ceil(item.viewport.height * pixelRatio)
+			const task = item.page.render({
+				canvas,
+				viewport: item.viewport,
+				...(pixelRatio === 1 ? {} : { transform: [pixelRatio, 0, 0, pixelRatio, 0, 0] }),
+			})
+			item.task = task
+			try {
+				await task.promise
+				if (!item.visible || !alive) return
+				// Swap only painted frames so zooming never blanks a visible page.
+				item.canvas.replaceWith(canvas)
+				item.canvas = canvas
+				item.section.setAttribute("data-painted", "")
+			} catch (error) {
+				if (!(error instanceof Error && error.name === "RenderingCancelledException") && alive) throw error
+			}
+		})
+		.catch(() => {
+			if (alive) status.textContent = "A page image could not be rendered. Its text is still available."
+		})
+}
+
 const observer = new IntersectionObserver(
 	(entries) => {
 		for (const entry of entries) {
@@ -234,39 +346,42 @@ const observer = new IntersectionObserver(
 			if (!item) continue
 			item.visible = entry.isIntersecting
 			if (!entry.isIntersecting) item.task?.cancel()
-			item.pending = item.pending
-				.catch(() => {})
-				.then(async () => {
-					if (!alive) return
-					if (!item.visible) {
-						item.canvas.width = item.canvas.height = 0
-						entry.target.removeAttribute("data-painted")
-						return
-					}
-					await ensureText(item)
-					if (!item.visible || !alive) return
-					const pixelRatio = Math.min(devicePixelRatio, 2)
-					item.canvas.width = Math.ceil(item.viewport.width * pixelRatio)
-					item.canvas.height = Math.ceil(item.viewport.height * pixelRatio)
-					item.task = item.page.render({
-						canvas: item.canvas,
-						viewport: item.viewport,
-						...(pixelRatio === 1 ? {} : { transform: [pixelRatio, 0, 0, pixelRatio, 0, 0] }),
-					})
-					try {
-						await item.task.promise
-						if (item.visible && alive) entry.target.setAttribute("data-painted", "")
-					} catch (error) {
-						if (!(error instanceof Error && error.name === "RenderingCancelledException") && alive) throw error
-					}
-				})
-				.catch(() => {
-					if (alive) status.textContent = "A page image could not be rendered. Its text is still available."
-				})
+			queuePaint(item)
 		}
 	},
 	{ rootMargin: "100% 0px" },
 )
+
+window.addEventListener(
+	"wheel",
+	(event) => {
+		if (!event.ctrlKey || !event.cancelable || !event.deltaY) return
+		event.preventDefault()
+		const delta =
+			event.deltaMode === 1 ? event.deltaY * 16 : event.deltaMode === 2 ? event.deltaY * innerHeight : event.deltaY
+		zoomTo(zoom * Math.exp(-delta * 0.0025))
+	},
+	{ passive: false },
+)
+window.addEventListener("keydown", (event) => {
+	if (!(event.ctrlKey || event.metaKey) || event.altKey) return
+	if (event.key === "+" || event.key === "=") {
+		event.preventDefault()
+		zoomTo(zoom * ZOOM_STEP)
+	} else if (event.key === "-" || event.key === "_") {
+		event.preventDefault()
+		zoomTo(zoom / ZOOM_STEP)
+	} else if (event.key === "0") {
+		event.preventDefault()
+		zoomTo(1)
+	}
+})
+zoomControls.addEventListener("click", (event) => {
+	const button = (event.target as Element | null)?.closest("button")
+	if (button?.id === "zoom-in") zoomTo(zoom * ZOOM_STEP)
+	else if (button?.id === "zoom-out") zoomTo(zoom / ZOOM_STEP)
+	else if (button?.id === "zoom-reset") zoomTo(1)
+})
 let pdfTask: ReturnType<typeof getDocument> | undefined
 const lifecycle = new AbortController()
 window.addEventListener(
@@ -274,6 +389,7 @@ window.addEventListener(
 	() => {
 		alive = false
 		lifecycle.abort()
+		clearTimeout(paintTimer)
 		stop()
 		observer.disconnect()
 		for (const renderer of renderers.values()) renderer.task?.cancel()
@@ -388,14 +504,13 @@ async function load() {
 		const { page, content } = await pageText(n)
 		textRequests.delete(n)
 		if (n + 1 <= pdf.numPages) void pageText(n + 1)
-		const scale = Math.min(1.4, Math.max(280, innerWidth - 40) / page.getViewport({ scale: 1 }).width)
+		const fitScale = Math.min(1.4, Math.max(280, innerWidth - 40) / page.getViewport({ scale: 1 }).width)
+		const scale = fitScale * zoom
 		const viewport = page.getViewport({ scale })
 		const section = document.createElement("section")
 		section.className = "pdf-page"
 		section.setAttribute("aria-label", `Page ${n}`)
-		section.style.width = `${viewport.width}px`
-		section.style.height = `${viewport.height}px`
-		section.style.setProperty("--total-scale-factor", String(scale))
+		setPageMetrics(section, viewport, scale)
 		const canvas = document.createElement("canvas")
 		canvas.width = canvas.height = 0
 		canvas.setAttribute("aria-hidden", "true")
@@ -403,12 +518,15 @@ async function load() {
 		container.className = "textLayer"
 		section.append(canvas, container)
 		pages.append(section)
+		if (n === 1) zoomControls.hidden = false
 		const state: PageState = {
 			page,
 			canvas,
+			section,
 			container,
 			content,
 			viewport,
+			fitScale,
 			runs: [],
 			visible: false,
 			pending: Promise.resolve(),

@@ -11,6 +11,13 @@
 			<div id="controls"></div>
 		</header>
 		<main id="pages" aria-label="PDF document"></main>
+		<div id="zoom" role="group" aria-label="Zoom" hidden>
+			<button type="button" id="zoom-out" aria-label="Zoom out" title="Zoom out">−</button>
+			<button type="button" id="zoom-reset" title="Reset zoom to fit width">
+				<span class="visually-hidden">Reset zoom to fit width: </span><span id="zoom-level">100%</span>
+			</button>
+			<button type="button" id="zoom-in" aria-label="Zoom in" title="Zoom in">+</button>
+		</div>
 		<script type="module" src="./main.ts"></script>
 	</body>
 </html>

@@ -1,10 +1,16 @@
+import type { browser } from "wxt/browser"
+
 import { $ } from "bun"
+
+import type { StoredVoice } from "../src/speech/voice-store.ts"
 
 import { voices } from "../src/speech/catalog.ts"
 import { checkPdfSelection } from "./check-pdf-selection.ts"
 import { checkSpeedFocus, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
 import { checkAbortedVoiceDeletion } from "./check-voice-deletion.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
+import { pageScript, readHighlightedText } from "./page-script.ts"
+import { inspectPdf, readCrossPageText, readEarlyPdfSelection, savePdfSelection } from "./pdf-page.ts"
 import { assert, copyProbeExtension, projectRoot, waitFor } from "./probe-helpers.ts"
 import {
 	recoverSelectionAfterFailure,
@@ -12,6 +18,38 @@ import {
 	type RecoveryDriver,
 	verifySelectionReplay,
 } from "./reader-scenarios.ts"
+
+/** Self-contained: the player iframe runs this through WebDriver. */
+async function firefoxReaderContract() {
+	const api = (globalThis as unknown as { browser: typeof browser }).browser
+	const session = location.hash.slice(1)
+	return {
+		document: await api.runtime.sendMessage({ type: "reader", session, command: "document" }),
+		stale: await api.runtime.sendMessage({ type: "reader", session: "stale", command: "close" }),
+	}
+}
+
+type SavedVoiceWindow = Window & { __probeSavedVoice?: StoredVoice }
+
+/** Keeps the installed fixture in page memory so the deletion test can restore it. */
+async function saveInstalledVoice() {
+	const { readStoredVoice } = await import("./voice-fixtures.js")
+	const page = window as SavedVoiceWindow
+	const voice = await readStoredVoice("cs_CZ-jirka-medium")
+	if (!voice) throw Error("Installed voice fixture is unavailable")
+	page.__probeSavedVoice = voice
+}
+
+async function restoreInstalledVoice() {
+	const { writeStoredVoice } = await import("./voice-fixtures.js")
+	const page = window as SavedVoiceWindow
+	const voice = page.__probeSavedVoice
+	if (!voice) throw Error("Saved voice fixture is unavailable")
+	await writeStoredVoice(voice)
+	delete page.__probeSavedVoice
+	const api = (globalThis as unknown as { browser: typeof browser }).browser
+	await api.storage.local.set({ voice: "cs_CZ-jirka-medium" })
+}
 
 const root = projectRoot
 const out = `${root}/.cache/product-probe/firefox`
@@ -240,10 +278,9 @@ try {
 		await script("document.querySelector('#voice').value==='cs_CZ-jirka-medium'"),
 		"Firefox stale preference left an empty voice picker",
 	)
-	const directReader = await script<any>(`(async()=>{
-		const session=location.hash.slice(1);
-		return {document:await browser.runtime.sendMessage({type:'reader',session,command:'document'}),stale:await browser.runtime.sendMessage({type:'reader',session:'stale',command:'close'})};
-	})()`)
+	const directReader = await script<{ document?: { text?: string }; stale?: { error?: string } }>(
+		pageScript(firefoxReaderContract),
+	)
 	assert(
 		typeof directReader.document?.text === "string" && directReader.stale?.error,
 		`Firefox reader contract failed: ${JSON.stringify(directReader)}`,
@@ -286,14 +323,7 @@ try {
 		)
 	}
 	await run("/frame", { id: null })
-	const highlight = await waitFor(
-		() =>
-			script<string>(
-				"Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')",
-			),
-		Boolean,
-		15,
-	).catch(async (error) => {
+	const highlight = await waitFor(() => script<string>(readHighlightedText), Boolean, 15).catch(async (error) => {
 		console.log(
 			"Firefox page highlights:",
 			await script("({keys:Array.from(CSS.highlights.keys()),text:document.querySelector('#selection').textContent})"),
@@ -465,9 +495,7 @@ try {
 	)
 	await run("/frame", { id: null })
 	await run("/window", { handle: voicesHandle })
-	await script(
-		`import('./voice-fixtures.js').then(async module => {window.__probeSavedVoice = await module.readStoredVoice('cs_CZ-jirka-medium')})`,
-	)
+	await script(pageScript(saveInstalledVoice))
 	await script(`document.querySelector('[data-voice="cs_CZ-jirka-medium"] .danger').click()`)
 	await waitFor(
 		() => script<boolean>("!document.querySelector('[data-voice=\"cs_CZ-jirka-medium\"] .danger')"),
@@ -488,9 +516,7 @@ try {
 	await waitFor(() => script("!document.querySelector('[data-read-aloud]')"), Boolean)
 	await run("/window", { handle: voicesHandle })
 	console.log("Firefox pause, close, and deletion passed.")
-	await script(
-		`import('./voice-fixtures.js').then(async module => {await module.writeStoredVoice(window.__probeSavedVoice);delete window.__probeSavedVoice;await browser.storage.local.set({voice:'cs_CZ-jirka-medium'})})`,
-	)
+	await script(pageScript(restoreInstalledVoice))
 	const originalPdf = await script<{ id: number }>(
 		`browser.tabs.create({url:${JSON.stringify(pdfSource)},active:false})`,
 	)
@@ -519,38 +545,23 @@ try {
 		90,
 	)
 	assert(!pdfStatus, `Firefox PDF fetch failed: ${pdfStatus}`)
-	const pdf = await script<any>(`(async()=>{
-		const session=new URL(document.querySelector('iframe').src).hash.slice(1)
-		const {text}=await window.readAloudHost({session,command:'document'})
-		const target='Virtual Research Environment',start=text.indexOf(target)
-		await window.readAloudHost({session,command:'highlight',start,end:start+target.length})
-		return {pages:document.querySelectorAll('.pdf-page').length,characters:text.length,highlighted:Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join('')}
-	})()`)
+	const pdf = await script<{ pages: number; characters: number; highlighted: string }>(
+		pageScript(inspectPdf, "Virtual Research Environment"),
+	)
 	assert(
 		pdf.pages === 60 && pdf.characters > 50000 && pdf.highlighted === "Virtual Research Environment",
 		`Firefox PDF mapping failed: ${JSON.stringify(pdf)}`,
 	)
 	const pdfSelection = await script<{ exactSelection?: boolean }>(checkPdfSelection)
 	assert(pdfSelection.exactSelection, `Firefox PDF selection failed: ${JSON.stringify(pdfSelection)}`)
-	const crossPage = await script<string>(`(async()=>{
-		const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
-		const {text}=await window.readAloudHost({session,command:'document'});
-		const start=text.indexOf('This work was supported',text.indexOf('Acknowledgements'));
-		const end=text.slice(0,text.indexOf('This thesis',start)).trimEnd().length;
-		if(start<0||end<=start)throw Error('Cross-page fixture missing');
-		const tab=await browser.tabs.getCurrent();await browser.storage.session.set({['pdfSelection:'+tab.id]:text.slice(start,end)});
-		return text.slice(start,end);
-	})()`)
+	const crossPage = await script<string>(pageScript(readCrossPageText))
+	await script(pageScript(savePdfSelection, crossPage))
 	const pdfSelectionStarted = performance.now()
 	await run("/url", {
 		url: `moz-extension://${uuid}/pdf.html?src=${encodeURIComponent(pdfSource)}&mode=selection`,
 	})
 	const earlyText = await waitFor(
-		() =>
-			script<string>(`(async()=>{
-			const frame=document.querySelector('iframe');if(!frame)return '';
-			return (await window.readAloudHost({session:new URL(frame.src).hash.slice(1),command:'document'})).text;
-		})()`),
+		() => script<string>(pageScript(readEarlyPdfSelection)),
 		(value) => typeof value === "string" && value.length > 0,
 		30,
 	)

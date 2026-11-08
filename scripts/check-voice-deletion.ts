@@ -1,6 +1,7 @@
 import type { browser } from "wxt/browser"
 
 import { voiceStore } from "../src/speech/voice-store.ts"
+import { pageScript } from "./page-script.ts"
 
 /** Abort a real IDB delete in the catalog; this is injected only into test copies. */
 async function abortVoiceDeletion(id: string, schema: typeof voiceStore) {
@@ -73,5 +74,4 @@ async function abortVoiceDeletion(id: string, schema: typeof voiceStore) {
 	}
 }
 
-export const checkAbortedVoiceDeletion = (id: string) =>
-	`(${abortVoiceDeletion.toString()})(${JSON.stringify(id)},${JSON.stringify(voiceStore)})`
+export const checkAbortedVoiceDeletion = (id: string) => pageScript(abortVoiceDeletion, id, voiceStore)

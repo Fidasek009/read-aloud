@@ -1,6 +1,8 @@
 import type { browser } from "wxt/browser"
 
 import { instrumentModel } from "../src/speech/instrument.ts"
+import { validateConfig, type VoiceConfig } from "../src/speech/voice-config.ts"
+import { pageScript } from "./page-script.ts"
 import {
 	assert,
 	chromeExtensionId,
@@ -65,12 +67,80 @@ function clientConnected() {
 	return !!fixture.__hostFixture?.port && fixture.__hostFixture.disconnected === false
 }
 
+async function installFixtureVoice(sourceHash: string, modelUrl: string, config: VoiceConfig) {
+	const { writeStoredVoice } = await import("./voice-fixtures.js")
+	const model = await (await fetch(modelUrl)).arrayBuffer()
+	await writeStoredVoice({ id: "en_US-ljspeech-medium", sourceHash, model, config })
+}
+
+interface FixtureSpeechResult {
+	ok: boolean
+	samples: number
+	words: number
+	backend: string
+}
+
+async function speakThroughFixtureHost(): Promise<FixtureSpeechResult> {
+	interface Reply {
+		id: number
+		ok: boolean
+		code?: string
+		clip?: { pcm: string; words: unknown[] }
+		diagnostics?: { backend?: string }
+	}
+	const port = (window as HostFixtureWindow).__hostFixture?.port
+	if (!port) throw Error("Speech fixture host port is unavailable")
+	const rpc = (message: { id: number; type: string; [key: string]: unknown }) =>
+		new Promise<Reply>((resolve, reject) => {
+			const timer = setTimeout(() => reject(Error("Speech fixture timed out")), 90_000)
+			const listener = (reply: Reply) => {
+				if (reply.id !== message.id) return
+				clearTimeout(timer)
+				port.onMessage.removeListener(listener)
+				resolve(reply)
+			}
+			port.onMessage.addListener(listener)
+			port.postMessage(message)
+		})
+	const loaded = await rpc({ id: 2, type: "load", voice: "en_US-ljspeech-medium" })
+	if (!loaded.ok) return { ok: false, samples: 0, words: 0, backend: `load failed: ${loaded.code}` }
+	const spoken = await rpc({ id: 3, type: "synthesize", text: "One natural voice on your device.", speed: 1 })
+	return {
+		ok: spoken.ok,
+		samples: spoken.clip ? Uint8Array.fromBase64(spoken.clip.pcm).byteLength / 4 : 0,
+		words: spoken.clip?.words.length ?? 0,
+		backend: spoken.diagnostics?.backend ?? spoken.code ?? "",
+	}
+}
+
+function installOffscreenPolicyProbe() {
+	interface Reply {
+		ok: boolean
+	}
+	const api = (globalThis as unknown as { chrome: typeof browser }).chrome
+	const send = (message: object) => api.runtime.sendMessage(message) as Promise<Reply>
+	const listener = (message: unknown) => {
+		if (!message || typeof message !== "object" || !("type" in message) || message.type !== "probe-offscreen-policy")
+			return
+		return (async () => {
+			const before = await send({ type: "speech-gpu-available" })
+			await send({ type: "speech-gpu-failed" })
+			const after = await send({ type: "speech-gpu-available" })
+			return {
+				storageUnavailable: (api as { storage?: unknown }).storage === undefined,
+				before: before.ok,
+				after: after.ok,
+			}
+		})()
+	}
+	api.runtime.onMessage.addListener(listener as Parameters<typeof api.runtime.onMessage.addListener>[0])
+}
+
 const extension = `${projectRoot}/.cache/host-lifecycle-probe`
 await copyProbeExtension("chrome", extension)
 const withSpeech = Bun.env.HOST_LIFECYCLE_SPEECH === "1"
 const fixture = `${projectRoot}/.cache/piper/5041a7a49ae5b3a0f30e6837769eb03fdbb231bd/en/en_US/ljspeech/medium/en_US-ljspeech-medium.onnx`
 const fixtureModel = withSpeech ? instrumentModel(await Bun.file(fixture).arrayBuffer()) : undefined
-const fixtureConfig = withSpeech ? await Bun.file(`${fixture}.json`).json() : undefined
 const fixtureServer = fixtureModel
 	? Bun.serve({
 			hostname: "127.0.0.1",
@@ -117,19 +187,7 @@ if (withSpeech) {
 	const manifest = await Bun.file(`${extension}/manifest.json`).json()
 	manifest.host_permissions = ["http://127.0.0.1/*"]
 	await Bun.write(`${extension}/manifest.json`, JSON.stringify(manifest))
-	await Bun.write(
-		`${extension}/offscreen-policy-probe.js`,
-		`
-chrome.runtime.onMessage.addListener(message => {
- if(message?.type!=='probe-offscreen-policy')return;
- return (async()=>{
-  const before=await chrome.runtime.sendMessage({type:'speech-gpu-available'});
-  await chrome.runtime.sendMessage({type:'speech-gpu-failed'});
-  const after=await chrome.runtime.sendMessage({type:'speech-gpu-available'});
-  return {storageUnavailable:chrome.storage===undefined,before:before.ok,after:after.ok};
- })();
-});`,
-	)
+	await Bun.write(`${extension}/offscreen-policy-probe.js`, pageScript(installOffscreenPolicyProbe))
 	await Bun.write(
 		`${extension}/inference.html`,
 		`${await Bun.file(`${extension}/inference.html`).text()}<script src="offscreen-policy-probe.js"></script>`,
@@ -142,31 +200,18 @@ async function hostTarget() {
 	const targets = await view.cdp<{ targetInfos: { targetId: string; url: string }[] }>("Target.getTargets")
 	return targets.targetInfos.find((target) => target.url === hostUrl)
 }
-const invoke = (operation: () => unknown) => view.evaluate<boolean>(`(${operation.toString()})()`)
 const waitClosed = () => waitFor(hostTarget, (target) => !target, retentionMs / 1000 + 15)
 try {
 	await view.navigate(`chrome-extension://${extensionId}/player.html`)
-	await invoke(prepareHost)
+	await view.evaluate<boolean>(pageScript(prepareHost))
 	const initial = await waitFor(hostTarget, Boolean, 15)
 	assert(initial, "Offscreen speech host was not created")
-	await invoke(connectHostClient)
+	await view.evaluate<boolean>(pageScript(connectHostClient))
 	if (fixtureServer) {
-		await view.evaluate(`(async()=>{
-			const {writeStoredVoice}=await import('./voice-fixtures.js');
-			await writeStoredVoice({id:'en_US-ljspeech-medium',sourceHash:${JSON.stringify(new Bun.CryptoHasher("sha256").update(await Bun.file(fixture).arrayBuffer()).digest("hex"))},model:await(await fetch(${JSON.stringify(fixtureServer.url.href)})).arrayBuffer(),config:${JSON.stringify(fixtureConfig)}});
-		})()`)
-		const speech = await view.evaluate<{ ok: boolean; samples: number; words: number; backend: string }>(`(async()=>{
-			const port=window.__hostFixture.port;
-			const rpc=message=>new Promise((resolve,reject)=>{
-				const timer=setTimeout(()=>reject(Error('Speech fixture timed out')),90000);
-				const listener=reply=>{if(reply.id!==message.id)return;clearTimeout(timer);port.onMessage.removeListener(listener);resolve(reply)};
-				port.onMessage.addListener(listener);port.postMessage(message);
-			});
-			const loaded=await rpc({id:2,type:'load',voice:'en_US-ljspeech-medium'});
-			if(!loaded.ok)return {ok:false,samples:0,words:0,backend:'load failed: '+loaded.code};
-			const spoken=await rpc({id:3,type:'synthesize',text:'One natural voice on your device.',speed:1});
-			return {ok:spoken.ok,samples:spoken.clip?Uint8Array.fromBase64(spoken.clip.pcm).byteLength/4:0,words:spoken.clip?.words.length??0,backend:spoken.diagnostics?.backend??spoken.code};
-		})()`)
+		const sourceHash = new Bun.CryptoHasher("sha256").update(await Bun.file(fixture).arrayBuffer()).digest("hex")
+		const config = validateConfig(await Bun.file(`${fixture}.json`).json())
+		await view.evaluate(pageScript(installFixtureVoice, sourceHash, fixtureServer.url.href, config))
+		const speech = await view.evaluate<FixtureSpeechResult>(pageScript(speakThroughFixtureHost))
 		// Reset only the fixture flag to prove both directions of persistence.
 		await view.evaluate("chrome.storage.session.remove('speechGpuFailed')")
 		const policy = await view.evaluate<{ storageUnavailable: boolean; before: boolean; after: boolean }>(
@@ -187,30 +232,33 @@ try {
 	}
 	await Bun.sleep(retentionMs + leaseMs + 250)
 	assert((await hostTarget())?.targetId === initial.targetId, "Open/paused client lost its speech host")
-	assert(await invoke(clientConnected), "Idle host disconnected its open/paused client")
+	assert(await view.evaluate<boolean>(pageScript(clientConnected)), "Idle host disconnected its open/paused client")
 	console.log("An open/paused client retained the host beyond its idle timeout.")
-	await invoke(disconnectHostClient)
+	await view.evaluate<boolean>(pageScript(disconnectHostClient))
 	await waitClosed()
 	console.log("The offscreen document closed after its final client disconnected.")
 
-	await invoke(prepareHost)
+	await view.evaluate<boolean>(pageScript(prepareHost))
 	const reopened = await waitFor(hostTarget, Boolean, 15)
 	assert(reopened && reopened.targetId !== initial.targetId, "A fresh host was not created after idle closure")
-	await invoke(connectHostClient)
-	await invoke(disconnectHostClient)
+	await view.evaluate<boolean>(pageScript(connectHostClient))
+	await view.evaluate<boolean>(pageScript(disconnectHostClient))
 	// Reserve just before expiration, then deliberately leave the connect gap
 	// extending beyond the old disconnect deadline. Closure must lose the race.
 	await Bun.sleep(Math.max(0, retentionMs - leaseMs / 2))
-	await invoke(prepareHost)
+	await view.evaluate<boolean>(pageScript(prepareHost))
 	await Bun.sleep(leaseMs * 0.75)
 	assert((await hostTarget())?.targetId === reopened.targetId, "Idle closure beat a reserved preparation")
-	await invoke(connectHostClient)
-	assert(await invoke(clientConnected), "The delayed client did not connect after the preparation lease")
+	await view.evaluate<boolean>(pageScript(connectHostClient))
+	assert(
+		await view.evaluate<boolean>(pageScript(clientConnected)),
+		"The delayed client did not connect after the preparation lease",
+	)
 	console.log("A reserved preparation protected the delayed client connection across the idle deadline.")
-	await invoke(disconnectHostClient)
+	await view.evaluate<boolean>(pageScript(disconnectHostClient))
 	await waitClosed()
 
-	await invoke(prepareHost)
+	await view.evaluate<boolean>(pageScript(prepareHost))
 	await waitFor(hostTarget, Boolean, 15)
 	await waitFor(hostTarget, (target) => !target, leaseMs / 1000 + 15)
 	console.log("An unused preparation lease expired and its empty document closed.")

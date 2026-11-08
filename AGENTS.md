@@ -51,6 +51,7 @@ Build a Firefox and Chrome extension that makes listening to a web page feel eff
 - Reuse maintained libraries and established upstream behavior before writing custom implementations. Keep extension-specific adapters small and share common logic; do not reinvent existing functionality.
 - Test meaningful user behavior on both target browsers. Include CPU fallback, interrupted playback, model-download failure, and long-page reading when those paths exist.
 - Reproduce browser-specific reports in the reported browser/build. Verify real worker startup, propagate browser script exceptions as test failures, and state when fixtures use simulated entry or test-only permissions.
+- Serialize browser-side probe assertions with `scripts/page-script.ts`: keep injected functions self-contained and type-checked instead of embedding hand-written JavaScript strings.
 - For UI work, verify keyboard access, accessible state changes, focus behavior, and real-browser layout as well as functionality, using the tools permitted in the current task.
 - Batch verification after related changes. Do not rerun broad checks after every small edit; repeat or expand checks only when a failure, new change, or unresolved concern warrants it.
 - Record unresolved product decisions and research evidence in project documentation rather than bloating the interface or this file.

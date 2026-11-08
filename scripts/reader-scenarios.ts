@@ -2,6 +2,7 @@ import type { browser } from "wxt/browser"
 
 import { playbackCopy } from "../src/playback/copy.ts"
 import { failNextPlayback } from "./check-player-controls.ts"
+import { pageScript } from "./page-script.ts"
 import { assert, waitFor } from "./probe-helpers.ts"
 
 export interface RecoveryDriver {
@@ -55,11 +56,8 @@ function selectSource(selector: string) {
 	return text
 }
 
-function expression<Args extends unknown[], Result>(operation: (...args: Args) => Result, ...args: Args) {
-	return `(${operation.toString()})(...${JSON.stringify(args)})`
-}
-const readState = (driver: RecoveryDriver) => driver.player<ReturnType<typeof playerState>>(expression(playerState))
-const readScope = (driver: RecoveryDriver) => driver.player<string>(expression(currentScope))
+const readState = (driver: RecoveryDriver) => driver.player<ReturnType<typeof playerState>>(pageScript(playerState))
+const readScope = (driver: RecoveryDriver) => driver.player<string>(pageScript(currentScope))
 
 async function failAndCheckRetry(driver: RecoveryDriver) {
 	await driver.player(failNextPlayback)
@@ -87,7 +85,7 @@ export async function recoverSelectionAfterFailure(
 	const session = (await readState(driver)).session
 	await failAndCheckRetry(driver)
 	await afterFailure?.()
-	const text = await driver.source<string>(expression(selectSource, selector))
+	const text = await driver.source<string>(pageScript(selectSource, selector))
 	await driver.pressPlay()
 	const scope = { text, session }
 	await assertScope(driver, scope)
@@ -113,7 +111,7 @@ export async function verifySelectionReplay(driver: RecoveryDriver, scope: Selec
 export async function recoverSelectionFromMenu(driver: RecoveryDriver, selector: string) {
 	const session = (await readState(driver)).session
 	await failAndCheckRetry(driver)
-	const text = await driver.source<string>(expression(selectSource, selector))
+	const text = await driver.source<string>(pageScript(selectSource, selector))
 	await driver.readSelectionFromMenu()
 	const recovered = await waitFor(
 		() => readState(driver),

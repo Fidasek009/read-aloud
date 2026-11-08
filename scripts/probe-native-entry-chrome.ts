@@ -1,7 +1,22 @@
 import { $ } from "bun"
 
 import { nativeEntryFixture, nativeEntryState } from "./native-entry-fixture.ts"
+import { pageScript } from "./page-script.ts"
 import { assert, chromeExecutable, chromeExtensionId, projectRoot, waitFor } from "./probe-helpers.ts"
+
+function elementCenter(selector: string) {
+	const element = document.querySelector(selector)
+	if (!element) throw Error(`Missing element: ${selector}`)
+	const rect = element.getBoundingClientRect()
+	return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 }
+}
+
+function selectionPoint() {
+	const rect = window.getSelection()?.getRangeAt(0).getClientRects()[0]
+	if (!rect) throw Error("Selection rectangle is missing")
+	return { x: rect.x + 3, y: rect.y + rect.height / 2 }
+}
+
 const fixture = await nativeEntryFixture("chrome")
 const { extension, server, voice, text } = fixture
 const profile = projectRoot + "/.cache/native-entry-chrome-profile-" + crypto.randomUUID()
@@ -86,9 +101,7 @@ try {
 	}
 	async function click(selector: string) {
 		await view.evaluate(`document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'center'})`)
-		const r = await view.evaluate<any>(
-			`(()=>{const r=document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect();return{x:r.x+r.width/2,y:r.y+r.height/2}})()`,
-		)
+		const r = await view.evaluate<{ x: number; y: number }>(pageScript(elementCenter, selector))
 		await view.cdp("Input.dispatchMouseEvent", { type: "mousePressed", ...r, button: "left", clickCount: 1 })
 		await view.cdp("Input.dispatchMouseEvent", { type: "mouseReleased", ...r, button: "left", clickCount: 1 })
 	}
@@ -112,9 +125,7 @@ try {
 		(await $`${xdo} search --onlyvisible --pid ${chrome.pid}`.text()).trim().split("\n")
 	const beforeMenu = new Set(await visibleWindows())
 	await view.evaluate('window.getSelection().selectAllChildren(document.querySelector("#selection"))')
-	const r = await view.evaluate<any>(
-		"(()=>{const r=window.getSelection().getRangeAt(0).getClientRects()[0];return {x:r.x+3,y:r.y+r.height/2}})()",
-	)
+	const r = await view.evaluate<{ x: number; y: number }>(pageScript(selectionPoint))
 	await view.cdp("Input.dispatchMouseEvent", { type: "mousePressed", ...r, button: "right", clickCount: 1 })
 	await view.cdp("Input.dispatchMouseEvent", { type: "mouseReleased", ...r, button: "right", clickCount: 1 })
 	await waitFor(async () => (await visibleWindows()).some((id) => !beforeMenu.has(id)), Boolean, 5)
@@ -134,7 +145,7 @@ try {
 	const { sessionId } = await view.cdp<any>("Target.attachToTarget", { targetId: target.targetId, flatten: false })
 	await call(sessionId, "Runtime.enable")
 	const state = await waitFor(
-		() => remote(sessionId, "(" + nativeEntryState.toString() + ")()"),
+		() => remote(sessionId, pageScript(nativeEntryState)),
 		(x) => x.time > 0,
 		180,
 	)

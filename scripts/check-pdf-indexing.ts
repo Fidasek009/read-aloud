@@ -1,5 +1,7 @@
 import type {} from "../src/reading/bridge.ts"
 
+import { pageScript } from "./page-script.ts"
+
 interface IndexingGate {
 	held: number
 	release(): void
@@ -42,7 +44,7 @@ function installIndexingGate() {
 }
 
 export async function observePdfIndexing(directory: string) {
-	await Bun.write(`${directory}/probe-pdf-indexing.js`, `(${installIndexingGate.toString()})()`)
+	await Bun.write(`${directory}/probe-pdf-indexing.js`, pageScript(installIndexingGate))
 	const html = Bun.file(`${directory}/pdf.html`)
 	await Bun.write(html, (await html.text()).replace("<head>", '<head><script src="probe-pdf-indexing.js"></script>'))
 }
@@ -127,4 +129,4 @@ async function checkIndexingInBrowser(mode: "missing" | "selection") {
 	}
 }
 
-export const checkPdfIndexing = `(${checkIndexingInBrowser.toString()})`
+export const checkPdfIndexing = (mode: "missing" | "selection") => pageScript(checkIndexingInBrowser, mode)

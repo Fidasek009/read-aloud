@@ -1,4 +1,5 @@
 import { voices as catalog } from "../src/speech/catalog.ts"
+import { pageScript } from "./page-script.ts"
 import {
 	chromeExtensionId,
 	closeChromeProbe,
@@ -27,20 +28,55 @@ const retried: string[] = []
 const waitFor = (expression: string, accept: (value: string) => boolean) =>
 	poll(() => view.evaluate<string>(expression), accept, 30)
 
+interface PreviewAudioObservation {
+	__previewFailures: { url: string; error: string; media?: string }[]
+	__previewAudio?: HTMLAudioElement
+}
+
+/** Self-contained: installed before page scripts to observe the catalog player. */
+function installPreviewAudioObservation() {
+	const probe = globalThis as unknown as typeof globalThis & PreviewAudioObservation
+	probe.__previewFailures = []
+	probe.Audio = new Proxy(probe.Audio, {
+		construct(target, args) {
+			const audio = Reflect.construct(target, args) as HTMLAudioElement
+			probe.__previewAudio = audio
+			const play = audio.play.bind(audio)
+			audio.play = () =>
+				play().catch((error: unknown) => {
+					probe.__previewFailures.push({
+						url: audio.currentSrc,
+						error: String(error),
+						...(audio.error ? { media: audio.error.message } : {}),
+					})
+					throw error
+				})
+			return audio
+		},
+	})
+}
+
+/** Self-contained: filtering must not interrupt or rebuild the playing preview. */
+function previewSurvivesFilter(selector: string) {
+	const button = document.querySelector<HTMLButtonElement>(selector)
+	const search = document.querySelector<HTMLInputElement>("#search")
+	const section = button?.closest("section")
+	if (!button || !search || !section) throw Error("Preview controls are missing")
+	search.value = "no matching voice"
+	search.dispatchEvent(new Event("input", { bubbles: true }))
+	const filtered = section.hidden && button.textContent === "Pause sample"
+	search.value = ""
+	search.dispatchEvent(new Event("input", { bubbles: true }))
+	return (
+		filtered && button === document.querySelector(selector) && !section.hidden && button.textContent === "Pause sample"
+	)
+}
+
 try {
 	await view.navigate("about:blank")
 	await view.cdp("Network.enable")
 	await view.cdp("Page.addScriptToEvaluateOnNewDocument", {
-		source: `globalThis.__previewFailures = []; globalThis.Audio = new Proxy(Audio, { construct(target, args) {
-			const audio = Reflect.construct(target, args);
-			globalThis.__previewAudio = audio;
-			const play = audio.play.bind(audio);
-			audio.play = () => play().catch(error => {
-				globalThis.__previewFailures.push({url:audio.currentSrc, error:String(error), media:audio.error?.message});
-				throw error;
-			});
-			return audio;
-		} });`,
+		source: pageScript(installPreviewAudioObservation),
 	})
 	const exceptions: string[] = []
 	view.addEventListener("Runtime.exceptionThrown", (event: any) => {
@@ -108,17 +144,7 @@ try {
 			throw new Error(`Invalid preview duration for ${voice.id}: ${duration}`)
 		if (!requests.includes(voice.previewUrl!)) throw new Error("Expected pinned preview URL was not requested")
 		if (voice === voices[0]) {
-			const unchanged = await view.evaluate<boolean>(`(() => {
-				const button = document.querySelector(${JSON.stringify(selector)});
-				const search = document.querySelector('#search');
-				search.value = 'no matching voice';
-				search.dispatchEvent(new Event('input', {bubbles:true}));
-				const filtered = button.closest('section').hidden && button.textContent === 'Pause sample';
-				search.value = '';
-				search.dispatchEvent(new Event('input', {bubbles:true}));
-				return filtered && button === document.querySelector(${JSON.stringify(selector)}) &&
-					!button.closest('section').hidden && button.textContent === 'Pause sample';
-			})()`)
+			const unchanged = await view.evaluate<boolean>(pageScript(previewSurvivesFilter, selector))
 			if (!unchanged) throw new Error("Filtering interrupted or rebuilt the playing preview")
 		}
 	}

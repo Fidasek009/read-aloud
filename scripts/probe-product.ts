@@ -1,8 +1,11 @@
+import type { browser } from "wxt/browser"
+
 import { readingChunks, sentenceTarget } from "../src/reading/chunks.ts"
 import { voices } from "../src/speech/catalog.ts"
 import { checkSpeedFocus, checkSpeedPanel, checkVolume, observePlayerAudio } from "./check-player-controls.ts"
 import { checkAbortedVoiceDeletion } from "./check-voice-deletion.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
+import { pageScript, readHighlightedText } from "./page-script.ts"
 import {
 	assert,
 	chromeExtensionId,
@@ -85,6 +88,91 @@ const remote = async (session: string, expression: string, userGesture = false, 
 	if (result.exceptionDetails)
 		throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text)
 	return result.result.value
+}
+
+/** Self-contained: the player iframe runs this through the page driver. */
+async function chromeReaderContract() {
+	const api = (globalThis as unknown as { chrome: typeof browser }).chrome
+	const tab = await api.tabs.getCurrent()
+	if (tab?.id === undefined) return { noTab: true }
+	const tabId = tab.id
+	const send = (session: string, command: object) =>
+		api.tabs.sendMessage(tabId, { type: "reader", session, ...command }, { frameId: 0 })
+	const session = location.hash.slice(1)
+	return {
+		tab: tabId,
+		document: await send(session, { command: "document" }),
+		invalid: await send(session, { command: "highlight", start: 2, end: 1 }),
+		stale: await send("stale", { command: "close" }),
+	}
+}
+
+type HighlightRange = { start: number; end: number }
+
+function observeHighlightCommands() {
+	const probe = globalThis as unknown as {
+		chrome: typeof browser
+		probeHighlights: HighlightRange[]
+	}
+	probe.probeHighlights = []
+	const send = probe.chrome.tabs.sendMessage.bind(probe.chrome.tabs)
+	probe.chrome.tabs.sendMessage = ((...args: Parameters<typeof send>) => {
+		const message: unknown = args[1]
+		if (
+			message &&
+			typeof message === "object" &&
+			"command" in message &&
+			message.command === "highlight" &&
+			"start" in message &&
+			"end" in message &&
+			typeof message.start === "number" &&
+			typeof message.end === "number"
+		)
+			probe.probeHighlights.push({ start: message.start, end: message.end })
+		return send(...args)
+	}) as typeof send
+}
+
+function pauseOnFirstHighlight() {
+	const probe = globalThis as unknown as {
+		chrome: typeof browser
+		probeWords: HighlightRange[]
+		freezeOnHighlight: boolean
+	}
+	probe.probeWords = []
+	probe.freezeOnHighlight = true
+	const send = probe.chrome.tabs.sendMessage.bind(probe.chrome.tabs)
+	probe.chrome.tabs.sendMessage = ((...args: Parameters<typeof send>) => {
+		const message: unknown = args[1]
+		if (
+			message &&
+			typeof message === "object" &&
+			"command" in message &&
+			message.command === "highlight" &&
+			"start" in message &&
+			"end" in message &&
+			typeof message.start === "number" &&
+			typeof message.end === "number" &&
+			message.end > message.start
+		) {
+			probe.probeWords.push({ start: message.start, end: message.end })
+			if (probe.freezeOnHighlight) {
+				probe.freezeOnHighlight = false
+				document.querySelector<HTMLButtonElement>("#play")?.click()
+			}
+		}
+		return send(...args)
+	}) as typeof send
+}
+
+function advanceWithHighlightProbe() {
+	const probe = globalThis as unknown as {
+		probeWords: HighlightRange[]
+		freezeOnHighlight: boolean
+	}
+	probe.probeWords.length = 0
+	probe.freezeOnHighlight = true
+	document.querySelector<HTMLButtonElement>("#next")?.click()
 }
 
 try {
@@ -219,12 +307,7 @@ try {
 		await player("document.querySelector('#voice').value==='en_US-ljspeech-medium'"),
 		"Stale preference left the voice picker empty",
 	)
-	const directReader = await player(`(async()=>{
-		const tab=await chrome.tabs.getCurrent();
-		if(!tab?.id)return {noTab:true};
-		const session=location.hash.slice(1);
-		return {tab:tab.id,document:await chrome.tabs.sendMessage(tab.id,{type:'reader',session,command:'document'},{frameId:0}),invalid:await chrome.tabs.sendMessage(tab.id,{type:'reader',session,command:'highlight',start:2,end:1},{frameId:0}),stale:await chrome.tabs.sendMessage(tab.id,{type:'reader',session:'stale',command:'close'},{frameId:0})};
-	})()`)
+	const directReader = await player(pageScript(chromeReaderContract))
 	assert(
 		directReader.tab === tab.id &&
 			typeof directReader.document?.text === "string" &&
@@ -232,9 +315,7 @@ try {
 			directReader.stale?.error,
 		`Direct Chrome reader contract failed: ${JSON.stringify(directReader)}`,
 	)
-	await player(
-		"globalThis.probeHighlights=[];const originalSend=chrome.tabs.sendMessage;chrome.tabs.sendMessage=(...args)=>{if(args[1]?.command==='highlight')probeHighlights.push({start:args[1].start,end:args[1].end});return originalSend(...args)}",
-	)
+	await player(pageScript(observeHighlightCommands))
 	const status = await waitFor(
 		() => player("document.querySelector('#status')?.textContent"),
 		(value) => typeof value === "string" && !value.includes("Preparing") && !value.includes("Getting"),
@@ -253,10 +334,7 @@ try {
 		await player("document.querySelector('#play').click()", true)
 	}
 	const highlight = await waitFor(
-		() =>
-			evaluate(
-				"Array.from(CSS.highlights.get('read-aloud-current-word') ?? []).map(range => range.toString()).join('')",
-			),
+		() => evaluate(readHighlightedText),
 		(value) => typeof value === "string" && value.length > 0,
 		10,
 	).catch(async (error) => {
@@ -621,9 +699,7 @@ try {
 	).sessionId
 	const mdControl = (expression: string, userGesture = false) => remote(mdPlayerSession, expression, userGesture)
 	await call(mdSession, "Page.bringToFront")
-	await mdControl(
-		"globalThis.probeWords=[];globalThis.freezeOnHighlight=true;const originalSend=chrome.tabs.sendMessage;chrome.tabs.sendMessage=(...args)=>{if(args[1]?.command==='highlight'&&args[1].end>args[1].start){probeWords.push(args[1]);if(freezeOnHighlight){freezeOnHighlight=false;document.querySelector('#play').click()}}return originalSend(...args)}",
-	)
+	await mdControl(pageScript(pauseOnFirstHighlight))
 	const mdStatus = await waitFor(
 		() => mdControl("document.querySelector('#status')?.textContent ?? ''"),
 		(value) => /Reading|Press Play|Paused|failed/i.test(value),
@@ -647,7 +723,7 @@ try {
 	for (let n = 0; n < 5; n++) {
 		mdCursor = sentenceTarget(mdChunks, mdCursor, 1)
 		assert(mdCursor > 0, "MD Dash must have several sentence boundaries")
-		await mdControl("probeWords.length=0;freezeOnHighlight=true;document.querySelector('#next').click()")
+		await mdControl(pageScript(advanceWithHighlightProbe))
 		await waitFor(() => mdControl("!document.querySelector('#play').disabled"), Boolean)
 		await mdControl("document.querySelector('#play').click()")
 		await waitFor(

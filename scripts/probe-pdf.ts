@@ -1,11 +1,23 @@
+import type { browser } from "wxt/browser"
+
 import { $ } from "bun"
 
 import { getVoice } from "../src/speech/catalog.ts"
 import { checkPdfIndexing, observePdfIndexing } from "./check-pdf-indexing.ts"
 import { checkPdfSelection } from "./check-pdf-selection.ts"
 import { pdfSpeechCheck } from "./check-pdf-speech.ts"
+import { checkPdfZoom, type PdfZoomResult } from "./check-pdf-zoom.ts"
 import { observePlayerAudio } from "./check-player-controls.ts"
 import { observeContextMenu } from "./observe-context-menu.ts"
+import { pageScript } from "./page-script.ts"
+import {
+	highlightPdfText,
+	inspectDistantPdf,
+	inspectPdf,
+	readCrossPageText,
+	readEarlyPdfSelection,
+	savePdfSelection,
+} from "./pdf-page.ts"
 import {
 	chromeExtensionId,
 	closeChromeProbe,
@@ -74,6 +86,27 @@ if (!accessOnly) {
 }
 const view = await createChromeProbe(extension)
 const waitForPdf = <T>(read: () => Promise<T>, accept: (value: T) => boolean) => waitFor(read, accept, 90)
+
+function readPdfIndexingState() {
+	const gate = (window as Window & { __pdfIndexingGate?: { held?: number } }).__pdfIndexingGate
+	return {
+		held: gate?.held ?? 0,
+		spans: document.querySelectorAll(".pdf-page:first-child .textLayer span").length,
+		status: document.querySelector("#status")?.textContent ?? "",
+		pages: document.querySelectorAll(".pdf-page").length,
+		scroll: scrollY,
+	}
+}
+
+async function provisionPdfVoice(base: string) {
+	const api = (globalThis as unknown as { chrome: typeof browser }).chrome
+	const url = new URL("check-pdf-speech.js", api.runtime.getURL("/")).href
+	const module = (await import(url)) as {
+		provisionVoice: (base: string) => Promise<unknown>
+	}
+	return module.provisionVoice(base)
+}
+
 async function probe() {
 	try {
 		await view.navigate("about:blank")
@@ -105,21 +138,21 @@ async function probe() {
 		if (Bun.env.PDF_SMOKE === "1") {
 			const pages = await view.evaluate<number>("document.querySelectorAll('.pdf-page').length")
 			if (pages < 1) throw new Error("The PDF has no pages")
-			console.log(JSON.stringify({ source, pages, textReadyMs }))
+			await waitForPdf(() => view.evaluate<boolean>("!!document.querySelector('.pdf-page[data-painted]')"), Boolean)
+			const zoom = await view.evaluate<PdfZoomResult>(checkPdfZoom)
+			if (
+				!(zoom.button > zoom.before && zoom.level === "125%") ||
+				!(zoom.wheel > zoom.button) ||
+				!zoom.prevented ||
+				Math.abs(zoom.reset - zoom.before) > 1
+			)
+				throw new Error(`PDF zoom failed: ${JSON.stringify(zoom)}`)
+			console.log(JSON.stringify({ source, pages, textReadyMs, zoom }))
 			return
 		}
-		const result = await view.evaluate<{
-			pages: number
-			characters: number
-			highlighted: string
-			content: boolean
-		}>(`(async()=>{
-		const session=new URL(document.querySelector('iframe').src).hash.slice(1);
-		const {text}=await window.readAloudHost({session,command:'document'});
-		const target='Virtual Research Environment';const start=text.indexOf(target);
-		await window.readAloudHost({session,command:'highlight',start,end:start+target.length});
-		return {pages:document.querySelectorAll('.pdf-page').length,characters:text.length,highlighted:Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join(''),content:text.includes('Molecular Dynamics')&&text.includes('Declaration')};
-	})()`)
+		const result = await view.evaluate<Awaited<ReturnType<typeof inspectPdf>>>(
+			pageScript(inspectPdf, "Virtual Research Environment"),
+		)
 		if (
 			result.pages !== 60 ||
 			!result.content ||
@@ -133,12 +166,9 @@ async function probe() {
 		)
 		const screenshot = await view.cdp<{ data: string }>("Page.captureScreenshot", { format: "png" })
 		await Bun.write(`${root}/.cache/product-probe/pdf-reading.png`, Uint8Array.fromBase64(screenshot.data))
-		const distant = await view.evaluate<{ highlighted: string; scroll: number; textPages: number }>(`(async()=>{
-		const session=new URL(document.querySelector('iframe').src).hash.slice(1);const {text}=await window.readAloudHost({session,command:'document'});
-		const target='Bibliography';const start=text.lastIndexOf(target);if(start<10000)throw Error('Distant-page fixture missing');
-		await window.readAloudHost({session,command:'highlight',start,end:start+target.length});
-		return {highlighted:Array.from(CSS.highlights.get('read-aloud-current-word')??[]).map(range=>range.toString()).join(''),scroll:scrollY,textPages:Array.from(document.querySelectorAll('.textLayer')).filter(layer=>layer.childNodes.length).length};
-	})()`)
+		const distant = await view.evaluate<Awaited<ReturnType<typeof inspectDistantPdf>>>(
+			pageScript(inspectDistantPdf, "Bibliography"),
+		)
 		if (distant.highlighted !== "Bibliography" || distant.scroll < 1000 || distant.textPages >= 60)
 			throw new Error(`Lazy PDF mapping failed: ${JSON.stringify(distant)}`)
 		console.log("PDF selection regressions starting.")
@@ -152,13 +182,10 @@ async function probe() {
 			await view.cdp("Page.bringToFront")
 			await view.evaluate("scrollTo(0,0)")
 			await waitForPdf(
-				() =>
-					view.evaluate<{ held: number; spans: number; status: string; pages: number; scroll: number }>(
-						"({held:window.__pdfIndexingGate?.held??0,spans:document.querySelectorAll('.pdf-page:first-child .textLayer span').length,status:document.querySelector('#status')?.textContent,pages:document.querySelectorAll('.pdf-page').length,scroll:scrollY})",
-					),
+				() => view.evaluate<ReturnType<typeof readPdfIndexingState>>(pageScript(readPdfIndexingState)),
 				(value) => value.held > 0 && value.spans > 0,
 			)
-			indexingChecks.push(await view.evaluate(`${checkPdfIndexing}(${JSON.stringify(scenario)})`))
+			indexingChecks.push(await view.evaluate(checkPdfIndexing(scenario)))
 			console.log("PDF indexing scenario passed:", scenario)
 		}
 		await view.navigate(`chrome-extension://${id}/pdf.html?src=${encodeURIComponent(source)}`)
@@ -170,37 +197,17 @@ async function probe() {
 			Boolean,
 		)
 
-		const crossPage = speechCheck
-			? await view.evaluate<string>(`(async()=>{
-				const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
-				const {text}=await window.readAloudHost({session,command:'document'});
-				const start=text.indexOf('This work was supported',text.indexOf('Acknowledgements'));
-				const end=text.slice(0,text.indexOf('This thesis',start)).trimEnd().length;
-				if(start<0||end<=start)throw Error('Cross-page fixture missing');
-				return text.slice(start,end);
-			})()`)
-			: undefined
+		const crossPage = speechCheck ? await view.evaluate<string>(pageScript(readCrossPageText)) : undefined
 		const speech = speechCheck ? await view.evaluate(pdfSpeechCheck(server.url.href)) : undefined
 		if (speechCheck) console.log("Cross-page neural speech:", JSON.stringify(speech))
-		if (speechCheck)
-			await view.evaluate(
-				`import(chrome.runtime.getURL('check-pdf-speech.js')).then(m=>m.provisionVoice(${JSON.stringify(server.url.href)}))`,
-			)
+		if (speechCheck) await view.evaluate(pageScript(provisionPdfVoice, server.url.href))
 		const articleChecksElapsedMs = performance.now() - started
 		const initialText = crossPage ?? "Their day-to-day use is nev-\nertheless constrained by four limitations"
-		await view.evaluate(`(async()=>{
-			const tab=await chrome.tabs.getCurrent();
-			await chrome.storage.session.set({['pdfSelection:'+tab.id]:${JSON.stringify(initialText)}});
-		})()`)
+		await view.evaluate(pageScript(savePdfSelection, initialText))
 		const selectionStarted = performance.now()
 		await view.navigate(`chrome-extension://${id}/pdf.html?src=${encodeURIComponent(source)}&mode=selection`)
 		const earlySelection = await waitFor(
-			() =>
-				view.evaluate<string>(`(async()=>{
-				const frame=document.querySelector('iframe');
-				if(!frame)return '';
-				return (await window.readAloudHost({session:new URL(frame.src).hash.slice(1),command:'document'})).text;
-			})()`),
+			() => view.evaluate<string>(pageScript(readEarlyPdfSelection)),
 			(value) => value.length > 0,
 		)
 		const selectionReadyMs = performance.now() - selectionStarted
@@ -218,13 +225,9 @@ async function probe() {
 			() => view.evaluate<string>("document.querySelector('#status').textContent"),
 			(value) => value === "" || !value.startsWith("Opening PDF"),
 		)
-		const mapped = await view.evaluate<string>(`(async()=>{
-			const frame=document.querySelector('iframe'),session=new URL(frame.src).hash.slice(1);
-			const text=(await window.readAloudHost({session,command:'document'})).text;
-			const from=text.indexOf(${JSON.stringify(speechCheck ? "This work was supported" : "nevertheless")});
-			await window.readAloudHost({session,command:'highlight',start:from,end:from+${speechCheck ? 4 : 12}});
-			return [...(CSS.highlights.get('read-aloud-current-word')??[])].map(range=>range.toString()).join('');
-		})()`)
+		const mapped = await view.evaluate<string>(
+			pageScript(highlightPdfText, speechCheck ? "This work was supported" : "nevertheless", speechCheck ? 4 : 12),
+		)
 		if (mapped.replace(/[-\s]/gu, "") !== (speechCheck ? "This" : "nevertheless"))
 			throw new Error(`Early selection did not acquire an exact highlight mapping: ${JSON.stringify(mapped)}`)
 		const record = {

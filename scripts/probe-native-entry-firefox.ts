@@ -1,7 +1,23 @@
 import { $ } from "bun"
 
 import { nativeEntryFixture, nativeEntryState } from "./native-entry-fixture.ts"
+import { pageScript } from "./page-script.ts"
 import { assert, projectRoot, waitFor } from "./probe-helpers.ts"
+
+function selectFixtureText() {
+	const selection = window.getSelection()
+	const source = document.querySelector("#selection")
+	if (!selection || !source) throw Error("Selection fixture is missing")
+	selection.selectAllChildren(source)
+	return selection.toString()
+}
+
+function selectionPoint() {
+	const rect = window.getSelection()?.getRangeAt(0).getClientRects()[0]
+	if (!rect) throw Error("Selection rectangle is missing")
+	return { x: Math.round(rect.x + 3), y: Math.round(rect.y + rect.height / 2) }
+}
+
 const fixture = await nativeEntryFixture("firefox")
 const { extension, manifest, server, voice, text } = fixture
 const uuid = crypto.randomUUID()
@@ -37,6 +53,7 @@ async function command(path: string, body?: unknown, method = body === undefined
 }
 const run = (path: string, body?: unknown, method?: string) => command("/session/" + session + path, body, method)
 const script = (s: string, args: unknown[] = []) => run("/execute/sync", { script: s, args })
+const evaluate = <T>(expression: string) => script(`return (${expression})`) as Promise<T>
 async function element(selector: string) {
 	return run("/element", { using: "css selector", value: selector })
 }
@@ -89,12 +106,8 @@ try {
 	console.log("Downloaded through production control:", voice.id)
 	await run("/window/new", { type: "tab" }).then((x) => run("/window", { handle: x.handle }))
 	await run("/url", { url: server.url.href })
-	await script(
-		'window.getSelection().selectAllChildren(document.querySelector("#selection"));return window.getSelection().toString()',
-	)
-	const point = await script(
-		"const r=window.getSelection().getRangeAt(0).getClientRects()[0];return {x:Math.round(r.x+3),y:Math.round(r.y+r.height/2)}",
-	)
+	await evaluate<string>(pageScript(selectFixtureText))
+	const point = await evaluate<{ x: number; y: number }>(pageScript(selectionPoint))
 	await run("/actions", {
 		actions: [
 			{
@@ -124,7 +137,7 @@ try {
 	)
 	await run("/frame", { id: frame })
 	const state = await waitFor(
-		() => script("return (" + nativeEntryState.toString() + ")()"),
+		() => evaluate<ReturnType<typeof nativeEntryState>>(pageScript(nativeEntryState)),
 		(x) => x.time > 0,
 		180,
 	)

@@ -1,3 +1,4 @@
+import { pageScript } from "./page-script"
 import { chromeExtensionId, closeChromeProbe, createChromeProbe, projectRoot, waitFor } from "./probe-helpers"
 
 // Original vector artwork + browser-rendered PNGs. No model, preview or page text
@@ -13,6 +14,15 @@ const server = Bun.serve({
 })
 const extension = `${projectRoot}/.output/chrome-mv3`
 const view = await createChromeProbe(extension, ["--headless=new", "--no-sandbox"])
+
+/** Self-contained: runs on the extension's voice catalog page. */
+function selectLanguage(language: string) {
+	const filter = document.querySelector<HTMLSelectElement>("#language")
+	if (!filter) throw Error("Language filter is missing")
+	filter.value = language
+	filter.dispatchEvent(new Event("change"))
+}
+
 async function screenshot(path: string, width: number, height: number, transparent = false) {
 	await view.cdp("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false })
 	await view.cdp("Emulation.setDefaultBackgroundColorOverride", {
@@ -59,10 +69,8 @@ try {
 		for (const [language, file] of [
 			["en-US", "voices-english.png"],
 			["cs-CZ", "voices-czech.png"],
-		]) {
-			await view.evaluate(
-				`(() => { const filter = document.querySelector('#language'); filter.value=${JSON.stringify(language)}; filter.dispatchEvent(new Event('change')); return true })()`,
-			)
+		] as const) {
+			await view.evaluate(pageScript(selectLanguage, language))
 			await view.evaluate("document.fonts.ready.then(() => true)")
 			await screenshot(`store/assets/${file}`, 1280, 800)
 		}

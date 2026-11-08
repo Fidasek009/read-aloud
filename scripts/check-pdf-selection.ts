@@ -3,6 +3,8 @@ import type { browser } from "wxt/browser"
 import type {} from "../src/reading/bridge.ts"
 import type { ReaderHost } from "../src/reading/host.ts"
 
+import { pageScript } from "./page-script.ts"
+
 type ProbeWindow = Window & { browser?: typeof browser; chrome?: typeof browser }
 
 /** Self-contained acceptance assertions serialized into the real extension PDF tab. */
@@ -437,4 +439,4 @@ async function checkPdfSelectionInBrowser() {
 	}
 }
 
-export const checkPdfSelection = `(${checkPdfSelectionInBrowser.toString()})()`
+export const checkPdfSelection = pageScript(checkPdfSelectionInBrowser)

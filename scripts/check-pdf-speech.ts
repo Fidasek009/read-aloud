@@ -7,6 +7,7 @@ import type { WorkerCommand } from "../src/speech/worker-protocol.ts"
 import { readingChunks } from "../src/reading/chunks.ts"
 import { getVoice } from "../src/speech/catalog.ts"
 import { instrumentModel } from "../src/speech/instrument.ts"
+import { pageScript } from "./page-script.ts"
 import { writeStoredVoice } from "./voice-fixtures.ts"
 
 interface WorkerReply extends SpeechClip {
@@ -120,4 +121,4 @@ async function checkPdfSpeechInBrowser(base: string) {
 	return module.checkSpeech(selected, base)
 }
 
-export const pdfSpeechCheck = (base: string) => `(${checkPdfSpeechInBrowser.toString()})(${JSON.stringify(base)})`
+export const pdfSpeechCheck = (base: string) => pageScript(checkPdfSpeechInBrowser, base)

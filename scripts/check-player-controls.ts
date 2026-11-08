@@ -1,5 +1,7 @@
 import type { browser } from "wxt/browser"
 
+import { pageScript } from "./page-script.ts"
+
 interface AudioObservation {
 	sources: number
 	stops: number
@@ -74,7 +76,7 @@ function installAudioObservation() {
 
 /** Observe the real output graph; allow one explicit output failure in copied test packages only. */
 export async function observePlayerAudio(directory: string) {
-	await Bun.write(`${directory}/probe-audio.js`, `(${installAudioObservation.toString()})()`)
+	await Bun.write(`${directory}/probe-audio.js`, pageScript(installAudioObservation))
 	const html = Bun.file(`${directory}/player.html`)
 	await Bun.write(html, (await html.text()).replace("<head>", '<head><script src="probe-audio.js"></script>'))
 }
@@ -215,7 +217,7 @@ function failPlayback() {
 }
 
 // Drivers still consume expressions, but every assertion above is checked by TypeScript.
-export const checkVolume = `(${verifyVolume.toString()})()`
-export const checkSpeedPanel = `(${verifySpeedPanel.toString()})()`
-export const checkSpeedFocus = `(${verifySpeedPanel.toString()})(true)`
-export const failNextPlayback = `(${failPlayback.toString()})()`
+export const checkVolume = pageScript(verifyVolume)
+export const checkSpeedPanel = pageScript(verifySpeedPanel)
+export const checkSpeedFocus = pageScript(verifySpeedPanel, true)
+export const failNextPlayback = pageScript(failPlayback)
