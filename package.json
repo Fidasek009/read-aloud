@@ -13,6 +13,7 @@
 		"dev:firefox": "bun --bun run wxt --browser firefox --mv3",
 		"prepare": "bun --bun run wxt prepare",
 		"typecheck": "bun run prepare && bun check && bun check -p tsconfig.speech.json && bun check -p tsconfig.tools.json",
+		"pretest": "bun scripts/prepare-runtime.ts",
 		"test": "bun test tests",
 		"format": "bun fmt",
 		"format:check": "bun fmt --check",
