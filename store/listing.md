@@ -26,7 +26,7 @@ Pause, move back or forward a sentence, and adjust speed, volume or voice in one
 
 Hear a voice before you download it.
 
-Press Listen for a prerecorded sample made with the same voice model and local speech engine used for reading. Choose the sound you prefer before downloading a model. English and Czech are available alongside additional languages and quality choices. Download only the voices you want, and delete them when you no longer need them. Speech quality and startup time vary by model and device.
+Press a voice's play icon for a prerecorded sample made with the same voice model and local speech engine used for reading. Choose the sound you prefer before downloading a model. English and Czech are available alongside additional languages and quality choices. Download only the voices you want, and delete them when you no longer need them. Speech quality and startup time vary by model and device.
 
 Speech runs inside the extension. No account, subscription or separately installed helper app is required. There is no advertising, analytics or telemetry. You need a connection for voice downloads, streamed samples and online source documents. Speech works offline after you install a voice and its required assets, with the source text available locally.
 

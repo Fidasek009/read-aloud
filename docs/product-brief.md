@@ -87,7 +87,7 @@ Previously asked questions on setup, reading scope, hardware, downloads, Piper's
 
 ## Product-owner feedback — 2026-10-30
 
-- Keep the speed control visibly distinct from a playback timeline. Compact, familiar playback icons with accessible names are appropriate; retain explicit text for Download/Delete. Delete is red.
+- Keep the speed control visibly distinct from a playback timeline. Compact, familiar playback icons with accessible names are appropriate. The original request to retain explicit Download/Delete text was superseded by the owner's 2026-11-10 request for icon-only download/delete and listen/pause buttons. Voice actions use tooltips, voice-specific accessible names and visible focus. Delete stays red.
 - Expose the entire available model catalog and its quality variants at launch, not just US-English/Czech samples. Do not equate catalog inclusion with working phonemizer support or license clearance.
 - The in-page bar must not add overscroll space. Repeated toolbar activation should reveal existing controls without creating another overlay or changing the reading position. Voices/settings are accessible from the bar; the browser's Options entry remains acceptable.
 - Fix Previous on the actual MD Dash article, not just prose fixtures.

@@ -1,6 +1,6 @@
 # Licenses and release checklist
 
-Updated **2026-11-06**. Original Read Aloud source and artwork are **MIT**. Third-party components retain their own terms. This document is the current checklist; the supporting inventories are reference evidence, not another approval process.
+Updated **2026-11-11**. Original Syllune source and artwork are **MIT**. Third-party components retain their own terms. This document is the current checklist; the supporting inventories are reference evidence, not another approval process.
 
 ## What we distribute
 
@@ -27,11 +27,11 @@ This automated check verifies supplied materials. It does not grant permission, 
 
 ## Models and previews: exact scope and open questions
 
-No model weights, training recordings or preview audio are bundled. Model weights remain on their source host and download only after an explicit Download. Read Aloud hosts its own preview recordings separately; Listen streams only the selected recording. The local ONNX graph is instrumented for word timing without changing the original weights. Each catalog entry links its pinned model card.
+No model weights, training recordings or preview audio are bundled. Model weights remain on their source host and download only when you press a voice's download icon. Syllune hosts its own preview recordings separately; a voice's play icon streams only its recording. The local ONNX graph is instrumented for word timing without changing the original weights. Each catalog entry links its pinned model card.
 
 **Established grants:** the [public-source model review](model-permissions-2026-11-06.md) now identifies model-level terms for 14 variants across English, Czech, Swedish, Ukrainian and Urdu. All three Ukrainian high-quality author-hosted files match our exact pinned SHA-256 values. LJSpeech medium has an [original-trainer public-domain model grant](https://brycebeattie.com/files/tts/). Kasandra medium has an owner-issued **CC BY 4.0** grant from Ondřej Šimek in [Piper PR #93](https://huggingface.co/rhasspy/piper-voices/discussions/93), tied to our exact checkpoint (SHA-256 09d08aa23691ed2d53fb3db242cfe82b189adf9c1812dd5fe928b5789ed76df7). Its author/source/license credit and graph-change notice are supplied. The separate paid-package README does not revoke that grant. The new review does not reduce the available catalog or establish blanket permission for it.
 
-**Upstream sample dependency removed:** all 171 available models now have original Read Aloud recordings of our own native-language passages. The files and provenance are hosted on the repository's [voice-previews branch](https://github.com/Fidasek009/read-aloud/tree/voice-previews); production URLs pin the published commit. No Piper Samples recording or Wikipedia passage is played, copied or rehosted. The previous question about permission to stream those upstream samples no longer applies to the current integration. Original texts and our contributions are MIT; we do not claim to relicense underlying models.
+**Upstream sample dependency removed:** all 171 available models now have original Syllune recordings of our own native-language passages. The files and provenance are hosted on the repository's [voice-previews branch](https://github.com/Fidasek009/read-aloud/tree/voice-previews); production URLs pin the published commit. No Piper Samples recording or Wikipedia passage is played, copied or rehosted. The previous question about permission to stream those upstream samples no longer applies to the current integration. Original texts and our contributions are MIT; we do not claim to relicense underlying models.
 
 **Remaining model assessment:** Jirka/other Lessac-fine-tuned checkpoints have unresolved grant/lineage scope; some catalog cards declare unknown or absent model terms. Applicable model/output restrictions and attribution/change conditions still need individual assessment. A dataset license is not automatically a model grant, and a training contract does not automatically apply to resulting weights. Creating original recordings removes the upstream-recording/transcript dependency; it does not answer every underlying model/output question.
 

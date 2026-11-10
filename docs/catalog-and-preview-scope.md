@@ -1,14 +1,14 @@
 # Catalog and preview scope
 
-Updated **2026-11-06**. This is the factual scope of our integration and remaining model questions, not a declaration that all hosted files are unrestricted or that every uncertainty proves a violation.
+Updated **2026-11-11**. This is the factual scope of our integration and remaining model questions, not a declaration that all hosted files are unrestricted or that every uncertainty proves a violation.
 
 ## What is and is not conveyed
 
-The extension/release archives contain the speech runtime, pronunciation data, first-party code and pinned discovery/configuration metadata. They do **not** contain Piper voice weights, training recordings or prerecorded preview audio. The extension makes no model request until Download and no audio-sample request until Listen. Models come from their pinned upstream host; original previews come from this repository's separate `voice-previews` branch, pinned by commit. No reading text or synthesized reading audio is sent to either host.
+The extension/release archives contain the speech runtime, pronunciation data, first-party code and pinned discovery/configuration metadata. They do **not** contain Piper voice weights, training recordings or prerecorded preview audio. The extension makes no model request until you press a voice's download icon and no audio-sample request until you press its play icon. Models come from their pinned upstream host; original previews come from this repository's separate `voice-previews` branch, pinned by commit. No reading text or synthesized reading audio is sent to either host.
 
 This distinction matters: GPL source duties for our shipped runtime are actual distributor duties. It would be incorrect to describe all upstream model/recording/sample files as bundled components, or to infer that permission to redistribute weights is required for an archive that does not redistribute them. Equally, direct hosting does not establish that every intended use, local modification, generated output or later redistribution is permitted.
 
-The user-facing catalog links each exact pinned model card through its License link before download. The voice-page footer already states that models have separate licenses and samples stream on Listen. Those links are source information, not a grant from Read Aloud. The local ONNX graph is modified to expose acoustic duration information; original parameter/weight values are preserved. Where applicable, attribution and change disclosure still need to be respected. Kasandra's owner/source/license/change notice is supplied in the installed notices page; its exact owner-issued grant is independently substantiated in the main audit.
+The user-facing catalog links each exact pinned model card through its License link before download. The voice-page footer states that models have separate licenses and samples stream when you press a voice's play icon. Those links are source information, not a grant from Syllune. The local ONNX graph is modified to expose acoustic duration information; original parameter/weight values are preserved. Where applicable, attribution and change disclosure still need to be respected. Kasandra's owner/source/license/change notice is supplied in the installed notices page; its exact owner-issued grant is independently substantiated in the main audit.
 
 ## Complete metadata inventory
 
@@ -22,7 +22,7 @@ The inventory completes the factual catalog pass. Open work is now narrower: est
 
 ## Original preview delivery
 
-All 171 available models use Read Aloud's own locally synthesized recordings and original native-language passages. The [delivery collection](https://github.com/Fidasek009/read-aloud/tree/voice-previews) includes exact audio/model/config hashes, source text, speaker zero, speed and renderer provenance. The extension uses one commit-pinned URL per model, requests it only after Listen and never downloads a voice model for auditioning. No preview audio enters the extension or AMO reviewer archive.
+All 171 available models use Syllune's own locally synthesized recordings and original native-language passages. The [delivery collection](https://github.com/Fidasek009/read-aloud/tree/voice-previews) includes exact audio/model/config hashes, source text, speaker zero, speed and renderer provenance. The extension uses one commit-pinned URL per model, requests it only when you press the voice's play icon and never downloads a voice model for auditioning. No preview audio enters the extension or AMO reviewer archive.
 
 The former Piper Samples/Wikipedia integration is removed, including its URLs, discovery lookup and installed transcript attribution. The dated 2026-11-05 metadata inventory remains historical evidence of that earlier integration. No permission to copy or stream those upstream recordings is needed by the replacement path. Original contributions are MIT; applicable model/output terms remain separate.
 

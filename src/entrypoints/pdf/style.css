@@ -119,7 +119,7 @@ button:focus-visible {
 	color: #202631;
 }
 .textLayer ::selection {
-	background: rgb(41 93 198 / 35%);
+	background: var(--selection);
 }
 @media (forced-colors: active) {
 	.textLayer ::selection {

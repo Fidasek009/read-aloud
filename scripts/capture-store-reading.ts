@@ -98,10 +98,7 @@ function downloadState(voice: string): boolean {
 
 type PlaybackState = {
 	played: boolean
-	status: string | undefined
 	visibility: DocumentVisibilityState
-	disabled: boolean
-	audio: { time: number; paused: boolean; error: number | undefined }[]
 }
 
 async function playerState(action: "play" | "pause", expected: string): Promise<PlaybackState> {
@@ -123,19 +120,19 @@ async function playerState(action: "play" | "pause", expected: string): Promise<
 	}
 	return {
 		played: probe.__probeAudio.elements.some((audio) => audio.currentTime > 0),
-		status: document.querySelector("#status")?.textContent ?? undefined,
 		visibility: document.visibilityState,
-		disabled: !play || play.disabled,
-		audio: probe.__probeAudio.elements.map((audio) => ({
-			time: audio.currentTime,
-			paused: audio.paused,
-			error: audio.error?.code,
-		})),
 	}
 }
 
-function hasPlayed(value: unknown): boolean {
-	return !!value && typeof value === "object" && "played" in value && value.played === true
+function hasVisiblePlayback(value: unknown): boolean {
+	return (
+		!!value &&
+		typeof value === "object" &&
+		"played" in value &&
+		value.played === true &&
+		"visibility" in value &&
+		value.visibility === "visible"
+	)
 }
 
 export async function captureStoreReading(): Promise<void> {
@@ -211,14 +208,18 @@ export async function captureStoreReading(): Promise<void> {
 			Boolean,
 		)
 		console.log("Store reading capture: waiting for the local audio clock.")
-		await waitFor(() => evaluateTarget(view, player, pageScript(playerState, "play", passage), true), hasPlayed, 180)
+		await waitFor(
+			() => evaluateTarget(view, player, pageScript(playerState, "play", passage), true),
+			hasVisiblePlayback,
+			180,
+		)
 		await waitFor(
 			() => view.evaluate<string>(readHighlightedText),
 			(word) => word.length > 0,
 		)
 		assert(
-			hasPlayed(await evaluateTarget(view, player, pageScript(playerState, "pause", passage))),
-			"The demo did not play real audio",
+			hasVisiblePlayback(await evaluateTarget(view, player, pageScript(playerState, "pause", passage))),
+			"The demo did not play real audio in a visible tab",
 		)
 		assert(await view.evaluate<string>(readHighlightedText), "The paused demo has no word highlight")
 		const shot = await view.cdp<{ data: string }>("Page.captureScreenshot", {

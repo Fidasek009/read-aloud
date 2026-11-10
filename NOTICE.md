@@ -1,6 +1,6 @@
 # Distribution notices
 
-Original Read Aloud source and artwork are MIT; see [LICENSE](LICENSE). Those original files remain MIT when combined with separately licensed dependencies.
+Original Syllune source and artwork are MIT; see [LICENSE](LICENSE). Those original files remain MIT when combined with separately licensed dependencies.
 
 The extension bundles Spellophone 0.2.1 (its TypeScript wrapper, generated glue, eSpeak NG 1.52.0 WebAssembly and pronunciation data) under GPL-3.0-or-later. The combined distribution is treated as GPL-covered; the archive is **not MIT-only**. Preserve GPL rights, license/copyright notices, modification information and the required access to corresponding source/build materials. Full pinned Spellophone/eSpeak source archives are now supplied in [vendor/source](vendor/source/README.md); see the exact provenance and recipient source-access directions there. No GPL exception is inferred from using a worker.
 
@@ -10,6 +10,6 @@ ONNX Runtime Web/Common 1.31.1 are MIT with upstream third-party notices. The ch
 
 Voice weights, datasets and prerecorded samples are not bundled. Explicit downloads and on-demand preview integration require their own scoped assessment; public hosting or a model-card label is not a universal rights guarantee. LJSpeech medium has an original-trainer public-domain grant. The exact Kasandra medium checkpoint has an owner-issued CC BY 4.0 grant (Ondřej Šimek, [Piper PR #93](https://huggingface.co/rhasspy/piper-voices/discussions/93)); preserve author credit, source/license links and modification notices. Its ONNX graph is locally instrumented for word timing, without altering the original weights. Jirka/other model and sample questions are described individually in [licensing](docs/licensing.md), not declared illegal by implication.
 
-Voice previews are generated locally from original Read Aloud texts and hosted separately in this repository's `voice-previews` branch. No Piper Samples audio or Wikipedia passages are used. Original texts and our contributions are MIT; model/output terms remain separate. The hosted catalog preserves exact model/config/recording hashes, original text and available model-card evidence. The extension pins a commit and fetches audio only after Listen.
+Voice previews are generated locally from original Syllune texts and hosted separately in this repository's `voice-previews` branch. No Piper Samples audio or Wikipedia passages are used. Original texts and our contributions are MIT; model/output terms remain separate. The hosted catalog preserves exact model/config/recording hashes, original text and available model-card evidence. The extension pins a commit and fetches audio only when you press a voice's play icon.
 
 The [licensing checklist](docs/licensing.md) records supplied source/notices and remaining model assessments. Automated checks verify required materials; they do not resolve those questions or certify product readiness or store approval.

@@ -13,6 +13,7 @@
 	--link: #a63d21;
 	--focus: #a63d21;
 	--track: #8b8073;
+	--selection: rgb(239 121 88 / 35%);
 }
 @media (prefers-color-scheme: dark) {
 	:root {

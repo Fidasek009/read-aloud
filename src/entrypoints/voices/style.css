@@ -89,6 +89,16 @@ button svg {
 	stroke-linecap: round;
 	stroke-linejoin: round;
 }
+@media (prefers-reduced-motion: no-preference) {
+	button[aria-busy="true"] svg {
+		animation: preview-loading 1s linear infinite;
+	}
+}
+@keyframes preview-loading {
+	to {
+		transform: rotate(360deg);
+	}
+}
 button:hover {
 	background: var(--hover);
 }

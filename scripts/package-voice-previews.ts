@@ -1,3 +1,4 @@
+import { productName } from "../src/extension/brand.ts"
 import { voices } from "../src/speech/catalog.ts"
 import { currentPreview, type PreviewRecord } from "./voice-preview-catalog.ts"
 
@@ -21,7 +22,7 @@ export async function packageVoicePreviews(root = process.cwd()) {
 	await Bun.write(`${destination}/LICENSE`, Bun.file(`${root}/LICENSE`))
 	await Bun.write(
 		`${destination}/README.md`,
-		`# Read Aloud original voice previews\n\n${voices.length} locally synthesized recordings of original Read Aloud texts.\n\nThese files are delivered separately from the extension and fetched only after Listen. Each released extension pins a specific commit of this branch. No upstream sample recordings or Wikipedia text are copied. No model weights or executable code are hosted here.\n\nOriginal texts and Read Aloud contributions are MIT; see LICENSE. Model terms remain separate: catalog.json preserves the exact model/config/audio hashes, speaker zero, speed, original text, renderer and available model-card evidence for each recording. It does not declare every model or output unrestricted. Kasandra medium credits Ondřej Šimek under CC BY 4.0 (https://huggingface.co/rhasspy/piper-voices/discussions/93). Full model/source details: https://github.com/Fidasek009/read-aloud/blob/main/docs/licensing.md.\n`,
+		`# ${productName} original voice previews\n\n${voices.length} locally synthesized recordings of original ${productName} texts.\n\nThese files are delivered separately from the extension and fetched only when you press a voice's play icon. Each released extension pins a specific commit of this branch. No upstream sample recordings or Wikipedia text are copied. No model weights or executable code are hosted here.\n\nOriginal texts and ${productName} contributions are MIT; see LICENSE. Model terms remain separate: catalog.json preserves the exact model/config/audio hashes, speaker zero, speed, original text, renderer and available model-card evidence for each recording. It does not declare every model or output unrestricted. Kasandra medium credits Ondřej Šimek under CC BY 4.0 (https://huggingface.co/rhasspy/piper-voices/discussions/93). Full model/source details: https://github.com/Fidasek009/read-aloud/blob/main/docs/licensing.md.\n`,
 	)
 	return { destination, hashes }
 }
@@ -33,7 +34,7 @@ if (import.meta.main) {
 	const { destination, hashes } = await packageVoicePreviews()
 	if (revision) {
 		// Verify public delivery before changing production URLs. Maintainer traffic
-		// is explicit; the extension itself continues to fetch only on Listen.
+		// is explicit; the extension itself fetches only on a preview action.
 		const entries = Object.entries(hashes)
 		let next = 0
 		await Promise.all(

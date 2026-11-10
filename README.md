@@ -10,7 +10,7 @@ Select a passage, right-click and choose **Read selection**. Syllune reads only 
 
 ![Syllune paused after reading selected text, with its playback bar and a highlighted word on the original demo article.](store/assets/reading-selection.png)
 
-Hear the voice before you download it. Press **Listen** for a prerecorded sample made with the same voice model and local speech engine used for reading. English and Czech are available alongside the wider multilingual catalog. Samples stream only after you press Listen. Downloaded voices stay on your computer until you delete them. Voice quality and startup time depend on the model and your device.
+Hear the voice before you download it. Press a voice's **play icon** for a prerecorded sample made with the same voice model and local speech engine used for reading. English and Czech are available alongside the wider multilingual catalog. Samples stream only on that action. Downloaded voices stay on your computer until you delete them. Voice quality and startup time depend on the model and your device.
 
 Online documents and streamed samples still need a connection. Speech works offline after you install a voice and its required assets, with the source text available locally. See the [privacy policy](PRIVACY.md) for network and storage details.
 
@@ -41,7 +41,7 @@ Bun is development tooling; the finished extension must not require users to ins
 
 ## Technical notes
 
-Model management and [original preview production](voice-previews/README.md) derive from the same complete catalog across every language and quality variant. Preview recordings are hosted separately and fetched only after Listen. Refresh pinned upstream catalog metadata with `bun run catalog:update`; it downloads no model weights.
+Model management and [original preview production](voice-previews/README.md) derive from the same complete catalog across every language and quality variant. Preview recordings are hosted separately and fetched only when you press a voice's play icon. Refresh pinned upstream catalog metadata with `bun run catalog:update`; it downloads no model weights.
 
 The extension uses a Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) describe the chosen approach and outstanding gates.
 
@@ -57,7 +57,7 @@ After building, use `bun run probe:chrome` and `bun run probe:firefox` for isola
 
 ## Voice management
 
-The voice page exposes the full pinned catalog with search, source terms, variants, and explicit downloads. Candidates that require unsupported pronunciation engines are excluded from new downloads; older downloaded copies remain deletable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
+The voice page exposes the full pinned catalog with search, source terms, variants, and explicit downloads. Candidates that require unsupported pronunciation engines are excluded from new downloads; older downloaded copies remain deletable. Playback controls and voice actions use icons with accessible names and tooltips. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
 
 ## PDF checks
 
