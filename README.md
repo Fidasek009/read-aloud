@@ -1,8 +1,26 @@
-# Read Aloud
+<img src="assets/brand/syllune.svg" width="64" height="64" alt="" />
 
-A Firefox and Chrome extension with local speech, a multilingual voice catalog, explicit model downloads, and a compact Edge-like playback bar. Natural voice quality is a release requirement still being evaluated.
+# Syllune
 
-The extension provides voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for confirmed requirements. [Known issues](docs/known-issues.md) lists user-facing limitations; [acceptance status](docs/feasibility-status.md) tracks remaining work.
+## Natural-sounding voices. On your computer.
+
+Syllune reads articles, selected text and PDFs with natural-sounding voices in Chrome and Firefox. Download a voice once, then listen offline on your computer. Your reading text and synthesized audio never go to a speech service. No account, subscription or companion app.
+
+Select a passage, right-click and choose **Read selection**. Syllune reads only that passage. Follow the word highlighting, pause when you need to, or move to the next sentence. Speed, volume and voice choice stay together in one compact playback bar. PDFs open in a separate reader tab without replacing the original.
+
+![Syllune paused after reading selected text, with its playback bar and a highlighted word on the original demo article.](store/assets/reading-selection.png)
+
+Hear the voice before you download it. Press **Listen** for a prerecorded sample made with the same voice model and local speech engine used for reading. English and Czech are available alongside the wider multilingual catalog. Samples stream only after you press Listen. Downloaded voices stay on your computer until you delete them. Voice quality and startup time depend on the model and your device.
+
+Online documents and streamed samples still need a connection. Speech works offline after you install a voice and its required assets, with the source text available locally. See the [privacy policy](PRIVACY.md) for network and storage details.
+
+## Try Syllune
+
+The public brand was previously Read Aloud. This is the same project, with the same extension IDs and update path. The repository and release archives retain their `read-aloud` names.
+
+Use a [tagged release](https://github.com/Fidasek009/read-aloud/releases) or build below. Chrome accepts the unpacked `.output/chrome-mv3/` folder in developer mode. Firefox users need an AMO-signed installation for normal use; `about:debugging` accepts a temporary development build. Store publication and product acceptance are separate from a successful build. No store installation links are claimed here until their public availability is verified.
+
+See [known issues](docs/known-issues.md) before using the extension. [Acceptance status](docs/feasibility-status.md) records the remaining listening, Windows, physical GPU and accessibility checks. [The product brief](docs/product-brief.md) records the agreed behavior.
 
 ## Development
 

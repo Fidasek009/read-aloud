@@ -6,6 +6,7 @@ const dimensions: [string, number, number][] = [
 	["store/assets/icon-128.png", 128, 128],
 	["store/assets/promo-small.png", 440, 280],
 	["store/assets/promo-marquee.png", 1400, 560],
+	["store/assets/reading-selection.png", 1280, 800],
 	["store/assets/voices-english.png", 1280, 800],
 	["store/assets/voices-czech.png", 1280, 800],
 	...[16, 32, 48, 64, 96, 128].map((size) => [`public/icons/icon-${size}.png`, size, size] as [string, number, number]),

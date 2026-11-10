@@ -23,6 +23,29 @@ const deleting = new Set<string>()
 const downloads = new Map<string, { controller: AbortController; fraction: number }>()
 const notices = new Map<string, { message: string; error: boolean }>()
 
+const icons = {
+	play: "m8 5 11 7-11 7z",
+	pause: "M8 5v14M16 5v14",
+	loading: "M20 12a8 8 0 1 1-8-8",
+	download: "M12 3v12m-5-5 5 5 5-5M5 16v5h14v-5",
+	delete: "M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7",
+	cancel: "m6 6 12 12M18 6 6 18",
+	retry: "M20 4v6h-6m6 0a8 8 0 1 0 0 5",
+}
+
+function setAction(button: HTMLButtonElement, icon: keyof typeof icons, label: string, title = label) {
+	const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+	svg.setAttribute("viewBox", "0 0 24 24")
+	svg.setAttribute("aria-hidden", "true")
+	svg.setAttribute("focusable", "false")
+	const path = document.createElementNS(svg.namespaceURI, "path")
+	path.setAttribute("d", icons[icon])
+	svg.append(path)
+	button.replaceChildren(svg)
+	button.setAttribute("aria-label", label)
+	button.title = title
+}
+
 function downloadNotice(id: string, message?: string, error = false) {
 	if (message) notices.set(id, { message, error })
 	else notices.delete(id)
@@ -40,9 +63,9 @@ function stopPreview() {
 	audio.removeAttribute("src")
 	audio.load()
 	if (preview) {
-		preview.textContent = "Listen"
+		setAction(preview, "play", `Listen to ${preview.dataset.voiceName}`, "Play an online sample")
+		preview.removeAttribute("aria-busy")
 		preview.setAttribute("aria-pressed", "false")
-		preview.setAttribute("aria-label", `Listen to ${preview.dataset.voiceName}`)
 	}
 	preview = undefined
 }
@@ -73,7 +96,7 @@ function updateRow(row: HTMLElement, voice: (typeof voices)[number]) {
 	const outcome = notices.get(voice.id)
 	const quality = qualityLabel(voice.quality)
 	action.className = installed.has(voice.id) ? "danger" : "primary"
-	action.textContent = downloading
+	const label = downloading
 		? "Cancel"
 		: installed.has(voice.id)
 			? "Delete"
@@ -83,7 +106,11 @@ function updateRow(row: HTMLElement, voice: (typeof voices)[number]) {
 					? "Retry"
 					: "Download"
 	action.disabled = deleting.has(voice.id) || (!!voice.unsupported && !installed.has(voice.id))
-	action.setAttribute("aria-label", `${action.textContent} ${voice.name} ${quality}`)
+	setAction(
+		action,
+		downloading ? "cancel" : installed.has(voice.id) ? "delete" : outcome?.error ? "retry" : "download",
+		`${label} ${voice.name} ${quality}`,
+	)
 	progress.hidden = !downloading
 	if (downloading?.fraction) progress.value = downloading.fraction
 	else progress.removeAttribute("value")
@@ -138,11 +165,14 @@ function render() {
 		}
 		const sample = document.createElement("button")
 		sample.dataset.action = "preview"
-		sample.textContent = "Listen"
+		sample.dataset.voiceName = `${voice.name} ${quality}`
+		setAction(
+			sample,
+			"play",
+			`Listen to ${sample.dataset.voiceName}`,
+			voice.previewUrl ? "Play an online sample" : "No prerecorded sample is available",
+		)
 		sample.disabled = !voice.previewUrl
-		sample.title = voice.previewUrl ? "Play an online sample" : "No prerecorded sample is available"
-		sample.dataset.voiceName = voice.name
-		sample.setAttribute("aria-label", `Listen to ${voice.name}`)
 		sample.setAttribute("aria-pressed", "false")
 		sample.onclick = async () => {
 			if (preview === sample) {
@@ -154,13 +184,14 @@ function render() {
 			const request = previewRequest
 			status.textContent = ""
 			preview = sample
-			sample.textContent = "Loading…"
+			setAction(sample, "loading", `Cancel loading sample for ${sample.dataset.voiceName}`)
+			sample.setAttribute("aria-busy", "true")
 			audio.src = voice.previewUrl
 			try {
 				await audio.play()
 				if (request !== previewRequest) return
-				sample.textContent = "Pause sample"
-				sample.setAttribute("aria-label", `Pause sample for ${voice.name}`)
+				setAction(sample, "pause", `Pause sample for ${sample.dataset.voiceName}`)
+				sample.removeAttribute("aria-busy")
 				sample.setAttribute("aria-pressed", "true")
 			} catch {
 				if (request !== previewRequest) return
@@ -204,10 +235,7 @@ function render() {
 			}
 			const task = { controller: new AbortController(), fraction: 0 }
 			downloads.set(voice.id, task)
-			action.textContent = "Cancel"
-			action.setAttribute("aria-label", `Cancel downloading ${voice.name}`)
-			progress.hidden = false
-			progress.removeAttribute("value")
+			updateRow(row, voice)
 			try {
 				await downloadVoice(
 					voice.id,

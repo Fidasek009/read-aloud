@@ -1,10 +1,20 @@
 # Product brief
 
-Started **2026-10-29**, updated **2026-11-06**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
+Started **2026-10-29**, updated **2026-11-10**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
 
 ## Confirmed experience
 
 A brutally simple, premium Firefox and Chrome extension for Windows and Linux. It reads web articles, selected text, and the user's PDF benchmark, entirely inside the browser extension with no separate helper application. US English and Czech are mandatory; expose all additional languages that the vetted models/runtime support.
+
+## Marketing direction
+
+The owner requested stronger visibility, a distinct identity rather than another extension called Read Aloud, and offline speech and a premium listening experience as the leading benefits on 2026-11-10. Use the unslop skill for all writing.
+
+The implementation uses **Syllune** as the public brand and **Syllune: Offline Text to Speech** as its store title. This name and the orange S artwork are implementation choices under that direction, not a claim that the owner selected the name or that trademark clearance is complete. Keep the repository, permanent extension IDs and release archive names unchanged.
+
+Lead with **Natural-sounding voices. On your computer.** The owner explicitly confirmed that voice naturalness must appear in the marketing, beside offline speech. Use it in the headline, opening description and promotional artwork. "Computer" reflects the desktop target; supporting copy must state that speech works offline after an explicit voice download and reading text never goes to a speech service. Make voice quality audible through samples from the same voice models and local engine used for reading. Show the actual playback bar and word highlighting. "Natural-sounding" is a product description, not a ranking; no comparative listening study currently supports "most natural sounding" or calling competitors robotic. Quality still varies by model, and listening acceptance remains separate. Premium means fewer interruptions and clear controls, not a paid tier or more settings. The [store materials](../store/listing.md) record positioning evidence, launch copy and promotion constraints.
+
+## Reading behavior
 
 The primary flow is **select text → right-click → read the selection nearly instantly**. Reading only that selection is the defined behavior; continuing into the rest of the article would be a different action. Article reading is available from the browser action or page context menu.
 

@@ -3,6 +3,7 @@ import { defineConfig } from "wxt"
 
 import { buildVersion } from "./scripts/release-version"
 import { adaptPdfMain } from "./scripts/runtime-adapters"
+import { productDescription, productName, storeName } from "./src/extension/brand"
 
 export default defineConfig({
 	srcDir: "src",
@@ -18,11 +19,13 @@ export default defineConfig({
 		],
 	}),
 	zip: {
-		artifactTemplate: "{{name}}-{{version}}-{{browser}}{{modeSuffix}}.zip",
-		sourcesTemplate: "{{name}}-{{version}}-sources{{modeSuffix}}.zip",
+		artifactTemplate: "read-aloud-{{version}}-{{browser}}{{modeSuffix}}.zip",
+		sourcesTemplate: "read-aloud-{{version}}-sources{{modeSuffix}}.zip",
 		includeSources: [
 			"src/**",
 			"scripts/**",
+			"assets/brand/**",
+			"store/assets/reading-selection.png",
 			"public/**",
 			"vendor/**",
 			"docs/**",
@@ -52,7 +55,8 @@ export default defineConfig({
 		},
 	},
 	manifest: ({ browser }) => ({
-		name: "Read Aloud",
+		name: storeName,
+		short_name: productName,
 		version: buildVersion(),
 		icons: {
 			16: "icons/icon-16.png",
@@ -61,7 +65,7 @@ export default defineConfig({
 			96: "icons/icon-96.png",
 			128: "icons/icon-128.png",
 		},
-		description: "Read pages and selected text aloud on your device.",
+		description: productDescription,
 		permissions: [
 			"activeTab",
 			"scripting",

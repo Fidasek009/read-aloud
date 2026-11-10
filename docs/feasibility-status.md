@@ -20,6 +20,8 @@ Separate [native entry probes](native-entry-2026-11-06.md) now pass in Chrome 15
 
 The supplied thesis has been fetched from the live MUNI URL in browser tests with an explicit test-origin grant: **60 pages**, SHA-256 `30b7977a1a52b029a691ad75b4b425162cf3570f5c94de9858ece7464f494c32`. The PDF probes verify missing-site-access recovery, fetching without CORS, mapping, highlighting, and cross-page local synthesis; product probes also exercise playback from a simulated native-viewer selection. They do not prove native menu activation, every paragraph's reading order, tables, citations, or accessibility.
 
+Local checks on 2026-11-10 used the Syllune-branded packages and a private virtual audio sink. The full Chrome product probe passed. Firefox passed Czech download/synthesis, word highlighting, keyboard/media controls, speed/volume focus, recovery, close and deletion, then failed while the PDF probe tried to highlight the thesis range at offsets 2120 to 3600. This failure is undiagnosed; fixture readiness and product behavior have not been distinguished. Do not report a complete Firefox probe pass. The store reading capture uses a foreground Chrome tab, a localhost-only test grant and scripted background entry. It verifies real audio-clock movement and word highlighting, not native activation, voice quality or an offline-disconnection test.
+
 ## Acceptance still open
 
 - **Performance follow-up, waived for the first release:** on 2026-11-06 the owner explicitly removed performance as a first-release blocker. The **1 second warm / 2 seconds cold** medium-model goal remains an optimization target. Measured cold startup exceeds it; do not claim that target has passed.

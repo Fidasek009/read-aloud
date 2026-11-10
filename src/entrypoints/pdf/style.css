@@ -1,9 +1,11 @@
+@import "../../theme.css";
+
 :root {
 	font:
 		14px/1.5 system-ui,
 		sans-serif;
-	background: #e7eaf0;
-	color: #202631;
+	background: var(--background);
+	color: var(--text);
 }
 body {
 	margin: 0;
@@ -22,7 +24,7 @@ header {
 	max-width: 640px;
 	margin: 0 auto;
 	padding: 10px 16px;
-	background: white;
+	background: var(--surface);
 	border-radius: 8px;
 }
 #status:empty {
@@ -45,12 +47,12 @@ button {
 	padding: 8px 12px;
 	border: 0;
 	border-radius: 6px;
-	background: #295dc6;
-	color: white;
+	background: var(--accent);
+	color: var(--accent-text);
 	cursor: pointer;
 }
 button:focus-visible {
-	outline: 3px solid #608eea;
+	outline: 3px solid var(--focus);
 	outline-offset: 2px;
 }
 #zoom {
@@ -62,9 +64,9 @@ button:focus-visible {
 	align-items: center;
 	gap: 2px;
 	padding: 4px;
-	border: 1px solid #d8dde7;
+	border: 1px solid var(--line);
 	border-radius: 10px;
-	background: #fff;
+	background: var(--surface);
 	box-shadow: 0 2px 8px #0002;
 }
 #zoom[hidden] {
@@ -79,7 +81,7 @@ button:focus-visible {
 	color: inherit;
 }
 #zoom button:hover {
-	background: #edf1f7;
+	background: var(--hover);
 }
 #zoom-in,
 #zoom-out {

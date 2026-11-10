@@ -89,7 +89,7 @@ export default defineContentScript({
 					const shadowStyle = document.createElement("style")
 					shadowStyle.textContent = playerFrameStyle
 					frame = document.createElement("iframe")
-					frame.title = "Read Aloud playback controls"
+					frame.title = "Syllune playback controls"
 					frame.src = `${browser.runtime.getURL("/player.html")}#${session.id}`
 					if (import.meta.env.BROWSER !== "firefox") frame.allow = "autoplay"
 					shadow.append(shadowStyle, frame)

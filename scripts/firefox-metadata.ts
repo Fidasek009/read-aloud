@@ -1,5 +1,6 @@
 import { join } from "node:path"
 
+import { productName } from "../src/extension/brand"
 import { parseVersion } from "./release-version"
 
 function section(markdown: string, heading: string) {
@@ -38,7 +39,9 @@ export async function firefoxMetadata(version: string, root = process.cwd()) {
 				},
 			},
 			approval_notes: `${section(listing, "Reviewer instructions")}\n\nBuild instructions: ${repository}/blob/v${version}/SOURCE_CODE_REVIEW.md. The matching reviewer source ZIP is attached automatically.`,
-			release_notes: { "en-US": `Read Aloud ${version}. Changes and source: ${repository}/releases/tag/v${version}` },
+			release_notes: {
+				"en-US": `${productName} ${version}. Changes and source: ${repository}/releases/tag/v${version}`,
+			},
 		},
 	}
 }
