@@ -6,14 +6,14 @@ Checked **2026-11-05** against Mozilla's documentation and the installed WXT 0.2
 
 1. Sign in at the [AMO Developer Hub](https://addons.mozilla.org/developers/). Complete the account's verification and accept Mozilla's developer agreement. Do not upload an extension just to obtain credentials.
 2. Open [API credentials](https://addons.mozilla.org/developers/addon/api/key/) and generate credentials if needed. The issuer/API key usually looks like `user:123456:78`. Keep the issuer and secret private.
-3. Open [GitHub environments](https://github.com/Fidasek009/read-aloud/settings/environments), select **stores**, then add these **environment secrets**:
+3. Open [GitHub environments](https://github.com/Fidasek009/syllune/settings/environments), select **stores**, then add these **environment secrets**:
 
    | Name | Mozilla value |
    | --- | --- |
    | `FIREFOX_JWT_ISSUER` | JWT issuer / API key |
    | `FIREFOX_JWT_SECRET` | JWT secret / API secret |
 
-4. Under [repository Actions variables](https://github.com/Fidasek009/read-aloud/settings/variables/actions), keep `FIREFOX_EXTENSION_ID` set to `read-aloud@fidasek009.github.io`. It is already configured. This permanent manifest/AMO GUID is unrelated to the listing's eventual URL slug.
+4. Under [repository Actions variables](https://github.com/Fidasek009/syllune/settings/variables/actions), keep `FIREFOX_EXTENSION_ID` set to `read-aloud@fidasek009.github.io`. It is already configured. This permanent manifest/AMO GUID is unrelated to the listing's eventual URL slug.
 
 No other Firefox variable, saved JWT, local `.env` file, manual listing upload or artwork task is required. The pipeline generates short-lived JWTs using Mozilla's authentication implementation. Credentials stay in the `stores` environment; PR jobs receive none.
 
@@ -35,7 +35,7 @@ AMO controls review and signing; successful submission does not guarantee approv
 
 ## Evidence and verification
 
-Integration tests run the installed Mozilla client against a local mock AMO service under Bun. They verify JWT signatures/expiry, first listing and update requests, exact archive bytes, source attachment, privacy/artwork requests, GET-only dry-runs before a listing exists, and failure propagation for credentials, access, validation and source upload. [Firefox Store check](https://github.com/Fidasek009/read-aloud/actions/runs/42119491832) passed CI, packaging and live GET-only authentication on 2026-11-05, including the expected absent listing. No extension was uploaded or submitted; live AMO package acceptance remains unverified.
+Integration tests run the installed Mozilla client against a local mock AMO service under Bun. They verify JWT signatures/expiry, first listing and update requests, exact archive bytes, source attachment, privacy/artwork requests, GET-only dry-runs before a listing exists, and failure propagation for credentials, access, validation and source upload. [Firefox Store check](https://github.com/Fidasek009/syllune/actions/runs/42119491832) passed CI, packaging and live GET-only authentication on 2026-11-05, including the expected absent listing. No extension was uploaded or submitted; live AMO package acceptance remains unverified.
 
 - [Mozilla's supported submission methods](https://extensionworkshop.com/documentation/publish/signing-and-distribution-overview/)
 - [Mozilla JWT authentication](https://mozilla.github.io/addons-server/topics/api/auth.html)

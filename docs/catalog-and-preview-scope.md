@@ -22,7 +22,7 @@ The inventory completes the factual catalog pass. Open work is now narrower: est
 
 ## Original preview delivery
 
-All 171 available models use Syllune's own locally synthesized recordings and original native-language passages. The [delivery collection](https://github.com/Fidasek009/read-aloud/tree/voice-previews) includes exact audio/model/config hashes, source text, speaker zero, speed and renderer provenance. The extension uses one commit-pinned URL per model, requests it only when you press the voice's play icon and never downloads a voice model for auditioning. No preview audio enters the extension or AMO reviewer archive.
+All 171 available models use Syllune's own locally synthesized recordings and original native-language passages. The [delivery collection](https://github.com/Fidasek009/syllune/tree/voice-previews) includes exact audio/model/config hashes, source text, speaker zero, speed and renderer provenance. The extension uses one commit-pinned URL per model, requests it only when you press the voice's play icon and never downloads a voice model for auditioning. No preview audio enters the extension or AMO reviewer archive.
 
 The former Piper Samples/Wikipedia integration is removed, including its URLs, discovery lookup and installed transcript attribution. The dated 2026-11-05 metadata inventory remains historical evidence of that earlier integration. No permission to copy or stream those upstream recordings is needed by the replacement path. Original contributions are MIT; applicable model/output terms remain separate.
 

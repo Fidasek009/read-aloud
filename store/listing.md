@@ -1,6 +1,6 @@
 # Store submission copy
 
-Updated 2026-11-10. These materials do not close the product or license acceptance gates. The registered publisher must supply account identity and legal declarations. No store changes or external promotion have been published as part of this overhaul.
+Updated 2026-11-13. These materials do not close the product or license acceptance gates. The registered publisher must supply account identity and legal declarations. No store changes or external promotion have been published as part of this overhaul.
 
 ## Name
 
@@ -30,18 +30,16 @@ Press a voice's play icon for a prerecorded sample made with the same voice mode
 
 Speech runs inside the extension. No account, subscription or separately installed helper app is required. There is no advertising, analytics or telemetry. You need a connection for voice downloads, streamed samples and online source documents. Speech works offline after you install a voice and its required assets, with the source text available locally.
 
-Syllune was previously named Read Aloud. The project repository and extension IDs retain their original names. This project is independent of other extensions called Read Aloud.
+Original application source is open source under MIT; the combined application includes GPL-covered runtime code, and voices/previews have separate terms. Source code, license notices and support: https://github.com/Fidasek009/syllune
 
-Original application source is open source under MIT; the combined application includes GPL-covered runtime code, and voices/previews have separate terms. Source code, license notices and support: https://github.com/Fidasek009/read-aloud
-
-Corresponding-source download/build directions for the release, including third-party source: https://github.com/Fidasek009/read-aloud/blob/main/vendor/source/SOURCE-ACCESS.md. Select the tag matching your installed version for the exact source snapshot. Source access is public and free; a store reviewer account is not required.
+Corresponding-source download/build directions for the release, including third-party source: https://github.com/Fidasek009/syllune/blob/main/vendor/source/SOURCE-ACCESS.md. Select the tag matching your installed version for the exact source snapshot. Source access is public and free; a store reviewer account is not required.
 
 ## Links
 
-- Homepage/source: https://github.com/Fidasek009/read-aloud
-- Support: https://github.com/Fidasek009/read-aloud/issues
-- Privacy policy: https://github.com/Fidasek009/read-aloud/blob/main/PRIVACY.md
-- Third-party terms: https://github.com/Fidasek009/read-aloud/blob/main/docs/licensing.md
+- Homepage/source: https://github.com/Fidasek009/syllune
+- Support: https://github.com/Fidasek009/syllune/issues
+- Privacy policy: https://github.com/Fidasek009/syllune/blob/main/PRIVACY.md
+- Third-party terms: https://github.com/Fidasek009/syllune/blob/main/docs/licensing.md
 
 ## Assets supplied
 
@@ -71,7 +69,7 @@ The [licensing checklist](../docs/licensing.md) records supplied notices, pinned
 
 ## Positioning and name checks
 
-Checked 2026-11-10. The brand is Syllune, pronounced "sih-LOON". Use that name in introductions, artwork, support replies and release notes. "Offline text to speech" describes the category; it is not the brand. Keep the repository, store item IDs and archive filenames stable so existing users keep their update path.
+Checked 2026-11-10. The brand is Syllune, pronounced "sih-LOON". Use that name in introductions, artwork, support replies and release notes. "Offline text to speech" describes the category; it is not the brand. Keep permanent store item IDs and archive filenames stable so existing users keep their update path.
 
 Lead with "Natural-sounding voices. On your computer." Voice quality belongs in the headline and opening description, beside local processing. State offline speech after an explicit voice download and no text uploads for synthesis in the supporting copy, so "on your computer" cannot be mistaken for cloud audio playback. Do not make readers infer quality from an engine name or find it only in the voice catalog. Repeat the same name, orange S icon and headline. Show a selected passage and real playback first, with actual voice samples as the proof people can hear. Premium means the reading controls stay together and out of the way; it does not imply a paid tier.
 
@@ -93,11 +91,11 @@ I build Syllune. It reads selected text, articles and PDFs with natural-sounding
 
 Select a passage and read only that passage, with word highlighting and a compact playback bar on the page. Hear a sample made with the same voice model and local speech engine before choosing a download. Samples and online documents still need a connection.
 
-The source and current limitations are public at https://github.com/Fidasek009/read-aloud. Original application code is MIT; the combined extension and voice models have separate terms. I would like feedback on reading order, voice quality and keyboard use, with your browser, operating system and chosen voice. Please do not post private text or documents.
+The source and current limitations are public at https://github.com/Fidasek009/syllune. Original application code is MIT; the combined extension and voice models have separate terms. I would like feedback on reading order, voice quality and keyboard use, with your browser, operating system and chosen voice. Please do not post private text or documents.
 
 ### Short social post
 
-Natural-sounding voices. On your computer. Syllune reads selected text, articles and PDFs. Download a voice once, then listen offline. Your reading text never goes to a speech service. Hear a sample before you choose. No account or subscription. Online documents and streamed samples still need a connection. I build it: https://github.com/Fidasek009/read-aloud
+Natural-sounding voices. On your computer. Syllune reads selected text, articles and PDFs. Download a voice once, then listen offline. Your reading text never goes to a speech service. Hear a sample before you choose. No account or subscription. Online documents and streamed samples still need a connection. I build it: https://github.com/Fidasek009/syllune
 
 ### Demo sequence
 

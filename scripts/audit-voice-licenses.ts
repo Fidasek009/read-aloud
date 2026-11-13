@@ -49,7 +49,7 @@ const result = {
 	reviewedAt: new Date().toISOString().slice(0, 10),
 	modelRevision: catalog.revision,
 	scope:
-		"All pinned model cards audited as metadata only; no weights or audio fetched. Preview recordings use Read Aloud's original texts, separately hosted with provenance. Dataset labels do not independently establish model/output grants.",
+		"All pinned model cards audited as metadata only; no weights or audio fetched. Preview recordings use Syllune's original texts, separately hosted with provenance. Dataset labels do not independently establish model/output grants.",
 	entries,
 }
 const output = `docs/evidence/catalog-license-inventory-${result.reviewedAt}.json`

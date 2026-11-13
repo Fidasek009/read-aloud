@@ -473,7 +473,7 @@ async function load() {
 					if ("lineNumber" in moduleError && typeof moduleError.lineNumber === "number") line = moduleError.lineNumber
 				}
 			}
-			console.error("Read Aloud: PDF worker startup failed", {
+			console.error("Syllune: PDF worker startup failed", {
 				asset: new URL(GlobalWorkerOptions.workerSrc, location.href).pathname,
 				reason,
 				line,

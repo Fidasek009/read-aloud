@@ -51,7 +51,7 @@ test("model instrumentation preserves original operators and weights while expos
 		name: "read_aloud_durations",
 		type: { tensorType: { elemType: 1 } },
 	})
-	expect(result.docString).toContain("Modified by Read Aloud")
+	expect(result.docString).toContain("Modified by Syllune")
 })
 
 test("unrecognized and truncated model graphs are rejected before installation", () => {

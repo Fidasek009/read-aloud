@@ -22,7 +22,7 @@ export async function packageVoicePreviews(root = process.cwd()) {
 	await Bun.write(`${destination}/LICENSE`, Bun.file(`${root}/LICENSE`))
 	await Bun.write(
 		`${destination}/README.md`,
-		`# ${productName} original voice previews\n\n${voices.length} locally synthesized recordings of original ${productName} texts.\n\nThese files are delivered separately from the extension and fetched only when you press a voice's play icon. Each released extension pins a specific commit of this branch. No upstream sample recordings or Wikipedia text are copied. No model weights or executable code are hosted here.\n\nOriginal texts and ${productName} contributions are MIT; see LICENSE. Model terms remain separate: catalog.json preserves the exact model/config/audio hashes, speaker zero, speed, original text, renderer and available model-card evidence for each recording. It does not declare every model or output unrestricted. Kasandra medium credits Ondřej Šimek under CC BY 4.0 (https://huggingface.co/rhasspy/piper-voices/discussions/93). Full model/source details: https://github.com/Fidasek009/read-aloud/blob/main/docs/licensing.md.\n`,
+		`# ${productName} original voice previews\n\n${voices.length} locally synthesized recordings of original ${productName} texts.\n\nThese files are delivered separately from the extension and fetched only when you press a voice's play icon. Each released extension pins a specific commit of this branch. No upstream sample recordings or Wikipedia text are copied. No model weights or executable code are hosted here.\n\nOriginal texts and ${productName} contributions are MIT; see LICENSE. Model terms remain separate: catalog.json preserves the exact model/config/audio hashes, speaker zero, speed, original text, renderer and available model-card evidence for each recording. It does not declare every model or output unrestricted. Kasandra medium credits Ondřej Šimek under CC BY 4.0 (https://huggingface.co/rhasspy/piper-voices/discussions/93). Full model/source details: https://github.com/Fidasek009/syllune/blob/main/docs/licensing.md.\n`,
 	)
 	return { destination, hashes }
 }
@@ -42,7 +42,7 @@ if (import.meta.main) {
 				while (next < entries.length) {
 					const [id, expected] = entries[next++]!
 					const response = await fetch(
-						`https://raw.githubusercontent.com/Fidasek009/read-aloud/${revision}/samples/${id}.wav`,
+						`https://raw.githubusercontent.com/Fidasek009/syllune/${revision}/samples/${id}.wav`,
 						{ signal: AbortSignal.timeout(30_000) },
 					)
 					if (!response.ok || response.headers.get("access-control-allow-origin") !== "*")

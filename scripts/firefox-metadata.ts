@@ -14,7 +14,7 @@ export async function firefoxMetadata(version: string, root = process.cwd()) {
 	const listing = await Bun.file(join(root, "store/listing.md")).text()
 	const summary = section(listing, "Short description")
 	if (summary.length > 250) throw new Error("AMO summary exceeds 250 characters")
-	const repository = "https://github.com/Fidasek009/read-aloud"
+	const repository = "https://github.com/Fidasek009/syllune"
 	return {
 		name: { "en-US": section(listing, "Name") },
 		default_locale: "en-US",

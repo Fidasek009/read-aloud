@@ -23,8 +23,8 @@ For the existing **0.1.1** draft. Do not upload another ZIP or create another it
 | Screenshots, in order | [reading-selection.png](assets/reading-selection.png), [voices-english.png](assets/voices-english.png), [voices-czech.png](assets/voices-czech.png) |
 | Small promotional tile | [promo-small.png](assets/promo-small.png) |
 | Marquee, if requested | [promo-marquee.png](assets/promo-marquee.png) |
-| Homepage | `https://github.com/Fidasek009/read-aloud` |
-| Support | `https://github.com/Fidasek009/read-aloud/issues` |
+| Homepage | `https://github.com/Fidasek009/syllune` |
+| Support | `https://github.com/Fidasek009/syllune/issues` |
 
 ## Privacy practices
 
@@ -51,7 +51,7 @@ For the existing **0.1.1** draft. Do not upload another ZIP or create another it
 **Privacy policy URL:**
 
 ```text
-https://github.com/Fidasek009/read-aloud/blob/main/PRIVACY.md
+https://github.com/Fidasek009/syllune/blob/main/PRIVACY.md
 ```
 
 ## Official guidance

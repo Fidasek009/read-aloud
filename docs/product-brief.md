@@ -1,6 +1,6 @@
 # Product brief
 
-Started **2026-10-29**, updated **2026-11-10**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
+Started **2026-10-29**, updated **2026-11-13**. Product answers below are confirmed by the user. The current implementation and open acceptance gates are described in [engineering](engineering.md) and [status](feasibility-status.md).
 
 ## Confirmed experience
 
@@ -8,9 +8,9 @@ A brutally simple, premium Firefox and Chrome extension for Windows and Linux. I
 
 ## Marketing direction
 
-The owner requested stronger visibility, a distinct identity rather than another extension called Read Aloud, and offline speech and a premium listening experience as the leading benefits on 2026-11-10. Use the unslop skill for all writing.
+Lead with a distinct Syllune identity, offline speech and a premium listening experience. Use the unslop skill for all writing.
 
-The implementation uses **Syllune** as the public brand and **Syllune: Offline Text to Speech** as its store title. This name and the orange S artwork are implementation choices under that direction, not a claim that the owner selected the name or that trademark clearance is complete. Keep the repository, permanent extension IDs and release archive names unchanged.
+The implementation uses **Syllune** as the public brand and **Syllune: Offline Text to Speech** as its store title. This name and the orange S artwork are implementation choices under that direction, not a claim that the owner selected the name or that trademark clearance is complete. The repository is `Fidasek009/syllune`. Public copy must omit obsolete product names and naming history. Keep permanent extension IDs, storage keys and release archive names unchanged.
 
 Lead with **Natural-sounding voices. On your computer.** The owner explicitly confirmed that voice naturalness must appear in the marketing, beside offline speech. Use it in the headline, opening description and promotional artwork. "Computer" reflects the desktop target; supporting copy must state that speech works offline after an explicit voice download and reading text never goes to a speech service. Make voice quality audible through samples from the same voice models and local engine used for reading. Show the actual playback bar and word highlighting. "Natural-sounding" is a product description, not a ranking; no comparative listening study currently supports "most natural sounding" or calling competitors robotic. Quality still varies by model, and listening acceptance remains separate. Premium means fewer interruptions and clear controls, not a paid tier or more settings. The [store materials](../store/listing.md) record positioning evidence, launch copy and promotion constraints.
 
