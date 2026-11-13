@@ -1,5 +1,6 @@
 import { join } from "node:path"
 
+import { productName } from "../src/extension/brand"
 import { parseVersion } from "./release-version"
 
 function section(markdown: string, heading: string) {
@@ -13,7 +14,7 @@ export async function firefoxMetadata(version: string, root = process.cwd()) {
 	const listing = await Bun.file(join(root, "store/listing.md")).text()
 	const summary = section(listing, "Short description")
 	if (summary.length > 250) throw new Error("AMO summary exceeds 250 characters")
-	const repository = "https://github.com/Fidasek009/read-aloud"
+	const repository = "https://github.com/Fidasek009/syllune"
 	return {
 		name: { "en-US": section(listing, "Name") },
 		default_locale: "en-US",
@@ -38,7 +39,9 @@ export async function firefoxMetadata(version: string, root = process.cwd()) {
 				},
 			},
 			approval_notes: `${section(listing, "Reviewer instructions")}\n\nBuild instructions: ${repository}/blob/v${version}/SOURCE_CODE_REVIEW.md. The matching reviewer source ZIP is attached automatically.`,
-			release_notes: { "en-US": `Read Aloud ${version}. Changes and source: ${repository}/releases/tag/v${version}` },
+			release_notes: {
+				"en-US": `${productName} ${version}. Changes and source: ${repository}/releases/tag/v${version}`,
+			},
 		},
 	}
 }

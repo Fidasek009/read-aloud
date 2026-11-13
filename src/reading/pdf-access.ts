@@ -117,7 +117,7 @@ async function localPdf(url: URL, signal: AbortSignal, status: HTMLElement): Pro
 				explain(
 					allowed
 						? "The browser blocked reading this local file directly."
-						: "Enable local file access for Read Aloud in your browser’s extension settings, then try again.",
+						: "Enable local file access for Syllune in your browser's extension settings, then try again.",
 				)
 				return undefined
 			},

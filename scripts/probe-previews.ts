@@ -64,12 +64,20 @@ function previewSurvivesFilter(selector: string) {
 	if (!button || !search || !section) throw Error("Preview controls are missing")
 	search.value = "no matching voice"
 	search.dispatchEvent(new Event("input", { bubbles: true }))
-	const filtered = section.hidden && button.textContent === "Pause sample"
+	const filtered = section.hidden && button.getAttribute("aria-pressed") === "true"
 	search.value = ""
 	search.dispatchEvent(new Event("input", { bubbles: true }))
 	return (
-		filtered && button === document.querySelector(selector) && !section.hidden && button.textContent === "Pause sample"
+		filtered &&
+		button === document.querySelector(selector) &&
+		!section.hidden &&
+		button.getAttribute("aria-pressed") === "true"
 	)
+}
+
+function previewState(selector: string) {
+	const button = document.querySelector(selector)
+	return button?.getAttribute("aria-busy") === "true" ? "loading" : button?.getAttribute("aria-pressed")
 }
 
 try {
@@ -108,10 +116,7 @@ try {
 				userGesture: true,
 			})
 			try {
-				await waitFor(
-					`document.querySelector(${JSON.stringify(selector)}).textContent`,
-					(value) => value === "Pause sample",
-				)
+				await waitFor(pageScript(previewState, selector), (value) => value === "true")
 				await waitFor("String(globalThis.__previewAudio?.currentTime ?? 0)", (value) => Number(value) > 0)
 				break
 			} catch (cause) {
@@ -124,10 +129,7 @@ try {
 					)
 				) {
 					retried.push(voice.id)
-					if (
-						(await view.evaluate<string>(`document.querySelector(${JSON.stringify(selector)}).textContent`)) !==
-						"Listen"
-					)
+					if ((await view.evaluate<string>(pageScript(previewState, selector))) !== "false")
 						await view.evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`)
 					continue
 				}
@@ -150,7 +152,7 @@ try {
 	}
 	const lastSelector = `[data-voice="${voices.at(-1)!.id}"] [data-action="preview"]`
 	await view.evaluate(`document.querySelector(${JSON.stringify(lastSelector)}).click()`)
-	await waitFor(`document.querySelector(${JSON.stringify(lastSelector)}).textContent`, (value) => value === "Listen")
+	await waitFor(pageScript(previewState, lastSelector), (value) => value === "false")
 	if (requests.some((url) => !voices.some((voice) => voice.previewUrl === url)))
 		throw new Error("A preview fetched something other than its audio")
 	await view.cdp("Network.emulateNetworkConditions", {

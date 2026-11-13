@@ -1,54 +1,26 @@
-# Read Aloud
+<img src="assets/brand/syllune.svg" width="64" height="64" alt="" />
 
-A Firefox and Chrome extension with local speech, a multilingual voice catalog, explicit model downloads, and a compact Edge-like playback bar. Natural voice quality is a release requirement still being evaluated.
+# Syllune
 
-The extension provides voice management, a small in-page playback bar, selection/article capture, a PDF reader in a new tab, and local Piper inference. See [AGENTS.md](AGENTS.md) for product principles and [the product brief](docs/product-brief.md) for confirmed requirements. [Known issues](docs/known-issues.md) lists user-facing limitations; [acceptance status](docs/feasibility-status.md) tracks remaining work.
+## Natural-sounding voices. On your computer.
 
-## Development
+Give your eyes a break. Syllune reads articles, selected text and PDFs aloud in Chrome and Firefox. Download a voice you like, then listen offline. Your reading text never goes to a speech service.
 
-Use **Bun 1.4.4 or newer**. The runtime, dependency management, tests, type checks, formatter, and tooling all use Bun. WXT's framework build runs under Bun.
+![Syllune's compact playback bar and word highlighting on a selected passage.](store/assets/reading-selection.png)
 
-```sh
-bun install --frozen-lockfile
-bun run typecheck
-bun run test
-bun run format:check
-bun run build
-bun run build:firefox
-```
+- **Select it. Hear it.** Highlight a passage, right-click and choose **Read selection**. Syllune reads that passage and stops at its end.
+- **Stay with the words.** Word highlighting and automatic scrolling help you follow along. Pause, skip a sentence, or change speed, volume and voice from one compact bar.
+- **Find your voice.** Hear a streamed sample before downloading. Choose from English, Czech and more languages, with different quality options. Keep only the voices you want.
+- **Listen to PDFs.** Open a document in a separate reader tab while keeping the original tab in place. Browser permissions can affect PDF access.
 
-For development, use `bun run dev` or `bun run dev:firefox`. Generated browser packages go in `.output/`. `bun run format` applies the preferences in [bunfig.toml](bunfig.toml).
+You need no account, subscription or companion app.
 
-Bun is development tooling; the finished extension must not require users to install Bun or a companion application. Model downloads must be deliberate user actions, never a side effect of opening or installing the extension.
+## Get started
 
-## Technical notes
+See [releases and downloads](https://github.com/Fidasek009/syllune/releases). Chrome supports unpacked installation; normal Firefox installation requires an AMO-signed package. For build and loading instructions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-Model management and [original preview production](voice-previews/README.md) derive from the same complete catalog across every language and quality variant. Preview recordings are hosted separately and fetched only after Listen. Refresh pinned upstream catalog metadata with `bun run catalog:update`; it downloads no model weights.
+Choose and download a voice to start listening. Speech works offline once the voice and its required assets are installed and the text is available locally. Downloads, streamed samples and online documents need a connection. Voice quality and startup time vary by model and device.
 
-The extension uses a Piper-based speech implementation. [Research](docs/research.md) and [engineering guidance](docs/engineering.md) describe the chosen approach and outstanding gates.
+[Known issues](docs/known-issues.md) · [Report a problem](https://github.com/Fidasek009/syllune/issues) · [Privacy](PRIVACY.md) · [Contribute](CONTRIBUTING.md)
 
-## License
-
-Original project code is [MIT](LICENSE). Third-party runtime files, model weights, and voice/preview assets retain their own licenses. The extension bundles GPL-3.0-or-later Spellophone/eSpeak NG with MIT ONNX Runtime. Original source files remain MIT; the combined bundle has GPL distribution obligations. See [NOTICE.md](NOTICE.md) and the [licensing checklist and open model/preview questions](docs/licensing.md). Run `bun run check:licenses` to verify supplied license/source materials; passing it does not establish release readiness.
-
-## Browser checks
-
-After building, use `bun run probe:chrome` and `bun run probe:firefox` for isolated product probes. They deliberately download a voice and delete it again. A working audio output is required; the Linux VM uses a private test sink via `bun scripts/with-test-audio.ts scripts/probe-product-firefox.ts`. The helper expects extracted Ubuntu PulseAudio test binaries under `.cache/test-audio/pulse/`; it installs no system service and is never part of the extension.
-
-`bun run probe:pdf` requires the deliberately fetched thesis bytes in `.cache/benchmarks/muni-thesis.pdf`. Its evidence covers PDF rendering/text mapping, not full speech acceptance. See [current status](docs/feasibility-status.md) for exact limits.
-
-## Voice management
-
-The voice page exposes the full pinned catalog with search, source terms, variants, and explicit downloads. Candidates that require unsupported pronunciation engines are excluded from new downloads; older downloaded copies remain deletable. Playback controls use icons with accessible names; voice actions retain text labels. The bar's gear opens voice management, and right-clicking the browser extension action exposes its Options page.
-
-## PDF checks
-
-For a live PDF fetch check, use `PDF_SOURCE_URL=https://is.muni.cz/th/wdhgd/bc.pdf bun run probe:pdf`. The test checks access recovery in a fresh ungranted profile, then uses a narrow grant in a separate test copy; it does not click the browser's native permission dialog. In your normal browser, the new PDF tab may ask for access to the PDF's site. This is optional site access, not an install-time all-sites grant.
-
-## Local diagnostics
-
-Local timing/backend diagnostics are available from the extension page's developer console with `await browser.storage.local.get("lastSpeechPerformance")` (use `chrome` in Chrome). They contain no reading text. Cold initialization is still over the acceptance budget; do not interpret one VM run as a benchmark.
-
-## CI and publishing
-
-A pushed stable `vX.Y.Z` tag sets the version for both browser manifests and all archives, runs CI, submits those exact packages to Chrome Web Store and Firefox AMO for automatic publication after approval, then automatically publishes the GitHub release. No package-version bump or manual GitHub release step is required. Releases also attach an agent-created store package containing original artwork, real screenshots, listing/privacy copy and icon source. Store accounts/credentials and existing license/product acceptance work must be completed before real publication. See [release engineering](docs/releasing.md), [store package](store/listing.md), [privacy policy](PRIVACY.md), and [reviewer build instructions](SOURCE_CODE_REVIEW.md).
+Original code is [MIT](LICENSE). The combined extension includes GPL-covered runtime code; voices and samples have separate terms. See [license details](NOTICE.md).

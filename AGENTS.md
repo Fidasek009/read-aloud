@@ -1,6 +1,16 @@
 # Product principles
 
-Build a Firefox and Chrome extension that makes listening to a web page feel effortless. Microsoft Edge's Read Aloud is the experience benchmark; Piper Read Aloud demonstrates the user's acceptable voice quality, but its UI/UX is a problem to solve.
+Build Syllune, a Firefox and Chrome extension that makes listening to a web page feel effortless. Microsoft Edge's Read Aloud is the experience benchmark; Piper Read Aloud demonstrates the user's acceptable voice quality, but its UI/UX is a problem to solve.
+
+## Brand and marketing
+
+- Lead with **Syllune**. The store title is **Syllune: Offline Text to Speech**. Use `https://github.com/Fidasek009/syllune` for repository links. Keep existing extension IDs, storage keys and release archive names stable. Do not include obsolete product names or naming history in public copy.
+- Lead public copy with **Natural-sounding voices. On your computer.** State voice naturalness beside local processing in headlines, opening descriptions and promotional artwork; do not leave it implicit or bury it in technical details. Supporting copy must explain that speech works offline after an explicit voice download and reading text never goes to a speech service. Online documents and streamed samples still need the network. Never imply zero network requests or offline model provisioning.
+- Make natural speech and an effortless, premium reading experience the product's identity. Demonstrate voices through the product's actual samples and listening through real playback captures. "Natural-sounding" describes the product, not a market ranking or a guarantee about every voice variant. Do not call competitors robotic or claim best, most natural, fastest, exact timing or universal compatibility without dated evidence that supports the comparison.
+- Use the orange S icon and Syllune wordmark consistently. Show reading before voice management in marketing. Keep promotional claims out of the playback bar and do not add onboarding steps, review nags, telemetry or permissions for marketing.
+- App colors come from `src/theme.css`: warm backgrounds, charcoal text and orange actions with dark labels. Share light/dark colors across voices, playback and PDF controls. Keep errors/Delete red, system fonts and document content unchanged.
+- Use the unslop skill whenever writing or editing prose, code, comments or documentation. Keep copy concrete and direct. No invented reviews, endorsements, rankings, scarcity, keyword stuffing or competitor impersonation. External promotion and store changes require authorization.
+- `store/listing.md` owns store copy, launch drafts and the dated positioning evidence. Keep README, manifest copy and public privacy materials consistent with it. Acceptance and license limits still apply.
 
 ## Non-negotiable values
 

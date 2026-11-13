@@ -1,9 +1,11 @@
+import { productName } from "../extension/brand.ts"
+
 /** Use the browser's media-key routing, including when the source tab is inactive. */
 export function bindMediaSession(
 	session: MediaSession | undefined,
 	actions: Pick<Record<MediaSessionAction, () => void>, "play" | "pause" | "previoustrack" | "nexttrack" | "stop">,
 ) {
-	if (session && typeof MediaMetadata !== "undefined") session.metadata = new MediaMetadata({ title: "Read Aloud" })
+	if (session && typeof MediaMetadata !== "undefined") session.metadata = new MediaMetadata({ title: productName })
 	const registered: MediaSessionAction[] = []
 	for (const action of Object.keys(actions) as (keyof typeof actions)[]) {
 		try {

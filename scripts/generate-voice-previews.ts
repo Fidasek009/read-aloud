@@ -166,7 +166,7 @@ try {
 					audioSha256: new Bun.CryptoHasher("sha256").update(data).digest("hex"),
 					rendererSha256,
 					generatedAt: new Date().toISOString(),
-					renderer: "Read Aloud CPU worker; ONNX graph instrumented for timing; original weights unchanged",
+					renderer: "Syllune CPU worker; ONNX graph instrumented for timing; original weights unchanged",
 				}
 				await Bun.write(output, `${JSON.stringify(records, null, "\t")}\n`)
 				console.log(`Created (${index + 1}/${selected.length}): ${id}, ${durationSeconds.toFixed(1)} seconds`)

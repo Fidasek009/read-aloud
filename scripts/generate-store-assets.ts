@@ -1,9 +1,9 @@
+import { productName, productTagline } from "../src/extension/brand"
+import { captureStoreReading } from "./capture-store-reading"
 import { pageScript } from "./page-script"
 import { chromeExtensionId, closeChromeProbe, createChromeProbe, projectRoot, waitFor } from "./probe-helpers"
 
-// Original vector artwork + browser-rendered PNGs. No model, preview or page text
-// is downloaded. Product screenshots capture the unmodified extension UI.
-const logo = await Bun.file(`${projectRoot}/assets/brand/read-aloud.svg`).text()
+const logo = await Bun.file(`${projectRoot}/assets/brand/syllune.svg`).text()
 const page = (body: string, style = "") =>
 	`<!doctype html><meta charset="utf-8"><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden}body{font-family:Arial,sans-serif}${style}</style>${body}`
 let html = ""
@@ -47,8 +47,8 @@ try {
 	] as const) {
 		const large = width > 500
 		html = page(
-			`<div class="brand">${logo}<b>Read Aloud</b></div><div class="copy"><span>ON-DEVICE READING</span><h1>Your page.<br>Your pace.</h1><p>Listen in Chrome &amp; Firefox.</p></div><div class="rings"></div>`,
-			`body{background:#10283f;color:#fff;padding:${large ? "40px 72px" : "18px 26px"}}.brand{display:flex;align-items:center;gap:8px;position:relative;z-index:2;font-size:${large ? 24 : 17}px}.brand svg{width:${large ? 64 : 40}px;height:${large ? 64 : 40}px;margin-left:-8px}.copy{position:relative;z-index:2;margin-top:${large ? 32 : 17}px}.copy span{font-size:${large ? 13 : 9}px;letter-spacing:2.6px;color:#89d7cf}h1{font-size:${large ? 100 : 43}px;letter-spacing:${large ? -4 : -1.8}px;line-height:1.02;margin:${large ? 18 : 12}px 0;font-weight:700}p{font-size:${large ? 19 : 12}px;color:#c2d3e1;margin:14px 0}.rings{position:absolute;width:${large ? 630 : 230}px;height:${large ? 630 : 230}px;border:1px solid #275466;border-radius:50%;right:${large ? -60 : -130}px;top:${large ? 25 : 70}px;box-shadow:0 0 0 ${large ? 70 : 28}px #17384c,0 0 0 ${large ? 140 : 56}px #143247}.rings:after{content:'';position:absolute;inset:30%;border-radius:50%;background:#61e5cd}`,
+			`<div class="brand">${logo}<b>${productName}</b></div><div class="copy"><h1>${productTagline.replace(". ", ".<br>")}</h1><p>Download a voice once. Speech runs offline.</p><span>Text to speech for Chrome &amp; Firefox</span></div>${large ? `<div class="mark" aria-hidden="true">${logo}</div>` : ""}`,
+			`body{background:#f5efe4;color:#24211e;padding:${large ? "40px 64px" : "22px 26px"}}.brand{display:flex;align-items:center;gap:10px;font-size:${large ? 30 : 22}px;letter-spacing:-.8px}.brand svg{width:${large ? 56 : 40}px;height:${large ? 56 : 40}px}.copy{margin-top:${large ? 64 : 28}px;position:relative;z-index:1}h1{font-family:Georgia,serif;font-size:${large ? 80 : 34}px;font-weight:400;letter-spacing:${large ? -3 : -1.1}px;line-height:1.12;margin:0 0 ${large ? 40 : 26}px}p{font-size:${large ? 23 : 13}px;margin:0 0 ${large ? 16 : 10}px}span{font-size:${large ? 16 : 11}px;color:#62594e}.mark{position:absolute;right:70px;top:108px;width:350px;transform:rotate(-8deg)}.mark svg{width:100%;height:100%}`,
 		)
 		await view.navigate(server.url.href)
 		await screenshot(`store/assets/${file}`, width, height)
@@ -80,3 +80,4 @@ try {
 	await closeChromeProbe(view)
 	await server.stop(true)
 }
+if (!process.argv.includes("--brand-only")) await captureStoreReading()

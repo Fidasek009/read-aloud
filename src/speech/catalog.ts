@@ -25,7 +25,7 @@ export const catalogVoices: readonly Voice[] = catalog.voices.map((voice) => ({
 	configUrl: `${base}/${voice.path}.json`,
 	previewUrl:
 		!voice.unsupported && Object.hasOwn(previews.recordings, voice.id)
-			? `https://raw.githubusercontent.com/Fidasek009/read-aloud/${previews.revision}/samples/${encodeURIComponent(voice.id)}.wav`
+			? `https://raw.githubusercontent.com/Fidasek009/syllune/${previews.revision}/samples/${encodeURIComponent(voice.id)}.wav`
 			: null,
 	termsUrl: `https://huggingface.co/rhasspy/piper-voices/blob/${catalog.revision}/${voice.path.replace(/[^/]+$/, "MODEL_CARD")}`,
 }))

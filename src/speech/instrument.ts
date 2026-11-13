@@ -130,6 +130,6 @@ export function instrumentModel(source: ArrayBuffer): Uint8Array<ArrayBuffer> {
 		extraNode,
 		extraOutput,
 		bytes.subarray(graph.end),
-		string(6, "Modified by Read Aloud: exposed predicted token durations. Original speech graph and weights retained."),
+		string(6, "Modified by Syllune: exposed predicted token durations. Original speech graph and weights retained."),
 	)
 }

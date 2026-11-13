@@ -1,13 +1,11 @@
+@import "../../theme.css";
+
 :root {
 	font:
 		13px/1.4 system-ui,
 		sans-serif;
-	color: #242a34;
+	color: var(--text);
 	color-scheme: light dark;
-	--surface: #fff;
-	--line: #d8dde7;
-	--muted: #5b6575;
-	--hover: #edf1f7;
 	background: transparent;
 }
 * {
@@ -67,8 +65,8 @@ a.icon:hover {
 }
 button.play,
 #setup {
-	background: #295dc6;
-	color: #fff;
+	background: var(--accent);
+	color: var(--accent-text);
 }
 button:disabled {
 	opacity: 0.4;
@@ -78,13 +76,13 @@ button:disabled:hover {
 	background: transparent;
 }
 button.play:disabled {
-	background: #295dc6;
+	background: var(--accent);
 }
 button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 a:focus-visible {
-	outline: 3px solid #608eea;
+	outline: 3px solid var(--focus);
 	outline-offset: 2px;
 }
 #close {
@@ -125,28 +123,28 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-runnable-track {
 	height: 3px;
 	border-radius: 2px;
-	background: #a7b4c9;
+	background: var(--track);
 }
 input[type="range"]::-moz-range-track {
 	height: 3px;
 	border-radius: 2px;
-	background: #a7b4c9;
+	background: var(--track);
 }
 input[type="range"]::-webkit-slider-thumb {
 	appearance: none;
 	width: 13px;
 	height: 13px;
 	margin-top: -5px;
-	border: 2px solid #295dc6;
+	border: 2px solid var(--link);
 	border-radius: 50%;
-	background: #fff;
+	background: var(--surface);
 }
 input[type="range"]::-moz-range-thumb {
 	width: 9px;
 	height: 9px;
-	border: 2px solid #295dc6;
+	border: 2px solid var(--link);
 	border-radius: 50%;
-	background: #fff;
+	background: var(--surface);
 }
 #voice {
 	flex: 1 1 136px;
@@ -155,7 +153,7 @@ input[type="range"]::-moz-range-thumb {
 	max-width: 148px;
 	font: inherit;
 	height: 32px;
-	border: 1px solid var(--line);
+	border: 1px solid var(--control-line);
 	border-radius: 7px;
 	padding: 0 6px;
 	color: inherit;
@@ -226,16 +224,10 @@ input[type="range"]::-moz-range-thumb {
 	white-space: nowrap;
 }
 #setup:hover {
-	background: #214fae;
+	background: var(--accent-hover);
 }
-@media (prefers-color-scheme: dark) {
-	:root {
-		color: #f1f4fa;
-		--surface: #23272f;
-		--line: #48515f;
-		--muted: #bac3d2;
-		--hover: #3a4351;
-	}
+button.play:hover:not(:disabled) {
+	background: var(--accent-hover);
 }
 @media (max-width: 440px) {
 	#playback {

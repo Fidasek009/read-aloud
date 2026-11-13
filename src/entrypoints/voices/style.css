@@ -1,7 +1,9 @@
+@import "../../theme.css";
+
 :root {
 	font-family: system-ui, sans-serif;
-	color: #202329;
-	background: #f8f9fb;
+	color: var(--text);
+	background: var(--background);
 	color-scheme: light dark;
 }
 * {
@@ -21,8 +23,16 @@ h1 {
 	letter-spacing: -0.8px;
 	margin-bottom: 12px;
 }
+.brand {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 16px;
+	font-weight: 650;
+	color: inherit;
+}
 p {
-	color: #566070;
+	color: var(--muted);
 	line-height: 1.65;
 }
 #voices {
@@ -36,8 +46,8 @@ section {
 	align-items: center;
 	flex-wrap: wrap;
 	gap: 12px;
-	background: white;
-	border: 1px solid #dfe3eb;
+	background: var(--surface);
+	border: 1px solid var(--line);
 	border-radius: 14px;
 	padding: 20px;
 	overflow-wrap: anywhere;
@@ -56,23 +66,49 @@ section p {
 	margin: 0;
 }
 button {
+	display: grid;
+	place-items: center;
+	flex: 0 0 44px;
+	width: 44px;
+	height: 44px;
 	font: inherit;
 	font-size: 14px;
-	border: 1px solid #cbd1dc;
+	border: 1px solid var(--control-line);
 	border-radius: 8px;
 	background: transparent;
 	color: inherit;
-	padding: 10px 16px;
+	padding: 10px;
 	cursor: pointer;
-	min-height: 42px;
+}
+button svg {
+	width: 22px;
+	height: 22px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 1.8;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+@media (prefers-reduced-motion: no-preference) {
+	button[aria-busy="true"] svg {
+		animation: preview-loading 1s linear infinite;
+	}
+}
+@keyframes preview-loading {
+	to {
+		transform: rotate(360deg);
+	}
 }
 button:hover {
-	background: #eef1f6;
+	background: var(--hover);
 }
 button.primary {
-	background: #295dc6;
-	border-color: #295dc6;
-	color: white;
+	background: var(--accent);
+	border-color: var(--accent);
+	color: var(--accent-text);
+}
+button.primary:hover {
+	background: var(--accent-hover);
 }
 button.danger {
 	color: #b42318;
@@ -102,7 +138,7 @@ button.danger:hover {
 	padding: 10px;
 	font: inherit;
 	font-weight: 400;
-	border: 1px solid #aeb8c8;
+	border: 1px solid var(--control-line);
 	border-radius: 8px;
 	color: inherit;
 	background: transparent;
@@ -111,7 +147,7 @@ input:focus-visible,
 select:focus-visible,
 button:focus-visible,
 a:focus-visible {
-	outline: 3px solid #568bea;
+	outline: 3px solid var(--focus);
 	outline-offset: 3px;
 }
 .terms {
@@ -139,7 +175,7 @@ button:disabled {
 progress {
 	width: 100%;
 	height: 6px;
-	accent-color: #295dc6;
+	accent-color: var(--link);
 }
 .download-status {
 	flex: 1 0 100%;
@@ -152,34 +188,13 @@ progress {
 footer {
 	margin-top: 32px;
 	font-size: 13px;
-	color: #566070;
+	color: var(--muted);
 	line-height: 1.65;
 }
 a {
-	color: #295dc6;
+	color: var(--link);
 }
 @media (prefers-color-scheme: dark) {
-	:root {
-		background: #171a20;
-		color: #f2f4f8;
-	}
-	section {
-		background: #22262e;
-		border-color: #414955;
-	}
-	p,
-	footer {
-		color: #b4bdcb;
-	}
-	button {
-		border-color: #657085;
-	}
-	button:hover {
-		background: #343c48;
-	}
-	a {
-		color: #9ebeff;
-	}
 	button.danger {
 		color: #ffb4aa;
 		border-color: #ed7769;
@@ -188,8 +203,8 @@ a {
 		background: #462723;
 	}
 	select option {
-		background: #22262e;
-		color: #f2f4f8;
+		background: var(--surface);
+		color: var(--text);
 	}
 	.download-status.error {
 		color: #ffb4aa;

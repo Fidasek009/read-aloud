@@ -208,7 +208,7 @@ async function start(mode: "article" | "selection", initial?: ReadingDocument) {
 		return
 	}
 	frame = document.createElement("iframe")
-	frame.title = "Read Aloud playback controls"
+	frame.title = "Syllune playback controls"
 	if (import.meta.env.BROWSER !== "firefox") frame.allow = "autoplay"
 	frame.src = `${browser.runtime.getURL("/player.html")}#${session.id}`
 	controls.append(frame)
@@ -401,7 +401,7 @@ window.addEventListener(
 
 async function load() {
 	const raw = params.get("src")
-	if (!raw) throw new Error("Open a PDF and choose Read Aloud from the browser toolbar.")
+	if (!raw) throw new Error("Open a PDF and choose Syllune from the browser toolbar.")
 	const url = new URL(raw)
 	if (!["https:", "http:", "file:"].includes(url.protocol)) throw new Error("This PDF address is not supported.")
 	await ownTab
@@ -473,7 +473,7 @@ async function load() {
 					if ("lineNumber" in moduleError && typeof moduleError.lineNumber === "number") line = moduleError.lineNumber
 				}
 			}
-			console.error("Read Aloud: PDF worker startup failed", {
+			console.error("Syllune: PDF worker startup failed", {
 				asset: new URL(GlobalWorkerOptions.workerSrc, location.href).pathname,
 				reason,
 				line,

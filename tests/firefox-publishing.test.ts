@@ -215,7 +215,7 @@ test.each([false, true])("Mozilla client creates/updates listing=%s and submits 
 	await withAmo({ exists }, async ({ root, base, requests, metadata }) => {
 		await publishFirefox({ version: "0.1.0", dryRun: false, extensionId, issuer, secret, root }, base)
 		expect(metadata[0]).toMatchObject({
-			name: { "en-US": "Read Aloud" },
+			name: { "en-US": "Syllune: Offline Text to Speech" },
 			categories: { firefox: ["other"] },
 			version: {
 				upload: "test-upload",

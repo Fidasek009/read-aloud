@@ -14,17 +14,17 @@ For the existing **0.1.1** draft. Do not upload another ZIP or create another it
 
 | Field | Value |
 | --- | --- |
-| Name | Read Aloud |
-| Summary, if editable | Listen to articles, selected text and PDFs with on-device voices in Chrome and Firefox. |
+| Name | Syllune: Offline Text to Speech |
+| Summary, if editable | Copy the **Short description** section of [listing.md](listing.md). |
 | Description | Copy only the **Full description** section of [listing.md](listing.md). |
 | Category | Productivity; choose its accessibility category/subcategory if the dashboard provides one. |
 | Language | English |
 | Icon | [icon-128.png](assets/icon-128.png) |
-| Screenshots | [voices-english.png](assets/voices-english.png) and [voices-czech.png](assets/voices-czech.png) |
+| Screenshots, in order | [reading-selection.png](assets/reading-selection.png), [voices-english.png](assets/voices-english.png), [voices-czech.png](assets/voices-czech.png) |
 | Small promotional tile | [promo-small.png](assets/promo-small.png) |
 | Marquee, if requested | [promo-marquee.png](assets/promo-marquee.png) |
-| Homepage | `https://github.com/Fidasek009/read-aloud` |
-| Support | `https://github.com/Fidasek009/read-aloud/issues` |
+| Homepage | `https://github.com/Fidasek009/syllune` |
+| Support | `https://github.com/Fidasek009/syllune/issues` |
 
 ## Privacy practices
 
@@ -36,7 +36,7 @@ For the existing **0.1.1** draft. Do not upload another ZIP or create another it
 
 | Permission | Answer |
 | --- | --- |
-| activeTab | Access the current page only after the user invokes Read Aloud, to read their selected text or the requested article and display synchronized highlighting and playback controls. |
+| activeTab | Access the current page only after the user invokes Syllune, to read their selected text or the requested article and display synchronized highlighting and playback controls. |
 | scripting | Inject the packaged page reader and playback controls into the user-requested tab to extract the requested text, highlight spoken words and scroll with playback. |
 | contextMenus | Provide Read selection and Read page commands in the browser's right-click menu. |
 | storage | Store voice choices and playback preferences locally, together with local model-management and limited technical diagnostic information. Reading text is not logged or uploaded. |
@@ -51,7 +51,7 @@ For the existing **0.1.1** draft. Do not upload another ZIP or create another it
 **Privacy policy URL:**
 
 ```text
-https://github.com/Fidasek009/read-aloud/blob/main/PRIVACY.md
+https://github.com/Fidasek009/syllune/blob/main/PRIVACY.md
 ```
 
 ## Official guidance

@@ -1,4 +1,4 @@
-# Building Read Aloud for source review
+# Building Syllune for source review
 
 Use **Bun 1.4.4**, pinned in `package.json`, on Linux. No Node runtime, helper application or voice-model download is required for building. Install Bun using its [official instructions](https://bun.com/docs/installation).
 

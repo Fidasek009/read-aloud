@@ -17,7 +17,7 @@ afterEach(async () => {
 	for (const root of roots.splice(0)) await $`rm -rf ${root}`.quiet()
 })
 
-test("every available model streams its matching original recording from the pinned Read Aloud collection", () => {
+test("every available model streams its matching original recording from the pinned Syllune collection", () => {
 	expect(delivery.revision).toMatch(/^[a-f0-9]{40}$/)
 	expect(Object.keys(delivery.recordings).sort()).toEqual(
 		voices
@@ -38,7 +38,7 @@ test("every available model streams its matching original recording from the pin
 		expect(recording.speed).toBe(1)
 		expect(delivery.recordings[voice.id as keyof typeof delivery.recordings]).toBe(recording.audioSha256)
 		expect(voice.previewUrl).toBe(
-			`https://raw.githubusercontent.com/Fidasek009/read-aloud/${delivery.revision}/samples/${encodeURIComponent(voice.id)}.wav`,
+			`https://raw.githubusercontent.com/Fidasek009/syllune/${delivery.revision}/samples/${encodeURIComponent(voice.id)}.wav`,
 		)
 	}
 })

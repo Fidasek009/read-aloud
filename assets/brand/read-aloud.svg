@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Read Aloud: an open page becoming sound">
-  <rect x="16" y="16" width="96" height="96" rx="25" fill="#10283f"/>
-  <path d="M35 40c12-3 22 1 29 8v39c-9-7-18-10-29-7Z" fill="#fff"/>
-  <path d="M64 48c5-5 10-8 16-9v10c-5 1-9 3-12 7v30l-4 3Z" fill="#bcf4ed"/>
-  <g fill="none" stroke="#61e5cd" stroke-linecap="round" stroke-width="5">
-    <path d="M81 62v12"/><path d="M91 55v26"/>
-  </g>
-</svg>
